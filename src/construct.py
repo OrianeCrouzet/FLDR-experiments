@@ -13,6 +13,7 @@ from discrete_sampling.rejection import get_rejection_precision
 from discrete_sampling.rejection import get_rejection_table
 
 from discrete_sampling.alias import alias_preprocess
+from discrete_sampling.alias_integers import alias_integers_preprocess
 
 from discrete_sampling.utils import get_Zkl
 from discrete_sampling.utils import get_binary_expansion_length
@@ -122,3 +123,18 @@ def construct_sample_alias(p_target):
     qs = [x.numerator for x in q]
     Ms = [x.denominator for x in q]
     return n, qs, Ms, j
+
+def construct_sample_alias_integers(p_target):
+    """
+    Prépare les tables pour l'algo alias.integers
+    p_target : liste de Fractions
+    Retourne :
+        K : nombre de cellules
+        Ms : liste des poids entiers
+    """
+    from discrete_sampling.utils import get_common_denominator, get_common_numerators
+    Z = get_common_denominator(p_target)
+    Ms = get_common_numerators(Z, p_target)
+    K, T, Threshold, cs = alias_integers_preprocess(Ms)
+
+    return K, Ms

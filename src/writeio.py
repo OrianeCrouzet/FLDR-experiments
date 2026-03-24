@@ -64,3 +64,30 @@ def write_sample_alias(n, qs, Ms, j, fname):
         write_array(qs, f)
         write_array(Ms, f)
         write_array(j, f)
+
+def write_sample_alias_integers(K, T, entropy, fname):
+    """
+    Écrit les tables préparées pour alias.integers dans un fichier
+    pour le pipeline, dans le format attendu :
+
+    Ligne 1 : K (plage des probabilités possibles)
+    Ligne 2 : nombre d’objets suivi des objets
+    Ligne 3 : entropie
+    """
+    # print(f"[DEBUG] Écriture du fichier {fname}")
+    # print(f"[DEBUG] K = {K}")
+    # print(f"[DEBUG] T (objets) = {T}")
+    # print(f"[DEBUG] entropy = {entropy:.5f}")
+
+    with open(fname, 'w') as f:
+        # Ligne 1 : plage des probabilités possibles
+        f.write('%d\n' % K)
+        # print(f"[DEBUG] Ligne 1 écrite : {K}")
+
+        # Ligne 2 : nombre d’objets + objets de la distribution
+        write_array(T, f)
+        # print(f"[DEBUG] Ligne 2 écrite : {T}")
+
+        # Ligne 3 : entropie
+        f.write('%.5f\n' % entropy)
+        #print(f"[DEBUG] Ligne 3 écrite : {entropy:.5f}")

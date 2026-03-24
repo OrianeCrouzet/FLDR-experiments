@@ -13,6 +13,7 @@ from discrete_sampling.rejection import get_rejection_precision
 from discrete_sampling.rejection import get_rejection_table
 
 from discrete_sampling.alias import alias_preprocess
+from discrete_sampling.alias_integers import alias_integers_preprocess
 
 from discrete_sampling.utils import get_Zkl
 from discrete_sampling.utils import get_binary_expansion_length
@@ -122,3 +123,21 @@ def construct_sample_alias(p_target):
     qs = [x.numerator for x in q]
     Ms = [x.denominator for x in q]
     return n, qs, Ms, j
+
+def construct_sample_alias_integers(p_target):
+    """
+    Prépare les tables pour l'algo alias.integers
+    Renvoie les objets nécessaires au sampling, format similaire à alias.py
+
+    p_target : liste ou array d'entiers
+    Retourne :
+        K : nombre de cellules
+        T : table des indices
+        Threshold : table des seuils
+        cs : valeur de normalisation (poids moyen)
+    """
+    K, T, Threshold, cs = alias_integers_preprocess(p_target)
+
+    # Optionnel : convertit les Threshold en fractions (comme dans l'alias original)
+    # Ici, on peut juste garder les entiers
+    return K, T, Threshold, cs

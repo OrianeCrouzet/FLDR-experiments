@@ -13,23 +13,47 @@ set -u
 stamp=${1}
 cmd=${2}
 
-SAMPLERS='interval
-  alias.exact
-  ky.enc
-  rej.binary
-  rej.enc
-  rej.matc
-  rej.table
-  rej.uniform
-  alias.integers'
+SAMPLERS='interval alias.exact ky.enc rej.binary rej.enc rej.matc rej.table rej.uniform alias.integers'
+
+#if [ ${cmd} = 'initialize' ]; then
+ # N=$(echo ${stamp} | cut -d. -f2)
+  #Z=$(echo ${stamp} | cut -d. -f3)
+  #seed=$(echo ${stamp} | cut -d. -f4)
+  #qs=$(echo ${SAMPLERS} | xargs -I% echo "'%'")
+  #./dists.py generate-distributions N=${N} Z=${Z} seed=${seed} samplers="${qs}" thin=5;
+  #exit 0;
+#fi
 
 if [ ${cmd} = 'initialize' ]; then
-  N=$(echo ${stamp} | cut -d. -f2)
-  Z=$(echo ${stamp} | cut -d. -f3)
-  seed=$(echo ${stamp} | cut -d. -f4)
-  qs=$(echo ${SAMPLERS} | xargs -I% echo "'%'")
-  ./dists.py generate-distributions N=${N} Z=${Z} seed=${seed} samplers="${qs}" thin=5;
-  exit 0;
+  if [[ "${stamp}" =~ ^dists\.([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+    N=${BASH_REMATCH[1]}
+    Z=${BASH_REMATCH[2]}
+    seed=${BASH_REMATCH[3]}
+    target_samplers="${SAMPLERS}"
+  else
+    # support des appels direct : ./pipeline.sh alias.integers initialize
+    case "${stamp}" in
+      interval|alias.exact|ky.enc|rej.binary|rej.enc|rej.matc|rej.table|rej.uniform|alias.integers)
+        N=5; Z=10; seed=1; target_samplers="${stamp}";
+        ;;
+      *)
+        echo "Unknown sampler init key: ${stamp}" >&2;
+        exit 2
+        ;;
+    esac
+  fi
+
+  echo "=== Initialize: Generating distributions ==="
+  echo "N = ${N}, Z = ${Z}, seed = ${seed}, samplers = ${target_samplers}"
+
+  for sampler in ${target_samplers}; do
+      echo "--- Generating distributions for sampler: ${sampler} ---"
+      ./dists.py generate-distributions N=${N} Z=${Z} seed=${seed} samplers="${sampler}" thin=5
+      echo "Finished sampler: ${sampler}"
+  done
+
+  echo "=== All samplers initialized ==="
+  exit 0
 fi
 
 if [ ${cmd} = 'aggregate-sizes' ]; then
@@ -45,15 +69,17 @@ if [ ${cmd} = 'measure-runtimes' ]; then
   steps=${3}
   seed=$(echo ${stamp} | cut -d. -f4)
   for sampler in ${SAMPLERS}; do
+      echo "=== Measuring sampler: ${sampler} ==="   # <-- log
       rm -rf /tmp/w
       fnames=$(ls ${stamp}/*.${sampler});
       for f in ${fnames}; do
           u=${f}.runtime
           echo "./main.out.opt ${seed} ${steps} ${sampler} ${f} > ${u} && echo ${u}" >>/tmp/w
       done
-      echo measuring ${sampler}
+      echo "Starting ${sampler} runs..."
       cat /tmp/w | xargs -P ${NCPU} -n1 -d'\n' -I% sh -c '%'
       wait
+      echo "Finished ${sampler}"  # <-- log
   done
   exit 0;
 fi

@@ -64,3 +64,23 @@ def write_sample_alias(n, qs, Ms, j, fname):
         write_array(qs, f)
         write_array(Ms, f)
         write_array(j, f)
+
+def write_sample_alias_integers(K, T, Threshold, cs, fname):
+    """
+    Écrit les tables préparées pour alias.integers dans un fichier
+    pour le pipeline, dans le même format que write_sample_alias.
+    
+    K : nombre de cellules
+    T : table des indices
+    Threshold : table des seuils
+    cs : valeur de normalisation
+    fname : chemin du fichier de sortie
+    """
+    def write_array(arr, f):
+        f.write(' '.join(str(x) for x in arr) + '\n')
+
+    with open(fname, 'w') as f:
+        f.write('%d\n' % K)
+        write_array(T, f)
+        write_array(Threshold, f)
+        f.write('%d\n' % cs)

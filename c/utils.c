@@ -18,6 +18,18 @@ int binary_search_interval(int *arr, int length, int x) {
 
     while (l <= r) {
         int mid = l + (r - l) / 2;
+
+        if (mid == 0) {
+            if (x < arr[0]) {
+                return -1;
+            }
+            if (length > 1 && x < arr[1]) {
+                return 0;
+            }
+            l = 1;
+            continue;
+        }
+
         if ((arr[mid-1] <= x) && (x < arr[mid])) {
             return mid - 1;
         } else if (arr[mid] <= x) {
@@ -26,6 +38,8 @@ int binary_search_interval(int *arr, int length, int x) {
             r = mid - 1;
         }
     }
+
+    return -1;
 }
 
 int binary_search_interval_nested(int *arr, int arr_denominator, int length,
@@ -39,6 +53,15 @@ int binary_search_interval_nested(int *arr, int arr_denominator, int length,
 
     while (l <= r) {
         int mid = l + (r - l) / 2;
+
+        if (mid == 0) {
+            if (common_b <= arr[0] * denominator) {
+                return 0;
+            }
+            l = 1;
+            continue;
+        }
+
         if ((arr[mid-1] * denominator <= common_a)
                 && (common_b <= arr[mid] * denominator)) {
             return mid - 1;

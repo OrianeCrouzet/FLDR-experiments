@@ -10,6 +10,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <stdint.h>
 #include "vector_int.h"
 #include "sstructs.h"
 

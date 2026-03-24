@@ -156,3 +156,27 @@ def sample_alias(n, qs, Ms, j, bitstream):
     if x == 1:
         return n
     return j[n-1] + 1
+
+def sample_alias_integers(K, T, Threshold, cs, bitstream):
+    """
+    Échantillonnage Alias integers utilisant un bitstream (comme sample_alias).
+    
+    K : nombre de cellules
+    T : table des indices
+    Threshold : table des seuils
+    cs : valeur de normalisation
+    bitstream : instance de BitStream ou équivalent
+    """
+    # 1. Tirage uniforme sur les cellules (chaque cellule = 2 indices)
+    n_cell = K // 2
+    q = sample_fdr(n_cell)  # renvoie 0..n_cell-1
+
+    # 2. Tirage Bernoulli par inversion
+    threshold = Threshold[q]
+    # On considère que la fonction sample_inversion_bernoulli prend threshold et cs
+    # et bitstream, retourne 0 ou 1
+    b = sample_inversion_bernoulli(threshold, cs)
+
+    # 3. Calcul de l'indice final
+    final_index = 2 * q + 1 - b
+    return T[final_index]

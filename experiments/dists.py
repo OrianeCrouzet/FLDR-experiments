@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from discrete_sampling.construct import construct_sample_alias
+from discrete_sampling.construct import construct_sample_alias_integers
 from discrete_sampling.construct import construct_sample_interval
 from discrete_sampling.construct import construct_sample_ky_approx_encoding
 from discrete_sampling.construct import construct_sample_ky_approx_matrix
@@ -31,6 +32,7 @@ from discrete_sampling.construct import construct_sample_rejection_matrix_cached
 from discrete_sampling.construct import construct_sample_rejection_uniform
 
 from discrete_sampling.writeio import write_sample_alias
+from discrete_sampling.writeio import write_sample_alias_integers
 from discrete_sampling.writeio import write_sample_interval
 from discrete_sampling.writeio import write_sample_ky_encoding
 from discrete_sampling.writeio import write_sample_ky_matrix
@@ -122,6 +124,9 @@ def write_samplers(args):
         ('alias.exact',
             construct_sample_alias,
             write_sample_alias),
+        ('alias.integers',
+            construct_sample_alias_integers,
+            write_sample_alias_integers),
     ]
 
     for suffix, f_construct, f_write in structures:
@@ -129,7 +134,10 @@ def write_samplers(args):
             continue
         fpath = os.path.join(dirname, 'd.%05d.%s' % (idx, suffix))
         struc = f_construct(p_target)
-        f_write(*struc, fpath)
+        if suffix == 'alias.integers':
+            f_write(*struc, entropy, fpath)
+        else:
+            f_write(*struc, fpath)
         print(fpath)
 
     fname_dist = 'd.%05d.dist' % (idx,)
