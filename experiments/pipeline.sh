@@ -2,6 +2,9 @@
 
 set -e
 
+# Set PYTHONPATH to find the discrete_sampling module
+export PYTHONPATH="$(cd "$(dirname "$0")/.." && pwd)/build/lib:$PYTHONPATH"
+
 if [ -z ${JOBS} ]; then
   NCPU=$(python3 -c 'import multiprocessing; print(multiprocessing.cpu_count())')
 else
@@ -13,7 +16,7 @@ set -u
 stamp=${1}
 cmd=${2}
 
-SAMPLERS='interval alias.exact ky.enc rej.binary rej.enc rej.matc rej.table rej.uniform alias.integers'
+SAMPLERS='interval alias.exact ky.enc rej.binary rej.enc rej.matc rej.table rej.uniform alias.integers aldr'
 
 #if [ ${cmd} = 'initialize' ]; then
  # N=$(echo ${stamp} | cut -d. -f2)
@@ -33,7 +36,7 @@ if [ ${cmd} = 'initialize' ]; then
   else
     # support des appels direct : ./pipeline.sh alias.integers initialize
     case "${stamp}" in
-      interval|alias.exact|ky.enc|rej.binary|rej.enc|rej.matc|rej.table|rej.uniform|alias.integers)
+      interval|alias.exact|ky.enc|rej.binary|rej.enc|rej.matc|rej.table|rej.uniform|alias.integers|aldr)
         N=5; Z=10; seed=1; target_samplers="${stamp}";
         ;;
       *)
@@ -59,7 +62,8 @@ fi
 if [ ${cmd} = 'aggregate-sizes' ]; then
   for sampler in ${SAMPLERS}; do
       fn=${stamp}/${sampler}.sizes;
-      stat ${stamp}/*.${sampler} -c %s > ${fn};
+      stat -f %z ${stamp}/*.${sampler} > ${fn};
+      #stat ${stamp}/*.${sampler} -c %s > ${fn};  --> pour WSL / Linux
       echo ${fn};
   done
   exit 0;
@@ -77,7 +81,7 @@ if [ ${cmd} = 'measure-runtimes' ]; then
           echo "./main.out.opt ${seed} ${steps} ${sampler} ${f} > ${u} && echo ${u}" >>/tmp/w
       done
       echo "Starting ${sampler} runs..."
-      cat /tmp/w | xargs -P ${NCPU} -n1 -d'\n' -I% sh -c '%'
+      cat /tmp/w | gxargs -P ${NCPU} -n1 -d'\n' -I% sh -c '%'
       wait
       echo "Finished ${sampler}"  # <-- log
   done
@@ -158,7 +162,7 @@ if [ ${cmd} = 'preprocess-measure' ]; then
       u=${fn%.dist}.preprocess
       echo "./preprocess.out.opt ${fn} > ${u}.c && echo ${u}.c" >> /tmp/w
   done
-  cat /tmp/w | xargs -P ${NCPU} -n1 -d'\n' -I% sh -c '%'
+  cat /tmp/w | gxargs -P ${NCPU} -n1 -d'\n' -I% sh -c '%'
   cat ${stamp}/*.preprocess.c > ${stamp}/preprocess
   echo ${stamp}/preprocess
   exit 0;

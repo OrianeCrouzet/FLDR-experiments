@@ -14,6 +14,7 @@ from discrete_sampling.rejection import get_rejection_table
 
 from discrete_sampling.alias import alias_preprocess
 from discrete_sampling.alias_integers import alias_integers_preprocess
+from discrete_sampling.aldr import aldr_preprocess
 
 from discrete_sampling.utils import get_Zkl
 from discrete_sampling.utils import get_binary_expansion_length
@@ -127,17 +128,29 @@ def construct_sample_alias(p_target):
 def construct_sample_alias_integers(p_target):
     """
     Prépare les tables pour l'algo alias.integers
-    Renvoie les objets nécessaires au sampling, format similaire à alias.py
-
-    p_target : liste ou array d'entiers
+    p_target : liste de Fractions
     Retourne :
         K : nombre de cellules
-        T : table des indices
-        Threshold : table des seuils
-        cs : valeur de normalisation (poids moyen)
+        Ms : liste des poids entiers
     """
-    K, T, Threshold, cs = alias_integers_preprocess(p_target)
+    from discrete_sampling.utils import get_common_denominator, get_common_numerators
+    Z = get_common_denominator(p_target)
+    Ms = get_common_numerators(Z, p_target)
+    K, T, Threshold, cs = alias_integers_preprocess(Ms)
 
-    # Optionnel : convertit les Threshold en fractions (comme dans l'alias original)
-    # Ici, on peut juste garder les entiers
-    return K, T, Threshold, cs
+    return K, Ms
+
+def construct_sample_aldr(p_target):
+    """
+    Prépare les poids entiers pour l'algo ALDR
+    p_target : liste de Fractions
+    Retourne :
+        n : nombre d'éléments
+        Ms : liste des poids entiers
+    """
+    from discrete_sampling.utils import get_common_denominator, get_common_numerators
+    Z = get_common_denominator(p_target)
+    Ms = get_common_numerators(Z, p_target)
+    n = len(Ms)
+
+    return n, Ms

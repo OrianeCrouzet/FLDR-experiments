@@ -180,3 +180,29 @@ def sample_alias_integers(K, T, Threshold, cs, bitstream):
     # 3. Calcul de l'indice final
     final_index = 2 * q + 1 - b
     return T[final_index]
+
+def sample_aldr(length_breadths, breadths, length_leaves_flat, leaves_flat, bitstream):
+    """
+    Échantillonnage ALDR utilisant un bitstream.
+    
+    length_breadths : longueur de breadths
+    breadths : liste des largeurs par niveau
+    length_leaves_flat : longueur de leaves_flat
+    leaves_flat : liste des feuilles aplaties
+    bitstream : générateur de bits (0 ou 1)
+    """
+    while True:
+        depth = 0
+        location = 0
+        val = 0
+        while True:
+            if val < breadths[depth]:
+                ans = leaves_flat[location + val]
+                if ans:
+                    return ans - 1
+                else:
+                    break
+            location += breadths[depth]
+            b = next(bitstream)
+            val = ((val - breadths[depth]) << 1) | b
+            depth += 1

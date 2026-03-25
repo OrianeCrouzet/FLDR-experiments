@@ -21,5 +21,7 @@ void cons_alias(unsigned int n, VectorInt* D, uint32_t cs, int virtual_obj, Vect
 struct sample_alias_integers_s preprocess_alias_integers(int* a, int n);
 uint32_t poids_total_v2(VectorInt D, unsigned int size);
 
+struct sample_aldr_s preprocess_aldr_flat_k(int* a, int n, int kmul);
+struct sample_aldr_s preprocess_aldr_flat(int* a, int n);
 
 #endif

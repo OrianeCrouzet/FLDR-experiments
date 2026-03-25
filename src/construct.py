@@ -14,6 +14,7 @@ from discrete_sampling.rejection import get_rejection_table
 
 from discrete_sampling.alias import alias_preprocess
 from discrete_sampling.alias_integers import alias_integers_preprocess
+from discrete_sampling.aldr import aldr_preprocess
 
 from discrete_sampling.utils import get_Zkl
 from discrete_sampling.utils import get_binary_expansion_length
@@ -138,3 +139,18 @@ def construct_sample_alias_integers(p_target):
     K, T, Threshold, cs = alias_integers_preprocess(Ms)
 
     return K, Ms
+
+def construct_sample_aldr(p_target):
+    """
+    Prépare les poids entiers pour l'algo ALDR
+    p_target : liste de Fractions
+    Retourne :
+        n : nombre d'éléments
+        Ms : liste des poids entiers
+    """
+    from discrete_sampling.utils import get_common_denominator, get_common_numerators
+    Z = get_common_denominator(p_target)
+    Ms = get_common_numerators(Z, p_target)
+    n = len(Ms)
+
+    return n, Ms

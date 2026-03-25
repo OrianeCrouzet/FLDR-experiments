@@ -32,6 +32,6 @@ int sample_alias_gsl(struct sample_alias_gsl_s *x);
 int sample_alias_exact(struct sample_alias_exact_s *x);
 
 uint32_t sample_alias_integers(struct sample_alias_integers_s *x);
-// sample_aldr
+int sample_aldr(struct sample_aldr_s *x);
 
 #endif

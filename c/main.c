@@ -163,13 +163,13 @@ int main(int argc, char **argv) {
         sample_alias_integers,
         free_sample_alias_integers_s,
         path, steps, t, x)
-    /*else READ_SAMPLE_TIME("aldr",
+    else READ_SAMPLE_TIME("aldr",
         sampler,
         sample_aldr_s,
         read_sample_aldr,
         sample_aldr,
         free_sample_aldr_s,
-        path, steps, t, x)*/
+        path, steps, t, x)
     else {
         printf("Unknown sampler: %s\n", sampler);
         exit(1);

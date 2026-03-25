@@ -65,22 +65,42 @@ def write_sample_alias(n, qs, Ms, j, fname):
         write_array(Ms, f)
         write_array(j, f)
 
-def write_sample_alias_integers(K, T, Threshold, cs, fname):
+def write_sample_alias_integers(K, T, entropy, fname):
     """
     Écrit les tables préparées pour alias.integers dans un fichier
-    pour le pipeline, dans le même format que write_sample_alias.
-    
-    K : nombre de cellules
-    T : table des indices
-    Threshold : table des seuils
-    cs : valeur de normalisation
-    fname : chemin du fichier de sortie
+    pour le pipeline, dans le format attendu :
+
+    Ligne 1 : K (plage des probabilités possibles)
+    Ligne 2 : nombre d’objets suivi des objets
+    Ligne 3 : entropie
     """
-    def write_array(arr, f):
-        f.write(' '.join(str(x) for x in arr) + '\n')
+    # print(f"[DEBUG] Écriture du fichier {fname}")
+    # print(f"[DEBUG] K = {K}")
+    # print(f"[DEBUG] T (objets) = {T}")
+    # print(f"[DEBUG] entropy = {entropy:.5f}")
 
     with open(fname, 'w') as f:
+        # Ligne 1 : plage des probabilités possibles
         f.write('%d\n' % K)
+        # print(f"[DEBUG] Ligne 1 écrite : {K}")
+
+        # Ligne 2 : nombre d’objets + objets de la distribution
         write_array(T, f)
-        write_array(Threshold, f)
-        f.write('%d\n' % cs)
+        # print(f"[DEBUG] Ligne 2 écrite : {T}")
+
+        # Ligne 3 : entropie
+        f.write('%.5f\n' % entropy)
+        #print(f"[DEBUG] Ligne 3 écrite : {entropy:.5f}")
+
+def write_sample_aldr(n, Ms, entropy, fname):
+    """
+    Écrit les poids pour ALDR dans un fichier
+    Format identique à alias_integers :
+    Ligne 1 : n (nombre d'éléments)
+    Ligne 2 : Ms (poids entiers)
+    Ligne 3 : entropie
+    """
+    with open(fname, 'w') as f:
+        f.write('%d\n' % n)
+        write_array(Ms, f)
+        f.write('%.5f\n' % entropy)

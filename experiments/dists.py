@@ -3,6 +3,13 @@
 # Copyright 2019 MIT Probabilistic Computing Project.
 # Released under Apache 2.0; refer to LICENSE.txt
 
+import multiprocessing as mp
+
+try:
+    mp.set_start_method("fork")
+except RuntimeError:
+    pass
+
 import os
 import shutil
 import subprocess
@@ -17,6 +24,7 @@ import numpy as np
 
 from discrete_sampling.construct import construct_sample_alias
 from discrete_sampling.construct import construct_sample_alias_integers
+from discrete_sampling.construct import construct_sample_aldr
 from discrete_sampling.construct import construct_sample_interval
 from discrete_sampling.construct import construct_sample_ky_approx_encoding
 from discrete_sampling.construct import construct_sample_ky_approx_matrix
@@ -33,6 +41,7 @@ from discrete_sampling.construct import construct_sample_rejection_uniform
 
 from discrete_sampling.writeio import write_sample_alias
 from discrete_sampling.writeio import write_sample_alias_integers
+from discrete_sampling.writeio import write_sample_aldr
 from discrete_sampling.writeio import write_sample_interval
 from discrete_sampling.writeio import write_sample_ky_encoding
 from discrete_sampling.writeio import write_sample_ky_matrix
@@ -127,6 +136,9 @@ def write_samplers(args):
         ('alias.integers',
             construct_sample_alias_integers,
             write_sample_alias_integers),
+        ('aldr',
+            construct_sample_aldr,
+            write_sample_aldr),
     ]
 
     for suffix, f_construct, f_write in structures:
@@ -134,7 +146,7 @@ def write_samplers(args):
             continue
         fpath = os.path.join(dirname, 'd.%05d.%s' % (idx, suffix))
         struc = f_construct(p_target)
-        if suffix == 'alias.integers':
+        if suffix == 'alias.integers' or suffix == 'aldr':
             f_write(*struc, entropy, fpath)
         else:
             f_write(*struc, fpath)

@@ -251,10 +251,10 @@ define mpower(a,b,c){
 
 /* absolute value of an integer n */
 
-define abs(n){
+/* define abs(n){
 	if(n>=0) return(n)
 	return(-n)
-}
+} */
 
 /*NOTE: in bc we have */
 

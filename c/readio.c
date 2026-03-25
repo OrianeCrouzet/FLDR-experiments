@@ -294,6 +294,26 @@ void free_sample_alias_integers_s(struct sample_alias_integers_s x){
     vector_free(&x.T);
 }
 
-// TODO
-// struct sample_aldr_s read_sample_aldr()
-// free_sample_aldr_s
+// Load sample_aldr data structure from file path.
+struct sample_aldr_s read_sample_aldr(char *fname){
+    // Load the distribution
+    FILE *fp = fopen(fname, "r");
+    int kmul;
+    fscanf(fp, "%d", &kmul);
+    int n;
+    fscanf(fp, "%d", &n);
+    int* array = calloc(n, sizeof(int));
+    for (int i = 0; i < n; ++i) {
+        fscanf(fp, "%d", &array[i]);
+    }
+    fclose(fp);
+
+    struct sample_aldr_s sampler = preprocess_aldr_flat(array, n);
+    free(array);
+    return sampler;
+}
+
+void free_sample_aldr_s(struct sample_aldr_s x){
+    free(x.breadths);
+    free(x.leaves_flat);
+}

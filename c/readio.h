@@ -27,7 +27,7 @@ struct sample_interval_s read_sample_interval(char *fname);
 struct sample_alias_gsl_s read_sample_alias_gsl(char *fname);
 struct sample_alias_exact_s read_sample_alias_exact(char *fname);
 struct sample_alias_integers_s read_sample_alias_integers(char *fname);
-// struct sample_aldr_s read_sample_aldr(char *fname);
+struct sample_aldr_s read_sample_aldr(char *fname);
 
 void free_matrix_s(struct matrix_s x);
 void free_array_s(struct array_s x);
@@ -43,6 +43,6 @@ void free_sample_interval_s(struct sample_interval_s x);
 void free_sample_alias_gsl_s(struct sample_alias_gsl_s x);
 void free_sample_alias_exact_s(struct sample_alias_exact_s x);
 void free_sample_alias_integers_s(struct sample_alias_integers_s x);
-// void free_sample_aldr_s(struct sample_aldr_s x);
+void free_sample_aldr_s(struct sample_aldr_s x);
 
 #endif

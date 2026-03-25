@@ -285,5 +285,21 @@ uint32_t sample_alias_integers(struct sample_alias_integers_s *x) {
     return result;
 }
 
-// TODO
 // sample_aldr
+int sample_aldr(struct sample_aldr_s *x){
+    while (1) {
+        int depth = 0;
+        int location = 0;
+        int val = 0;
+        for (;;) {
+            if (val < x->breadths[depth]) {
+                int ans = x->leaves_flat[location + val];
+                if (ans) return ans - 1;
+                else break;
+            }
+            location += x->breadths[depth];
+            val = ((val - x->breadths[depth]) << 1) | flip();
+            ++depth;
+        }
+    }
+}
