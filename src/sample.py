@@ -160,26 +160,13 @@ def sample_alias(n, qs, Ms, j, bitstream):
 def sample_alias_integers(K, T, Threshold, cs, bitstream):
     """
     Échantillonnage Alias integers utilisant un bitstream (comme sample_alias).
-    
-    K : nombre de cellules
-    T : table des indices
-    Threshold : table des seuils
-    cs : valeur de normalisation
-    bitstream : instance de BitStream ou équivalent
     """
-    # 1. Tirage uniforme sur les cellules (chaque cellule = 2 indices)
     n_cell = K // 2
-    q = sample_fdr(n_cell)  # renvoie 0..n_cell-1
-
-    # 2. Tirage Bernoulli par inversion
-    threshold = Threshold[q]
-    # On considère que la fonction sample_inversion_bernoulli prend threshold et cs
-    # et bitstream, retourne 0 ou 1
-    b = sample_inversion_bernoulli(threshold, cs)
-
-    # 3. Calcul de l'indice final
+    q = sample_fdr(n_cell, bitstream) - 1
+    b = sample_inversion_bernoulli(Threshold[q], cs, bitstream)
     final_index = 2 * q + 1 - b
     return T[final_index]
+
 
 def sample_aldr(length_breadths, breadths, length_leaves_flat, leaves_flat, bitstream):
     """
@@ -206,3 +193,29 @@ def sample_aldr(length_breadths, breadths, length_leaves_flat, leaves_flat, bits
             b = next(bitstream)
             val = ((val - breadths[depth]) << 1) | b
             depth += 1
+
+
+def sample_alias_rust(*args):
+    from discrete_sampling.alias_rust import WeightedError
+    from discrete_sampling.alias_rust import alias_rust_preprocess
+    from discrete_sampling.alias_rust import weighted_alias_new
+
+    if len(args) == 2:
+        dist, bitstream = args
+        if hasattr(dist, 'aliases') and hasattr(dist, 'prob'):
+            alias_dist = dist
+        else:
+            alias_dist = alias_rust_preprocess(dist)
+    elif len(args) == 3:
+        _Z, weights, bitstream = args
+        err, alias_dist = weighted_alias_new(weights)
+        if err != WeightedError.WEIGHTED_OK:
+            raise ValueError('weighted_alias_new failed with error %r' % (err,))
+    else:
+        raise TypeError('sample_alias_rust expects (dist, bitstream) or (Z, Ms, bitstream)')
+
+    i = sample_fdr(alias_dist.n, bitstream) - 1
+    b = sample_inversion_bernoulli(int(alias_dist.prob[i]), int(alias_dist.weight_sum), bitstream)
+    if b == 1:
+        return i
+    return alias_dist.aliases[i]

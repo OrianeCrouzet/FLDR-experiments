@@ -16,7 +16,7 @@ set -u
 stamp=${1}
 cmd=${2}
 
-SAMPLERS='interval alias.exact ky.enc rej.binary rej.enc rej.matc rej.table rej.uniform alias.integers aldr'
+SAMPLERS='interval alias.exact ky.enc rej.binary rej.enc rej.matc rej.table rej.uniform alias.integers aldr alias.rust'
 
 #if [ ${cmd} = 'initialize' ]; then
  # N=$(echo ${stamp} | cut -d. -f2)
@@ -36,7 +36,7 @@ if [ ${cmd} = 'initialize' ]; then
   else
     # support des appels direct : ./pipeline.sh alias.integers initialize
     case "${stamp}" in
-      interval|alias.exact|ky.enc|rej.binary|rej.enc|rej.matc|rej.table|rej.uniform|alias.integers|aldr)
+      interval|alias.exact|ky.enc|rej.binary|rej.enc|rej.matc|rej.table|rej.uniform|alias.integers|aldr|alias.rust)
         N=5; Z=10; seed=1; target_samplers="${stamp}";
         ;;
       *)

@@ -140,6 +140,18 @@ def construct_sample_alias_integers(p_target):
 
     return K, Ms
 
+
+def construct_sample_alias_rust(p_target):
+    """
+    Prépare les poids entiers pour l'algo alias.rust.
+    Le format retourné suit le format de fichier utilisé côté C.
+    """
+    from discrete_sampling.utils import get_common_denominator, get_common_numerators
+    Z = get_common_denominator(p_target)
+    Ms = get_common_numerators(Z, p_target)
+    return Z, Ms
+
+
 def construct_sample_aldr(p_target):
     """
     Prépare les poids entiers pour l'algo ALDR

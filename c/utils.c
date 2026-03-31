@@ -74,6 +74,8 @@ int binary_search_interval_nested(int *arr, int arr_denominator, int length,
     return -1;
 }
 
+// ***** Mes ajouts *****
+
 void cons_alias(unsigned int n, VectorInt* D, uint32_t cs, int virtual_obj, VectorInt* T, VectorInt* Threshold){
     VectorInt H, L;
     vector_init(&H);

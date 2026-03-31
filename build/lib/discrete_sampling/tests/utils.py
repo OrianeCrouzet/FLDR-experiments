@@ -6,7 +6,7 @@ from scipy.stats import chisquare
 
 def get_chisquare_pval(p_target, samples):
     N = len(samples)
-    f_expected = [N*p for p in p_target]    # int(N*p) pour WSL / Linux
+    f_expected = [N*p for p in p_target]    # int(N*p) --> pour WSL / Linux
     counts = Counter(samples)
     keys = sorted(set(samples))
     f_actual = [counts[k] for k in keys]

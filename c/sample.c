@@ -14,6 +14,7 @@
 #include "sample.h"
 #include "sstructs.h"
 #include "utils.h"
+#include "alias_rust.h"
 
 int sample_ky_encoding(struct sample_ky_encoding_s *x) {
 
@@ -101,7 +102,7 @@ int sample_fdr(struct sample_fdr_s *x) {
             }
         }
     }
-}
+} 
 
 int sample_inversion_bernoulli(struct sample_inversion_bernoulli_s *x) {
     int v = x->a;
@@ -303,3 +304,24 @@ int sample_aldr(struct sample_aldr_s *x){
         }
     }
 }
+
+// sample_alias_rust
+static unsigned int alias_rust_rng_index(unsigned int n) {
+    return (n <= 1) ? 0u : uniform(n);
+}
+
+static double alias_rust_rng_weight(double max) {
+    if (max <= 1.0) {
+        return 0.0;
+    }
+    return (double) uniform((uint32_t) max);
+}
+
+uint32_t sample_alias_rust(struct sample_alias_rust_s *x){
+    return weighted_alias_sample(
+        (alias_rust_s *)x,
+        alias_rust_rng_index,
+        alias_rust_rng_weight
+    );
+}
+

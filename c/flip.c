@@ -50,7 +50,7 @@ void check_refill(void) {
         // we set flip_k to 32 to use sysrandom
         if (flip_k == 32) {
             flip_word = arc4random();
-            // getrandom(&flip_word, sizeof(flip_word), 0);  --> not available on Mac
+            // getrandom(&flip_word, sizeof(flip_word), 0);  --> pour WSL / Linux
         } else {
             flip_word = rand();
         }

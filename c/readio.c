@@ -13,6 +13,7 @@
 #include "sstructs.h"
 #include "vector_int.h"
 #include "utils.h"
+#include "alias_rust.h"
 
 // Load matrix from file.
 struct matrix_s load_matrix(FILE *fp) {
@@ -316,4 +317,44 @@ struct sample_aldr_s read_sample_aldr(char *fname){
 void free_sample_aldr_s(struct sample_aldr_s x){
     free(x.breadths);
     free(x.leaves_flat);
+}
+
+// Load sample_alias_rust data structure from file path.
+struct sample_alias_rust_s read_sample_alias_rust(char *fname){
+    FILE *fp = fopen(fname, "r");
+    if (fp == NULL) {
+        perror(fname);
+        exit(EXIT_FAILURE);
+    }
+
+    int Z;
+    fscanf(fp, "%d", &Z);
+    struct array_s weights_raw = load_array(fp);
+    fclose(fp);
+
+    double *weights = calloc(weights_raw.length, sizeof(double));
+    for (int i = 0; i < weights_raw.length; ++i) {
+        weights[i] = (double) weights_raw.a[i];
+    }
+
+    struct sample_alias_rust_s sampler;
+    WeightedError err = weighted_alias_new(
+        (alias_rust_s *)&sampler,
+        weights,
+        (unsigned int)weights_raw.length
+    );
+
+    free(weights);
+    free_array_s(weights_raw);
+
+    if (err != WEIGHTED_OK) {
+        fprintf(stderr, "weighted_alias_new failed for %s (error %d)\n", fname, err);
+        exit(EXIT_FAILURE);
+    }
+
+    return sampler;
+}
+
+void free_sample_alias_rust_s(struct sample_alias_rust_s x){
+    weighted_alias_free((alias_rust_s *)&x);
 }

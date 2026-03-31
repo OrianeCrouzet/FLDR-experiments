@@ -92,6 +92,18 @@ def write_sample_alias_integers(K, T, entropy, fname):
         f.write('%.5f\n' % entropy)
         #print(f"[DEBUG] Ligne 3 écrite : {entropy:.5f}")
 
+
+def write_sample_alias_rust(Z, Ms, entropy, fname):
+    """
+    Écrit l'entrée brute attendue par l'implémentation C de alias.rust :
+    poids entiers + entropie
+    """
+    with open(fname, 'w') as f:
+        f.write('%d\n' % Z)
+        write_array(Ms, f)
+        f.write('%.5f\n' % entropy)
+
+
 def write_sample_aldr(n, Ms, entropy, fname):
     """
     Écrit les poids pour ALDR dans un fichier

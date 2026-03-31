@@ -1,6 +1,6 @@
 all: main.out main.out.opt preprocess.out preprocess.out.opt test
 
-SRC_C = flip.c main.c macros.c vector_int.c readio.c sample.c utils.c
+SRC_C = flip.c main.c macros.c vector_int.c readio.c sample.c alias_rust.c utils.c
 SRC_CPP = main.cpp macros.c readio.c readio.cpp sample.cpp
 
 GSL_FLAGS = $(shell pkg-config --libs --cflags gsl)  # --cflags
@@ -15,13 +15,13 @@ main.out.opt: $(SRC_C)
 main.out.profile.out: $(SRC_C)
 	gcc -pg -o main.out.profile.out $^ $(GSL_FLAGS)
 
-preprocess.out: vector_int.c readio.c preprocess.c utils.c
+preprocess.out: vector_int.c readio.c preprocess.c alias_rust.c utils.c
 	gcc -o preprocess.out $^ $(GSL_FLAGS)
 
-preprocess.out.opt: vector_int.c readio.c preprocess.c utils.c
+preprocess.out.opt: vector_int.c readio.c preprocess.c alias_rust.c utils.c
 	gcc -O3 -Wno-unused-result -o preprocess.out.opt $^ $(GSL_FLAGS)
 
-SAMPLERS = alias.exact interval ky.enc rej.binary rej.enc rej.matc rej.table rej.uniform alias.integers aldr
+SAMPLERS = alias.exact interval ky.enc rej.binary rej.enc rej.matc rej.table rej.uniform alias.integers aldr alias.rust
 
 test: main.out.opt
 	for sampler in $(SAMPLERS); do \

@@ -107,6 +107,8 @@ struct sample_alias_gsl_s {
     gsl_ran_discrete_t *distribution;
 };
 
+// ***** Mes ajouts *****
+
 // sample_alias_integers
 struct sample_alias_integers_s {
     VectorInt T;
@@ -114,13 +116,23 @@ struct sample_alias_integers_s {
     uint32_t cs;
 };
 
-// sample-aldr
+// sample_aldr
 struct sample_aldr_s {
     // flattened ALDR tree
     int length_breadths;
     int length_leaves_flat;
     int *breadths;
     int *leaves_flat;
+};
+
+// sample_alias_rust
+struct sample_alias_rust_s {
+    VectorInt aliases;
+    double *prob;
+    VectorInt small;
+    VectorInt large;
+    unsigned int n;
+    double weight_sum;
 };
 
 
