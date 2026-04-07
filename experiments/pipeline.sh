@@ -75,6 +75,8 @@ fi
 # Les distributions doivent avoir le même format que les distributions générées à la base !
 # Commande : ./pipeline.sh <dir> measure-runtimes-existing <steps> [seed]
 # steps = nombre de tirage par distribution et par sampler
+# On effectue une copie du dossier des distributionspour les garder intacts,
+# le nouveau dossier s'appelle <dir>-work et c'est dans ce dossier que les fichiers de runtime seront créés.
 if [ ${cmd} = 'measure-runtimes-existing' ]; then
   steps=${3}
   seed=${4:-1}
