@@ -16,7 +16,9 @@ set -u
 stamp=${1}
 cmd=${2}
 
-SAMPLERS='interval alias.exact ky.enc rej.binary rej.enc rej.matc rej.table rej.uniform alias.integers aldr alias.rust'
+#SAMPLERS='interval alias.exact ky.enc rej.binary rej.enc rej.matc rej.table rej.uniform alias.integers aldr alias.rust'
+SAMPLERS='alias.exact rej.enc alias.integers aldr alias.rust'
+
 
 #if [ ${cmd} = 'initialize' ]; then
  # N=$(echo ${stamp} | cut -d. -f2)
@@ -66,6 +68,135 @@ if [ ${cmd} = 'aggregate-sizes' ]; then
       #stat ${stamp}/*.${sampler} -c %s > ${fn};  --> pour WSL / Linux
       echo ${fn};
   done
+  exit 0;
+fi
+
+# Pour charger nos *.dist dans un dossier, au lieu de les générer à la volée (mesures habituelles)
+# Les distributions doivent avoir le même format que les distributions générées à la base !
+# Commande : ./pipeline.sh <dir> measure-runtimes-existing <steps> [seed]
+# steps = nombre de tirage par distribution et par sampler
+if [ ${cmd} = 'measure-runtimes-existing' ]; then
+  steps=${3}
+  seed=${4:-1}
+  if [ -z "${steps}" ]; then
+      echo "Usage: $0 <dir> measure-runtimes-existing <steps> [seed]" >&2
+      exit 1
+  fi
+
+  if [ ! -d "${stamp}" ]; then
+      echo "Directory not found: ${stamp}" >&2
+      exit 1
+  fi
+
+  work_dir="${stamp}-work"
+  cp -R "${stamp}" "${work_dir}"
+  echo "=== Working copy created at ${work_dir} ==="
+  stamp="${work_dir}"
+
+  if ls "${stamp}"/*.dist >/dev/null 2>&1; then
+      echo "=== Found .dist files in ${stamp}; generating sampler structures ==="
+      python3 <<PY
+from pathlib import Path
+from fractions import Fraction
+from discrete_sampling.construct import (
+    construct_sample_alias,
+    construct_sample_alias_integers,
+    construct_sample_alias_rust,
+    construct_sample_aldr,
+    construct_sample_interval,
+    construct_sample_ky_encoding,
+    construct_sample_ky_matrix,
+    construct_sample_ky_matrix_cached,
+    construct_sample_ky_approx_encoding,
+    construct_sample_ky_approx_matrix,
+    construct_sample_ky_approx_matrix_cached,
+    construct_sample_rejection_uniform,
+    construct_sample_rejection_hash_table,
+    construct_sample_rejection_binary_search,
+    construct_sample_rejection_encoding,
+    construct_sample_rejection_matrix,
+    construct_sample_rejection_matrix_cached,
+)
+from discrete_sampling.writeio import (
+    write_sample_alias,
+    write_sample_alias_integers,
+    write_sample_alias_rust,
+    write_sample_aldr,
+    write_sample_interval,
+    write_sample_ky_encoding,
+    write_sample_ky_matrix,
+    write_sample_ky_matrix_cached,
+    write_sample_rejection_uniform,
+    write_sample_rejection_hash_table,
+    write_sample_rejection_binary_search,
+)
+
+stamp = Path('${stamp}')
+structures = {
+    'ky.enc': (construct_sample_ky_encoding, write_sample_ky_encoding),
+    'ky.mat': (construct_sample_ky_matrix, write_sample_ky_matrix),
+    'ky.matc': (construct_sample_ky_matrix_cached, write_sample_ky_matrix_cached),
+    'ky.approx.enc': (construct_sample_ky_approx_encoding, write_sample_ky_encoding),
+    'ky.approx.mat': (construct_sample_ky_approx_matrix, write_sample_ky_matrix),
+    'ky.approx.matc': (construct_sample_ky_approx_matrix_cached, write_sample_ky_matrix_cached),
+    'rej.uniform': (construct_sample_rejection_uniform, write_sample_rejection_uniform),
+    'rej.table': (construct_sample_rejection_hash_table, write_sample_rejection_hash_table),
+    'rej.binary': (construct_sample_rejection_binary_search, write_sample_rejection_binary_search),
+    'rej.enc': (construct_sample_rejection_encoding, write_sample_ky_encoding),
+    'rej.mat': (construct_sample_rejection_matrix, write_sample_ky_matrix),
+    'rej.matc': (construct_sample_rejection_matrix_cached, write_sample_ky_matrix_cached),
+    'interval': (construct_sample_interval, write_sample_interval),
+    'alias.exact': (construct_sample_alias, write_sample_alias),
+    'alias.integers': (construct_sample_alias_integers, write_sample_alias_integers),
+    'alias.rust': (construct_sample_alias_rust, write_sample_alias_rust),
+    'aldr': (construct_sample_aldr, write_sample_aldr),
+}
+
+for dist_path in sorted(stamp.glob('*.dist')):
+    with dist_path.open() as f:
+        Z = int(f.readline().strip())
+        parts = f.readline().strip().split()
+        n = int(parts[0])
+        Ms = [int(x) for x in parts[1:]]
+        entropy = float(f.readline().strip())
+    p_target = [Fraction(m, Z) for m in Ms]
+
+    for sampler in "${SAMPLERS}".split():
+        if sampler not in structures:
+            continue
+        f_construct, f_write = structures[sampler]
+        out_path = dist_path.with_name(dist_path.stem + '.' + sampler)
+        struc = f_construct(p_target)
+        if sampler in {'alias.integers', 'alias.rust', 'aldr'}:
+            f_write(*struc, entropy, str(out_path))
+        else:
+            f_write(*struc, str(out_path))
+PY
+  fi
+
+  for sampler in ${SAMPLERS}; do
+      echo "=== Measuring existing sampler: ${sampler} ==="
+      rm -rf /tmp/w
+      fnames=$(ls "${stamp}"/*.${sampler} 2>/dev/null || true)
+      if [ -z "${fnames}" ]; then
+          echo "No files for sampler ${sampler} in ${stamp}" >&2
+          continue
+      fi
+      for f in ${fnames}; do
+          u=${f}.runtime
+          echo "./main.out.opt ${seed} ${steps} ${sampler} ${f} > ${u} && echo ${u}" >> /tmp/w
+      done
+      cat /tmp/w | gxargs -P ${NCPU} -n1 -d'\n' -I% sh -c '%'
+      wait
+  done
+
+  # Reuse existing aggregation commands for readability and maintainability.
+  echo "=== Aggregating sizes ==="
+  "$0" ${stamp} aggregate-sizes
+
+  echo "=== Aggregating runtimes ==="
+  "$0" ${stamp} aggregate-runtimes
+
   exit 0;
 fi
 
