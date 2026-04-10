@@ -90,7 +90,9 @@ if [ ${cmd} = 'measure-runtimes-existing' ]; then
       exit 1
   fi
 
-  work_dir="${stamp}-work"
+  work_dir="measures/$(basename "${stamp}")-work"
+  mkdir -p "$(dirname "${work_dir}")"
+  rm -rf "${work_dir}"
   cp -R "${stamp}" "${work_dir}"
   echo "=== Working copy created at ${work_dir} ==="
   stamp="${work_dir}"

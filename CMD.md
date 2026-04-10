@@ -23,7 +23,7 @@ Il faut lancer la commande :
     $ cd experiments
     $ ./pipeline.sh '' run-all-memory-runtime <Z> <n>
 
-Avec `Z` la somme des poids de la distribution et `n` la plage des probabilités possibles. **Il faut impérativement que n <= Z.** 
+Avec `Z` la somme des poids de la distribution et `n` la taille de la dsitribution. **Il faut impérativement que n <= Z.** 
 
 Les mesures seront alors stockées dans un dossier appelé `dists.{n}.{Z}.2`.
 

@@ -6,12 +6,15 @@
 
 static double pairwise_sum(const double *weights, unsigned int n)
 {
-    double sum = 0.0;
-
-    for(unsigned int i=0;i<n;i++)
-        sum += weights[i];
-
-    return sum;
+    if (n <= 32) {
+        double sum = 0.0;
+        for (unsigned int i = 0; i < n; i++)
+            sum += weights[i];
+        return sum;
+    } else {
+        unsigned int mid = n / 2;
+        return pairwise_sum(weights, mid) + pairwise_sum(weights + mid, n - mid);
+    }
 }
 
 // ***** Construction *****

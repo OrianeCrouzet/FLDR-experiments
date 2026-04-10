@@ -100,6 +100,7 @@ def main():
     args = parser.parse_args()
 
     base_dir = Path(__file__).resolve().parent
+    distributions_dir = base_dir / 'distributions'
     src_dir = base_dir / args.source
 
     if not src_dir.is_dir():
@@ -117,9 +118,10 @@ def main():
         grouped.setdefault((n, Z), []).append((txt_path, weights))
 
     print(f'Converting {len(txt_files)} files from {src_dir}')
+    distributions_dir.mkdir(parents=True, exist_ok=True)
     for (n, Z), items in sorted(grouped.items()):
         folder_name = make_output_folder_name(args.dist_type, n, Z, args.seed)
-        out_dir = base_dir / folder_name
+        out_dir = distributions_dir / folder_name
         out_dir.mkdir(parents=True, exist_ok=True)
         print(f'  Writing {len(items)} distribution(s) to {out_dir}')
 

@@ -4,7 +4,9 @@ Ce dépôt GitHub reprend celui de F. Saad, [fast-loaded-dice-roller-experiments
 
 ## Objectif
 
-Nous avons pour objectif de comparer notre ALIAS en arithmétique entière à d'autres algorithmes de tirage. On retrouvera l'ALIAS classique de Walker, l'ALIAS de Rust, mais également les algorithmes de Saad : FLDR et ALDR. Nous reprenons ainsi son code pour refaire la figure 4 de son article [The Fast Loaded Dice Roller: A Near-Optimal Exact Sampler for Discrete Probability Distributions](http://fsaad.mit.edu/assets/SFRM-FLDR-AISTATS-2020.pdf).
+Nous avons pour objectif de comparer notre ALIAS en arithmétique entière à d'autres algorithmes de tirage. On retrouvera l'ALIAS classique de Walker, l'ALIAS de Rust, mais également les algorithmes de Saad : FLDR et ALDR. Nous reprenons ainsi son code pour refaire la figure 4 de son article [The Fast Loaded Dice Roller: A Near-Optimal Exact Sampler for Discrete Probability Distributions](https://proceedings.mlr.press/v108/saad20a/saad20a.pdf).
+
+**Lien vers notre brouillon d'article** : https://plmlatex.math.cnrs.fr/project/671651d4449a94d80d7be5c7
 
 ## 1. Parcourir le dépôt
 
@@ -13,24 +15,19 @@ Plusieurs fichiers Markdown ont été créé pour faciliter la compréhension et
 - Pour en apprendre plus sur l'architecture globale du dépôt, consultez [ARCHI.md](ARCHI.md).
 - Pour lire le README.md du dépôt original, consultez [SAAD_README.md](SAAD_README.md).
 
-## 2. Ajouter du code dans le dépôt (optionnel)
+## 2. Détails du code
 
-Afin de faciliter l'ajout de code dans ce dépôt, il existe un fichier Markdown pour chaque sous-dossier, afin de décrire avec exactitude tout ce qu'il faut faire pour apporter des changements.
+Afin de faciliter la compréhension du code dans ce dépôt, il existe un fichier Markdown pour chaque sous-dossier, afin de décrire avec exactitude tout ce qu'il faut faire pour apporter des changements, ainsi que les informations importantes qu'on a relevées au fur et à mesure de notre travail.
 
-### Ajouter un nouvel algorithme
+Vous pouvez suivre le détail du code dans l'ordre indiqué ci-après, ou directement aller regarder le Markdown du sous-dossier qui vous intéresse. L'ordre proposé est celui qu'on utilise pour ajouter un nouvel algorithme dans le code.
 
-Pour ajouter un nouvel algorithme, veuillez suivre les instructions dans cet ordre : 
+**Détails du code** :
 
 1. [C.md](/c/C.md)
 2. [SRC.md](/src/SRC.md)
 3. [TESTS.md](/tests/TESTS.md)
-
-### Modifier des paramètres
-
-Si vous voulez modifier des paramètres pour relancer les mesures expérimentales sur les distributions ou pour modifier la figure 4, veuillez suivre les instructions dans cet ordre : 
-
-1. [EXPERIMENTS.md](/experiments/EXPERIMENTS.md)
-2. [NOTEBOOKS.md](/experiments//notebooks/NOTEBOOKS.md)
+4. [EXPERIMENTS.md](/experiments/EXPERIMENTS.md)
+5. [NOTEBOOKS.md](/experiments//notebooks/NOTEBOOKS.md)
 
 ## 3. Commandes
 
