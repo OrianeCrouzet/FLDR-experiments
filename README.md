@@ -8,6 +8,10 @@ Nous avons pour objectif de comparer notre ALIAS en arithmétique entière à d'
 
 **Lien vers notre brouillon d'article** : https://plmlatex.math.cnrs.fr/project/671651d4449a94d80d7be5c7
 
+## Questions posées en réunion
+
+Vous trouverez dans [QUESTIONS.md](QUESTIONS.md) le récapitulatif de toutes les questions que nous nous sommes posés en réunion, et leur réponse s'il y en a.
+
 ## 1. Parcourir le dépôt
 
 Plusieurs fichiers Markdown ont été créé pour faciliter la compréhension et/ou la prise en main du code afin de reproduire la figure 4 autant de fois que nécessaire. 

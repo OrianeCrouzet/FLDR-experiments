@@ -265,22 +265,12 @@ uint32_t sample_alias_integers(struct sample_alias_integers_s *x) {
     q = uniform(n);
 
     unsigned int q_index = q;
-    if (q_index >= x->Threshold.size) {
-        printf("ERREUR : q_index %u dépasse Threshold.size = %u\n", q_index, x->Threshold.size);
-        exit(EXIT_FAILURE);
-    }
     
     // Tirage de Bernoulli pour savoir si on prend T[2q] ou T[2q + 1]
     uint32_t b = bernoulli(x->Threshold.data[q_index], x->cs);
 
     // Calcul de l'index final dans T sans branchement conditionnel
-    uint32_t final_index = 2 * q_index + 1 - b;  
-    
-    if (final_index >= x->T.size) {
-        printf("ERREUR : final_index %u dépasse T.size = %u\n", final_index, x->T.size);
-        fflush(stdout);
-        exit(EXIT_FAILURE);
-    }    
+    uint32_t final_index = 2 * q_index + 1 - b;    
 
     uint32_t result = x->T.data[final_index];
     return result;

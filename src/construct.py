@@ -138,7 +138,7 @@ def construct_sample_alias_integers(p_target):
     Ms = get_common_numerators(Z, p_target)
     K, T, Threshold, cs = alias_integers_preprocess(Ms)
 
-    return K, Ms
+    return Z, Ms
 
 
 def construct_sample_alias_rust(p_target):
