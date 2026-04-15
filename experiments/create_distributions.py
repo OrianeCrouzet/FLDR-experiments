@@ -28,9 +28,15 @@ import shutil
 import numpy as np
 from scipy import stats
 import argparse
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 DISTRIBUTIONS_DIR = os.path.join(BASE_DIR, 'distributions')
+
+# Pour faire le plot de l'entropie en fonction de sigma pour les gaussiennes
+GAUSSIAN_SIGMAS = []
+GAUSSIAN_ENTROPIES = []
 
 
 # Shannon entropy
@@ -89,13 +95,14 @@ def sparse_family(n):
 
 def gaussian_family(n):
     x = np.arange(n)
-    # Moyenne aléatoire et écart-type aléatoire pour faire varier l'entropie
     mu = np.random.uniform(0, n)
-    sigma = 10**np.random.uniform( 
-        np.log10(n/100),
-        np.log10(n/2)
+    sigma = 10**np.random.uniform(
+        np.log10(0.5),
+        np.log10(np.sqrt(n)),
     )
-    return np.exp(-(x-mu)**2/(2*sigma**2))
+    weights = np.exp(-(x-mu)**2/(2*sigma**2))
+    # On renvoie sigma pour faire le plot, pas pour les distributions elles-mêmes
+    return weights, sigma
 
 
 def exponential_family(n):
@@ -167,11 +174,69 @@ def main():
             shutil.rmtree(family_dir)
         os.makedirs(family_dir, exist_ok=True)
         for i in range(args.m):
-            raw = generator(args.n)
+            # Traitement spécial pour les gaussiennes
+            if name == "gaussian":
+                raw, sigma = generator(args.n)
+            else:
+                raw = generator(args.n)
+
             numerators = normalize_to_Z(raw, args.Z)
+
+            # Calcul entropie
+            entropy = compute_entropy(numerators)
+
+            # Stockage pour les gaussiennes pour faire le plot après
+            if name == "gaussian":
+                GAUSSIAN_SIGMAS.append(sigma)
+                GAUSSIAN_ENTROPIES.append(entropy)
+
             write_distribution(family_dir, i, numerators, args.Z)
 
     print("Done")
+
+    # Plot de l'entropie en fonction de sigma pour les gaussiennes
+    if len(GAUSSIAN_SIGMAS) > 0:
+
+        sigmas = np.array(GAUSSIAN_SIGMAS)
+        entropies = np.array(GAUSSIAN_ENTROPIES)
+
+        # Tri pour joli plot
+        order = np.argsort(sigmas)
+        sigmas = sigmas[order]
+        entropies = entropies[order]
+
+        fig, ax = plt.subplots()
+
+        ax.scatter(sigmas, entropies, s=10, marker='.')
+
+        # Régression semi-log
+        x = np.log2(sigmas)
+        y = entropies
+        a, b = np.polyfit(x, y, 1)
+
+        x_line = np.linspace(x.min(), x.max(), 200)
+        y_line = a * x_line + b
+
+        ax.plot(2**x_line, y_line, linestyle='--')
+
+        print(f"[Gaussian] slope H vs log2(sigma): {a:.3f}")
+
+        ax.set_xscale('log', base=2)
+
+        ax.set_xlabel('Sigma', fontsize=12)
+        ax.set_ylabel('Entropy (bits)', fontsize=12)
+
+        ax.xaxis.set_major_locator(
+            ticker.LogLocator(base=2., subs=(1,), numticks=20)
+        )
+
+        fig.set_size_inches(5.5, 4)
+        fig.set_tight_layout(True)
+
+        plt.savefig("gaussian_entropy_vs_sigma.png")
+        plt.savefig("gaussian_entropy_vs_sigma.pdf")
+
+        plt.show()
 
 
 if __name__ == "__main__":
