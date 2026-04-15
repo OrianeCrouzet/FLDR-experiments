@@ -21,7 +21,7 @@ Il faut lancer la commande :
     $ cd experiments
     $ ./pipeline.sh '' run-all-memory-runtime <Z> <n>
 
-Avec `Z` la somme des poids de la distribution et `n` la taille de la distribution. **Il faut impérativement que n <= Z.** 
+--> avec `Z` la somme des poids de la distribution et `n` la taille de la distribution. **Il faut impérativement que n <= Z.** 
 
 Les distributions _et_ les mesures seront alors stockées dans un dossier appelé `/experiments/dists.{n}.{Z}.2`.
 
@@ -50,7 +50,7 @@ _Si_ les dossiers de distributions ne sont pas présents dans le dépôt (dans l
     $ cd experiments
     $ python3 create_distributions.py <n> <Z> <m>
 
-Avec `n` la taille de la distribution, `Z` la somme des poids de la distribution et `m` le nombre de distributions à créer par famille de distributions.
+--> avec `n` la taille de la distribution, `Z` la somme des poids de la distribution et `m` le nombre de distributions à créer par famille de distributions.
 
 _Exemple_ : `python3 create_distributions.py 1000 40001 200` va créer 200 distributions de taille 1000 avec Z = 40001. 
 
@@ -73,7 +73,7 @@ Pour lancer les mesures sur un dossier de distributions en particulier, il faut 
 
     $ ./pipeline.sh <distrib_path> measure-runtimes-existing <steps>
 
-Avec `distrib_path` le chemin vers le dossier souhaité et `steps` le nombre de tirage par algorithme. 
+--> avec `distrib_path` le chemin vers le dossier souhaité et `steps` le nombre de tirage par algorithme. 
 
 Les mesures seront alors stockées dans un dossier appelé `experiments/measures/{distrib_path}-work`.
 

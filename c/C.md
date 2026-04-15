@@ -1,5 +1,7 @@
 # Ajouter un nouvel algorithme en C
 
+_BROUILLON_
+
 En guise d'exemple, nous utiliserons l'algorithme `my_algo` pour expliquer les ajouts à faire.
 
 ## main.c
