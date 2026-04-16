@@ -199,7 +199,7 @@ PY
   "$0" ${stamp} aggregate-sizes
 
   echo "=== Aggregating runtimes ==="
-  "$0" ${stamp} aggregate-runtimes
+  "$0" ${stamp} aggregate-runtimes ${steps}
 
   exit 0;
 fi
@@ -224,20 +224,41 @@ if [ ${cmd} = 'measure-runtimes' ]; then
 fi
 
 if [ ${cmd} = 'aggregate-runtimes' ]; then
+  steps=${3}
+  rm -f ${stamp}/avg_bits
+
   for sampler in ${SAMPLERS}; do
-      fn_runtime=${stamp}/${sampler}.runtimes;
-      fn_calls=${stamp}/${sampler}.calls;
-      fnames=$(ls ${stamp}/*.${sampler}.runtime)
-      rm -rf ${fn_runtime} ${fn_calls};
+      fn_runtime=${stamp}/${sampler}.runtimes
+      fn_calls=${stamp}/${sampler}.calls
+      fn_bits=${stamp}/${sampler}.bits
+
+      fnames=$(ls ${stamp}/*.${sampler}.runtime 2>/dev/null || true)
+
+      rm -f ${fn_runtime} ${fn_calls} ${fn_bits}
+
       for f in ${fnames}; do
           echo $f
           cat ${f} | tail -n1 | cut -f2 -d ' ' >> ${fn_runtime}
           cat ${f} | tail -n1 | cut -f3 -d ' ' >> ${fn_calls}
+
+          # calcul des bits ici
+          # on divise par steps pour obtenir le nombre de bits par tirage
+          cat ${f} | tail -n1 | awk -v steps=${steps} '{print ($3 * 32) / steps}' >> ${fn_bits}
       done
-      echo ${fn_runtime};
-      echo ${fn_calls};
+
+      echo ${fn_runtime}
+      echo ${fn_calls}
+      echo ${fn_bits}
+
+      # moyenne pour ce sampler
+      if [ -f ${fn_bits} ]; then
+          avg_bits=$(awk '{s+=$1} END {print s/NR}' ${fn_bits})
+          echo "${sampler} ${avg_bits}" >> ${stamp}/avg_bits
+      fi
   done
-  exit 0;
+
+  echo "Averages written to ${stamp}/avg_bits"
+  exit 0
 fi
 
 if [ ${cmd} = 'run-all-memory-runtime' ]; then
@@ -248,7 +269,7 @@ if [ ${cmd} = 'run-all-memory-runtime' ]; then
       ./pipeline.sh ${stamp} initialize;
       ./pipeline.sh ${stamp} aggregate-sizes;
       ./pipeline.sh ${stamp} measure-runtimes 1000000;
-      ./pipeline.sh ${stamp} aggregate-runtimes;
+      ./pipeline.sh ${stamp} aggregate-runtimes 1000000;
   done
   exit 0
 fi

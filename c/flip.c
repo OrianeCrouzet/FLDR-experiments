@@ -12,6 +12,7 @@
 
 #include "flip.h"
 
+// Si on fait NUM_RNG_CALLS * 32, on devrait obtenir le nombre de bits générés, avec une marge d'erreur de 31 bits au plus. 
 unsigned long NUM_RNG_CALLS = 0;
 
 // RAND_MAX is 2**31-1 signed, so bits are 0,...29 with 30th
