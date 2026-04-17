@@ -16,6 +16,7 @@ set -u
 stamp=${1}
 cmd=${2}
 
+# rej.enc == fldr
 #SAMPLERS='interval alias.exact ky.enc rej.binary rej.enc rej.matc rej.table rej.uniform alias.integers aldr alias.rust'
 SAMPLERS='alias.exact rej.enc alias.integers aldr alias.rust'
 

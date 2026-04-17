@@ -71,7 +71,7 @@ int preprocess_fldr(struct array_s x, int m) {
 }
 
 void preprocess_alias_gsl(struct array_s x, int m) {
-    gsl_ran_discrete_preproc(x.length, (double*)x.a);
+    gsl_ran_discrete_preproc(x.length, (double*)x.a);       // code alias exact 
 }
 
 int main(int argc, char **argv) {

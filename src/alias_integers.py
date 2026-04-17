@@ -80,7 +80,7 @@ def alias_integers_sample(K, T, Threshold, cs):
     """
     # Tirage uniforme d'une case
     q = np.random.randint(0, K // 2)  # chaque cellule correspond à 2 indices
-    b = np.random.randint(0, Threshold[q] + 1) < Threshold[q]
+    b = np.random.randint(0, cs) < Threshold[q]
 
     # Calcul de l'indice final (équivalent au C)
     final_index = 2 * q + 1 - int(b)

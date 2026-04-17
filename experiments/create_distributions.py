@@ -95,7 +95,7 @@ def sparse_family(n):
 
 def gaussian_family(n):
     x = np.arange(n)
-    mu = np.random.uniform(0, n)
+    mu = n      # Mu fixé à n pour tester le rapport sigma/entropie
     sigma = 10**np.random.uniform(
         np.log10(0.5),
         np.log10(np.sqrt(n)),
@@ -224,7 +224,7 @@ def main():
         ax.set_xscale('log', base=2)
 
         ax.set_xlabel('Sigma', fontsize=12)
-        ax.set_ylabel('Entropy (bits)', fontsize=12)
+        ax.set_ylabel('Entropy', fontsize=12)
 
         ax.xaxis.set_major_locator(
             ticker.LogLocator(base=2., subs=(1,), numticks=20)
