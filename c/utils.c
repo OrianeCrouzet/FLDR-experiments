@@ -159,6 +159,51 @@ void cons_alias(unsigned int n, VectorInt* D, uint32_t cs, int virtual_obj, Vect
     vector_free(&L);
 }
 
+// Comparison function for qsort
+int compare_pairs(const void *a, const void *b) {
+    Pair *p1 = (Pair *)a;
+    Pair *p2 = (Pair *)b;
+
+    if (p1->first < p2->first) return -1;
+    if (p1->first > p2->first) return 1;
+    return 0;
+}
+
+// // Sort the array
+//    qsort(table, size, sizeof(Pair), compare_pairs);
+
+void cons_alias_2(unsigned int n, VectorInt* D, uint32_t cs, int virtual_obj, VectorInt* T, VectorInt* Threshold){
+    struct sample_inversion_bernoulli_s table[n];
+    for (unsigned int i = 0; i < n; i++) {
+        table[i].a = D->data[i];
+        table[i].M = i;
+    }
+    qsort(table, n, sizeof(struct sample_inversion_bernoulli_s), compare_pairs);
+    while(table[n-1].a > 0){
+        int i = 0;
+        while(table[i].a == 0)
+            i++;
+        if(table[i].a >= cs){
+            vector_push(T, table[i].M);
+            vector_push(T, -1);
+            vector_push(Threshold, cs);
+            table[i].a -= cs;
+        }
+        else{
+            int j = 0;
+            while(table[j].a + table[i].a < cs)
+                j++;
+            vector_push(T, table[i].M);
+            vector_push(T, table[j].M);
+            vector_push(Threshold, table[i].a);
+            table[j].a += table[i].a - cs;
+            table[i].a = 0;
+            qsort(table, n, sizeof(struct sample_inversion_bernoulli_s), compare_pairs);
+        }
+
+    }
+}
+
 struct sample_alias_integers_s preprocess_alias_integers(int* a, int n) {
     struct sample_alias_integers_s sampler;
 
