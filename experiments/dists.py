@@ -22,6 +22,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 
+from create_distributions import normalize_to_Z
+
 from discrete_sampling.construct import construct_sample_alias
 from discrete_sampling.construct import construct_sample_alias_integers
 from discrete_sampling.construct import construct_sample_alias_rust
@@ -199,6 +201,10 @@ def generate_distributions(N=10, Z=-1, seed=1, samplers='', thin=1,
         # for a in alphas
         for a in alphas[offset::thin]
     ]
+    # dernière distribution = uniforme parfaite
+    u = np.ones(N)
+    weights = normalize_to_Z(u, Z)
+    distributions.append([Fraction(int(w), Z) for w in weights])
 
     low, high = get_distribution_entropy_bounds(N, Z)
     entropies = parallel_map(compute_entropy, distributions)

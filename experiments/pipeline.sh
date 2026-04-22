@@ -20,7 +20,6 @@ cmd=${2}
 #SAMPLERS='interval alias.exact ky.enc rej.binary rej.enc rej.matc rej.table rej.uniform alias.integers aldr alias.rust'
 SAMPLERS='alias.exact rej.enc alias.integers aldr alias.rust'
 
-
 #if [ ${cmd} = 'initialize' ]; then
  # N=$(echo ${stamp} | cut -d. -f2)
   #Z=$(echo ${stamp} | cut -d. -f3)

@@ -161,11 +161,11 @@ void cons_alias(unsigned int n, VectorInt* D, uint32_t cs, int virtual_obj, Vect
 
 // Comparison function for qsort
 int compare_pairs(const void *a, const void *b) {
-    Pair *p1 = (Pair *)a;
-    Pair *p2 = (Pair *)b;
+    struct sample_inversion_bernoulli_s *p1 = (struct sample_inversion_bernoulli_s *)a;
+    struct sample_inversion_bernoulli_s *p2 = (struct sample_inversion_bernoulli_s *)b;
 
-    if (p1->first < p2->first) return -1;
-    if (p1->first > p2->first) return 1;
+    if (p1->a < p2->a) return -1;
+    if (p1->a > p2->a) return 1;
     return 0;
 }
 
