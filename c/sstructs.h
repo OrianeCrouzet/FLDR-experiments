@@ -18,6 +18,7 @@
 #include <gsl/gsl_randist.h>
 #include <gmp.h>
 #include "vector_int.h"
+#include "fraction.h"
 
 // matrix
 struct matrix_s {
@@ -140,7 +141,7 @@ struct sample_alias_rust_s {
 struct AliasEntry{
     int i;          
     int j;          // -1 if NULL
-    mpq_t prob;     // = k / pdsCase
+    struct Fraction prob;     // = k / pdsCase
 };
 
 // Structure de l'Alias Fractions
@@ -148,6 +149,5 @@ struct sample_alias_fractions_s{
     int taille;           // Nombre d'éléments
     struct AliasEntry* table;    // Tableau de AliasEntry
 };
-
 
 #endif

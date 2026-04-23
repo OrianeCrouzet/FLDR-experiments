@@ -17,6 +17,7 @@
 #include "utils.h"
 #include "alias_rust.h"
 #include "alias_fractions.h"
+#include "fraction.h"
 
 int sample_ky_encoding(struct sample_ky_encoding_s *x) {
 
@@ -318,27 +319,17 @@ uint32_t sample_alias_rust(struct sample_alias_rust_s *x){
 }
 
 // alias_fractions
-uint32_t sample_alias_fractions(struct sample_alias_fractions_s *x){
-    mpz_t index_mpz, taille_mpz, numer, denom;
-    mpz_inits(index_mpz, taille_mpz, numer, denom, NULL);
+uint32_t sample_alias_fractions(struct sample_alias_fractions_s *x) {
+    uint32_t n = (uint32_t)x->taille;
 
-    mpz_set_ui(taille_mpz, x->taille);
+    uint32_t index = uniform(n);
 
-    // Tirage uniforme entier dans [0, taille)
-    uniform_with_gmp(index_mpz, taille_mpz);
+    struct Fraction f = x->table[index].prob;
 
-    uint32_t index = (uint32_t) mpz_get_ui(index_mpz);
+    uint32_t numer = f.num;
+    uint32_t denom = f.denom;
 
-    // Récupération probabilité
-    mpz_set(numer, mpq_numref(x->table[index].prob));
-    mpz_set(denom, mpq_denref(x->table[index].prob));
+    uint32_t b = bernoulli(numer, denom);
 
-    uint32_t result =
-        bernoulli_with_gmp(numer, denom)
-        ? x->table[index].i
-        : x->table[index].j;
-
-    mpz_clears(index_mpz, taille_mpz, numer, denom, NULL);
-
-    return result;
+    return b ? x->table[index].i : x->table[index].j;
 }
