@@ -14,6 +14,7 @@
 #include "vector_int.h"
 #include "utils.h"
 #include "alias_rust.h"
+#include "alias_fractions.h"
 
 // Load matrix from file.
 struct matrix_s load_matrix(FILE *fp) {
@@ -357,4 +358,31 @@ struct sample_alias_rust_s read_sample_alias_rust(char *fname){
 
 void free_sample_alias_rust_s(struct sample_alias_rust_s x){
     weighted_alias_free((alias_rust_s *)&x);
+}
+
+// Load sample_alias_fractions data structure from file path.
+struct sample_alias_fractions_s read_sample_alias_fractions(char *fname) {
+    FILE *fp = fopen(fname, "r");
+    if (fp == NULL) {
+        perror(fname);
+        exit(EXIT_FAILURE);
+    }
+
+    int Z;
+    fscanf(fp, "%d", &Z);
+    int n;
+    fscanf(fp, "%d", &n);
+    int* array = calloc(n, sizeof(int));
+    for (int i = 0; i < n; ++i) {
+        fscanf(fp, "%d", &array[i]);
+    }
+    fclose(fp);
+
+    struct sample_alias_fractions_s sampler = preprocess_alias_fractions(array, n);
+    free(array);
+    return sampler;
+}
+
+void free_sample_alias_fractions_s(struct sample_alias_fractions_s x) {
+    free_sample_alias_fractions(x);
 }

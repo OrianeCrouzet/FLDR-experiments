@@ -9,12 +9,14 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <gmp.h>
 
 #include "flip.h"
 #include "sample.h"
 #include "sstructs.h"
 #include "utils.h"
 #include "alias_rust.h"
+#include "alias_fractions.h"
 
 int sample_ky_encoding(struct sample_ky_encoding_s *x) {
 
@@ -315,3 +317,28 @@ uint32_t sample_alias_rust(struct sample_alias_rust_s *x){
     );
 }
 
+// alias_fractions
+uint32_t sample_alias_fractions(struct sample_alias_fractions_s *x){
+    mpz_t index_mpz, taille_mpz, numer, denom;
+    mpz_inits(index_mpz, taille_mpz, numer, denom, NULL);
+
+    mpz_set_ui(taille_mpz, x->taille);
+
+    // Tirage uniforme entier dans [0, taille)
+    uniform_with_gmp(index_mpz, taille_mpz);
+
+    uint32_t index = (uint32_t) mpz_get_ui(index_mpz);
+
+    // Récupération probabilité
+    mpz_set(numer, mpq_numref(x->table[index].prob));
+    mpz_set(denom, mpq_denref(x->table[index].prob));
+
+    uint32_t result =
+        bernoulli_with_gmp(numer, denom)
+        ? x->table[index].i
+        : x->table[index].j;
+
+    mpz_clears(index_mpz, taille_mpz, numer, denom, NULL);
+
+    return result;
+}

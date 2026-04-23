@@ -177,6 +177,13 @@ int main(int argc, char **argv) {
         sample_alias_rust,
         free_sample_alias_rust_s,
         path, steps, t, x)
+    else READ_SAMPLE_TIME("alias.fractions",
+        sampler,
+        sample_alias_fractions_s,
+        read_sample_alias_fractions,
+        sample_alias_fractions,
+        free_sample_alias_fractions_s,
+        path, steps, t, x)
     else {
         printf("Unknown sampler: %s\n", sampler);
         exit(1);

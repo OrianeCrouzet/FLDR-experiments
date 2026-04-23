@@ -17,8 +17,8 @@ stamp=${1}
 cmd=${2}
 
 # rej.enc == fldr
-#SAMPLERS='interval alias.exact ky.enc rej.binary rej.enc rej.matc rej.table rej.uniform alias.integers aldr alias.rust'
-SAMPLERS='alias.exact rej.enc alias.integers aldr alias.rust'
+#SAMPLERS='interval alias.exact ky.enc rej.binary rej.enc rej.matc rej.table rej.uniform alias.integers aldr alias.rust alias.fractions'
+SAMPLERS='alias.exact rej.enc alias.integers aldr alias.rust alias.fractions'
 
 #if [ ${cmd} = 'initialize' ]; then
  # N=$(echo ${stamp} | cut -d. -f2)
@@ -38,7 +38,7 @@ if [ ${cmd} = 'initialize' ]; then
   else
     # support des appels direct : ./pipeline.sh alias.integers initialize
     case "${stamp}" in
-      interval|alias.exact|ky.enc|rej.binary|rej.enc|rej.matc|rej.table|rej.uniform|alias.integers|aldr|alias.rust)
+      interval|alias.exact|ky.enc|rej.binary|rej.enc|rej.matc|rej.table|rej.uniform|alias.integers|aldr|alias.rust|alias.fractions)
         N=5; Z=10; seed=1; target_samplers="${stamp}";
         ;;
       *)
@@ -154,6 +154,7 @@ structures = {
     'alias.integers': (construct_sample_alias_integers, write_sample_alias_integers),
     'alias.rust': (construct_sample_alias_rust, write_sample_alias_rust),
     'aldr': (construct_sample_aldr, write_sample_aldr),
+    'alias.fractions': (construct_sample_alias_fractions, write_sample_alias_fractions),
 }
 
 for dist_path in sorted(stamp.glob('*.dist')):
@@ -171,7 +172,7 @@ for dist_path in sorted(stamp.glob('*.dist')):
         f_construct, f_write = structures[sampler]
         out_path = dist_path.with_name(dist_path.stem + '.' + sampler)
         struc = f_construct(p_target)
-        if sampler in {'alias.integers', 'alias.rust', 'aldr'}:
+        if sampler in {'alias.integers', 'alias.rust', 'aldr', 'alias.fractions'}:
             f_write(*struc, entropy, str(out_path))
         else:
             f_write(*struc, str(out_path))

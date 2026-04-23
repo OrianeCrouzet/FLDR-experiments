@@ -138,7 +138,7 @@ def construct_sample_alias_integers(p_target):
     Ms = get_common_numerators(Z, p_target)
     K, T, Threshold, cs = alias_integers_preprocess(Ms)
 
-    return K, Ms
+    return Z, Ms
 
 
 def construct_sample_alias_rust(p_target):
@@ -166,3 +166,23 @@ def construct_sample_aldr(p_target):
     n = len(Ms)
 
     return n, Ms
+
+def construct_sample_alias_fractions(p_target):
+    """
+    p_target : liste de Fraction
+
+    Retourne :
+        Z : dénominateur commun
+        Ms : poids entiers
+
+    même logique que alias.integers
+    """
+    from discrete_sampling.utils import (
+        get_common_denominator,
+        get_common_numerators
+    )
+
+    Z = get_common_denominator(p_target)
+    Ms = get_common_numerators(Z, p_target)
+
+    return Z, Ms

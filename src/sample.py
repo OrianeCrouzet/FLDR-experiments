@@ -219,3 +219,21 @@ def sample_alias_rust(*args):
     if b == 1:
         return i
     return alias_dist.aliases[i]
+
+def sample_alias_fractions(x, bitstream):
+    """
+    x = structure renvoyée par construct_sample_alias_fractions
+    """
+    index = sample_fdr(x["taille"], bitstream) - 1
+
+    entry = x["table"][index]
+
+    numer = entry["prob"].numerator
+    denom = entry["prob"].denominator
+
+    b = sample_inversion_bernoulli(numer, denom, bitstream)
+
+    if b:
+        return entry["i"]
+    else:
+        return entry["j"]

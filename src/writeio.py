@@ -116,3 +116,16 @@ def write_sample_aldr(n, Ms, entropy, fname):
         f.write('%d\n' % n)
         write_array(Ms, f)
         f.write('%.5f\n' % entropy)
+
+def write_sample_alias_fractions(Z, T, entropy, fname):
+    """
+    Écrit les poids pour alias.fractions dans un fichier
+    Format identique à alias_integers :
+    Ligne 1 : n (nombre d'éléments)
+    Ligne 2 : Ms (poids entiers)
+    Ligne 3 : entropie
+    """
+    with open(fname, 'w') as f:
+        f.write('%d\n' % Z)
+        write_array(T, f)
+        f.write('%.5f\n' % entropy)

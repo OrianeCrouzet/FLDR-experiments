@@ -16,6 +16,7 @@
 
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
+#include <gmp.h>
 #include "vector_int.h"
 
 // matrix
@@ -133,6 +134,19 @@ struct sample_alias_rust_s {
     VectorInt large;
     unsigned int n;
     double weight_sum;
+};
+
+// sample_alias_fractions
+struct AliasEntry{
+    int i;          
+    int j;          // -1 if NULL
+    mpq_t prob;     // = k / pdsCase
+};
+
+// Structure de l'Alias Fractions
+struct sample_alias_fractions_s{
+    int taille;           // Nombre d'éléments
+    struct AliasEntry* table;    // Tableau de AliasEntry
 };
 
 

@@ -65,7 +65,7 @@ def write_sample_alias(n, qs, Ms, j, fname):
         write_array(Ms, f)
         write_array(j, f)
 
-def write_sample_alias_integers(K, T, entropy, fname):
+def write_sample_alias_integers(Z, T, entropy, fname):
     """
     Écrit les tables préparées pour alias.integers dans un fichier
     pour le pipeline, dans le format attendu :
@@ -81,7 +81,7 @@ def write_sample_alias_integers(K, T, entropy, fname):
 
     with open(fname, 'w') as f:
         # Ligne 1 : plage des probabilités possibles
-        f.write('%d\n' % K)
+        f.write('%d\n' % Z)
         # print(f"[DEBUG] Ligne 1 écrite : {K}")
 
         # Ligne 2 : nombre d’objets + objets de la distribution
@@ -115,4 +115,17 @@ def write_sample_aldr(n, Ms, entropy, fname):
     with open(fname, 'w') as f:
         f.write('%d\n' % n)
         write_array(Ms, f)
+        f.write('%.5f\n' % entropy)
+
+def write_sample_alias_fractions(Z, T, entropy, fname):
+    """
+    Écrit les poids pour alias.fractions dans un fichier
+    Format identique à alias_integers :
+    Ligne 1 : n (nombre d'éléments)
+    Ligne 2 : Ms (poids entiers)
+    Ligne 3 : entropie
+    """
+    with open(fname, 'w') as f:
+        f.write('%d\n' % Z)
+        write_array(T, f)
         f.write('%.5f\n' % entropy)

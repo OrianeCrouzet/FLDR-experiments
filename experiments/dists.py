@@ -27,6 +27,7 @@ from create_distributions import normalize_to_Z
 from discrete_sampling.construct import construct_sample_alias
 from discrete_sampling.construct import construct_sample_alias_integers
 from discrete_sampling.construct import construct_sample_alias_rust
+from discrete_sampling.construct import construct_sample_alias_fractions
 from discrete_sampling.construct import construct_sample_aldr
 from discrete_sampling.construct import construct_sample_interval
 from discrete_sampling.construct import construct_sample_ky_approx_encoding
@@ -45,6 +46,7 @@ from discrete_sampling.construct import construct_sample_rejection_uniform
 from discrete_sampling.writeio import write_sample_alias
 from discrete_sampling.writeio import write_sample_alias_integers
 from discrete_sampling.writeio import write_sample_alias_rust
+from discrete_sampling.writeio import write_sample_alias_fractions
 from discrete_sampling.writeio import write_sample_aldr
 from discrete_sampling.writeio import write_sample_interval
 from discrete_sampling.writeio import write_sample_ky_encoding
@@ -146,6 +148,9 @@ def write_samplers(args):
         ('aldr',
             construct_sample_aldr,
             write_sample_aldr),
+        ('alias.fractions',
+            construct_sample_alias_fractions,
+            write_sample_alias_fractions),
     ]
 
     for suffix, f_construct, f_write in structures:
@@ -153,7 +158,7 @@ def write_samplers(args):
             continue
         fpath = os.path.join(dirname, 'd.%05d.%s' % (idx, suffix))
         struc = f_construct(p_target)
-        if suffix in {'alias.integers', 'alias.rust', 'aldr'}:
+        if suffix in {'alias.integers', 'alias.rust', 'aldr', 'alias.fractions'}:
             f_write(*struc, entropy, fpath)
         else:
             f_write(*struc, fpath)
