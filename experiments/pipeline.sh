@@ -18,7 +18,7 @@ cmd=${2}
 
 # rej.enc == fldr
 #SAMPLERS='interval alias.exact ky.enc rej.binary rej.enc rej.matc rej.table rej.uniform alias.integers aldr alias.rust alias.fractions'
-SAMPLERS='alias.exact rej.enc alias.integers aldr alias.rust alias.fractions'
+SAMPLERS='alias.exact rej.enc aldr alias.integers alias.rust alias.fractions'
 
 #if [ ${cmd} = 'initialize' ]; then
  # N=$(echo ${stamp} | cut -d. -f2)
@@ -61,6 +61,58 @@ if [ ${cmd} = 'initialize' ]; then
   exit 0
 fi
 
+if [ ${cmd} = 'initialize-2' ]; then
+  # format attendu :
+  #   dists.H.maxpow.seed
+  # exemple :
+  #   dists.3.12.1
+  # => H=3 maxpow=12 seed=1
+
+  if [[ "${stamp}" =~ ^dists\.entropy\.([0-9]+([.][0-9]+)?)\.([0-9]+)\.([0-9]+)$ ]]; then
+    H=${BASH_REMATCH[1]}
+    maxpow=${BASH_REMATCH[3]}
+    seed=${BASH_REMATCH[4]}
+    target_samplers="${SAMPLERS}"
+
+  else
+    # appel direct :
+    # ./pipeline.sh alias.integers initialize
+    case "${stamp}" in
+      interval|alias.exact|ky.enc|rej.binary|rej.enc|rej.matc|rej.table|rej.uniform|alias.integers|aldr|alias.rust|alias.fractions)
+        H=10
+        maxpow=12
+        Z=-1
+        seed=1
+        target_samplers="${stamp}"
+        ;;
+      *)
+        echo "Unknown sampler init key: ${stamp}" >&2
+        exit 2
+        ;;
+    esac
+  fi
+
+  echo "=== Initialize: Generating distributions ==="
+  echo "H = ${H}, maxpow = ${maxpow}, seed = ${seed}, samplers = ${target_samplers}"
+
+  for sampler in ${target_samplers}; do
+      echo "--- Generating distributions for sampler: ${sampler} ---"
+
+      ./dists.py generate-distributions-entropy \
+          H=${H} \
+          maxpow=${maxpow} \
+          Z=-1 \
+          seed=${seed} \
+          samplers="${sampler}" \
+          thin=5
+
+      echo "Finished sampler: ${sampler}"
+  done
+
+  echo "=== All samplers initialized ==="
+  exit 0
+fi
+
 if [ ${cmd} = 'aggregate-sizes' ]; then
   for sampler in ${SAMPLERS}; do
       fn=${stamp}/${sampler}.sizes;
@@ -75,7 +127,7 @@ fi
 # Les distributions doivent avoir le même format que les distributions générées à la base !
 # Commande : ./pipeline.sh <dir> measure-runtimes-existing <steps> [seed]
 # steps = nombre de tirage par distribution et par sampler
-# On effectue une copie du dossier des distributionspour les garder intacts,
+# On effectue une copie du dossier des distributions pour les garder intacts,
 # le nouveau dossier s'appelle <dir>-work et c'est dans ce dossier que les fichiers de runtime seront créés.
 if [ ${cmd} = 'measure-runtimes-existing' ]; then
   steps=${3}
@@ -271,6 +323,22 @@ if [ ${cmd} = 'run-all-memory-runtime' ]; then
       ./pipeline.sh ${stamp} aggregate-sizes;
       ./pipeline.sh ${stamp} measure-runtimes 1000000;
       ./pipeline.sh ${stamp} aggregate-runtimes 1000000;
+  done
+  exit 0
+fi
+
+if [ ${cmd} = 'run-all-memory-runtime-2' ]; then
+  H=${3}
+  seed=${5:-2}
+
+  for maxpow in ${4}; do
+      stamp=dists.entropy.${H}.${maxpow}.${seed}
+      echo ${stamp}
+
+      ./pipeline.sh ${stamp} initialize-2
+      ./pipeline.sh ${stamp} aggregate-sizes
+      ./pipeline.sh ${stamp} measure-runtimes 1000000
+      ./pipeline.sh ${stamp} aggregate-runtimes 1000000
   done
   exit 0
 fi

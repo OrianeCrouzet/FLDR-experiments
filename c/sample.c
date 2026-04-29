@@ -9,7 +9,6 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
-#include <gmp.h>
 
 #include "flip.h"
 #include "sample.h"
@@ -318,7 +317,7 @@ uint32_t sample_alias_rust(struct sample_alias_rust_s *x){
     );
 }
 
-// alias_fractions
+// alias_fractions ORIGINALE
 uint32_t sample_alias_fractions(struct sample_alias_fractions_s *x) {
     uint32_t n = (uint32_t)x->taille;
 
@@ -332,4 +331,18 @@ uint32_t sample_alias_fractions(struct sample_alias_fractions_s *x) {
     uint32_t b = bernoulli(numer, denom);
 
     return b ? x->table[index].i : x->table[index].j;
+}
+
+uint32_t sample_alias_fractions2(struct sample_alias_fractions_s *x) {
+    uint32_t n = x->taille;
+    uint32_t index = uniform(n);
+
+    if (x->table[index].j == -1)
+        return x->table[index].i;
+
+    struct Fraction f = x->table[index].prob;
+
+    return bernoulli(f.num, f.denom)
+        ? x->table[index].i
+        : x->table[index].j;
 }

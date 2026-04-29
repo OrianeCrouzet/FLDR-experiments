@@ -74,7 +74,7 @@ void preprocess_alias_gsl(struct array_s x, int m) {
     gsl_ran_discrete_preproc(x.length, (double*)x.a);       // code alias exact ?
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv) { 
     // Read command line arguments.
     if (argc != 2) {
         printf("usage: ./mainc path\n");
