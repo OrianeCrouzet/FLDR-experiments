@@ -83,7 +83,10 @@ uint32_t uniform(uint32_t n) {
     }
 }
 
+// Mettre un 2 à la fin de la fonction que vous ne voulez PAS utiliser (ça évite de modifier les appels partout dans le code...)
+
 uint32_t bernoulli(uint32_t numer, uint32_t denom) {
+    // ORIGINALE
     if (numer == 0) {
         return 0;
     }
@@ -92,6 +95,23 @@ uint32_t bernoulli(uint32_t numer, uint32_t denom) {
     }
     uint32_t y;
 
+    for (;;) {
+        numer <<= 1;
+        if (numer == denom) {
+            return flip();
+        }
+        if (y = numer > denom) {
+            numer -= denom;
+        }
+        if (flip()) {
+            return y;
+        }
+    }
+}
+
+uint32_t bernoulli2(uint32_t numer, uint32_t denom) {
+    // VERSION 2 d'Antoine
+    uint32_t y;
     for (;;) {
         numer <<= 1;
         if (numer == denom) {

@@ -103,7 +103,7 @@ Run the following command
 
     $ cd experiments
     $ ./pipeline.sh pp.mn.418 preprocess-initialize
-    $ ./pipeline.sh pp.mn.418 preprocess-measure
+    $ ./pipeline.sh pp.mn.418 preprocess-measure 
     $ ./pipeline.sh pp.mn.418 preprocess-aggregate
 
 By default, all the CPUs on the machine will be used.  For a machine with

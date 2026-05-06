@@ -15,6 +15,8 @@
 
 #include "readio.h"
 #include "sstructs.h"
+#include "alias_fractions.h"
+#include "utils.h"
 
 int ceil_log2(unsigned long long x) {
   static const unsigned long long t[6] = {
@@ -82,25 +84,53 @@ int main(int argc, char **argv) {
     }
     char *path = argv[1];
 
-    // Load the distribution.
+    // Load distribution
+
+    // FILE *fp = fopen(path, "r");
+    // int Z;
+    // fscanf(fp, "%d", &Z);
+    // struct array_s x = load_array(fp);
+    // fclose(fp);
+
     FILE *fp = fopen(path, "r");
-    int Z;
-    fscanf(fp, "%d", &Z);
-    struct array_s x = load_array(fp);
+    int kmul;
+    fscanf(fp, "%d", &kmul);
+    int n;
+    fscanf(fp, "%d", &n);
+    int* array = calloc(n, sizeof(int));
+    for (int i = 0; i < n; ++i) {
+        fscanf(fp, "%d", &array[i]);
+    }
     fclose(fp);
 
-    // Measure time of FLDR.
+    // Measure time of Alias Integers.
     clock_t t;
     t = clock();
-    int d = preprocess_fldr(x, Z);
+    struct sample_alias_integers_s temp1 = preprocess_alias_integers(array, n);
     t = clock() - t;
-    double t_fldr = ((double) t) / CLOCKS_PER_SEC;
+    double t_alias_integers = ((double) t) / CLOCKS_PER_SEC;
 
-    // Measure time of Alias GSL.
+    // Measure time of Alias Fractions.
     t = clock();
-    preprocess_alias_gsl(x, Z);
+    struct sample_alias_fractions_s temp2 = preprocess_alias_fractions(array, n);
     t = clock() - t;
-    double t_alias = ((double) t) / CLOCKS_PER_SEC;
+    double t_alias_fractions = ((double) t) / CLOCKS_PER_SEC;
 
-    printf("%dc %1.6f %1.6f\n", d, t_fldr, t_alias);
+    // // Measure time of FLDR.
+    // clock_t t;
+    // t = clock();
+    // int d = preprocess_fldr(x, Z);
+    // t = clock() - t;
+    // double t_fldr = ((double) t) / CLOCKS_PER_SEC;
+
+    // // Measure time of Alias GSL.
+    // t = clock();
+    // preprocess_alias_gsl(x, Z);
+    // t = clock() - t;
+    // double t_alias = ((double) t) / CLOCKS_PER_SEC;
+
+    // printf("%dc %1.6f %1.6f\n", d, t_fldr, t_alias);
+
+    printf("%dc %1.6f %1.6f\n", n, t_alias_integers, t_alias_fractions);
+    fflush(stdout);
 }

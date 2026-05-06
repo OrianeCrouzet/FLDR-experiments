@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
         sample_rejection_binary_search,
         free_sample_rejection_binary_search_s,
         path, steps, t, x)
-    else READ_SAMPLE_TIME("rej.enc",
+    else READ_SAMPLE_TIME("rej.enc",    // FLDR
         sampler,
         sample_ky_encoding_s,
         read_sample_ky_encoding,

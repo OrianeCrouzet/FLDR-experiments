@@ -77,9 +77,13 @@ int binary_search_interval_nested(int *arr, int arr_denominator, int length,
 // ***** Mes ajouts *****
 
 void cons_alias(unsigned int n, VectorInt* D, uint32_t cs, int virtual_obj, VectorInt* T, VectorInt* Threshold){
+    // ORIGINALE
     VectorInt H, L;
     vector_init(&H);
     vector_init(&L);
+    vector_reserve(&H, n);
+    vector_reserve(&L, n);
+
     int virtual_cell = -1;
     int t = 0;
 
@@ -204,12 +208,127 @@ void cons_alias_2(unsigned int n, VectorInt* D, uint32_t cs, int virtual_obj, Ve
     }
 }
 
+void cons_alias3(unsigned int n, VectorInt* D, uint32_t cs, int virtual_obj, VectorInt* T, VectorInt* Threshold) {
+    // Version optimisée
+    VectorInt H, L;
+    vector_init(&H);
+    vector_init(&L);
+    vector_reserve(&H, n);
+    vector_reserve(&L, n);
+
+    int virtual_cell = -1;
+    int t = 0;
+
+    // Optimisation 1 : Éviter les appels répétés à vector_get et D->data
+    int* D_data = D->data;
+    
+    for (unsigned int i = 0; i < n; i++) {
+        if (D_data[i] >= cs) {
+            vector_push(&H, i);
+        } else {
+            vector_push(&L, i);
+        }
+    }
+
+    int w = 0;
+    int w2 = 0;
+    int temp = 0;
+    
+    int* H_data = H.data;
+    int* L_data = L.data;
+    int* T_data = T->data;
+    int* Threshold_data = Threshold->data;
+    int H_pos = H.size;
+    int L_pos = L.size;
+
+    while (H_pos > 0) {
+        unsigned int x = H_data[--H_pos]; // pop from H
+        w = D_data[x];
+
+        if (L_pos > 0) {
+            unsigned int x2 = L_data[--L_pos]; // pop from L
+            w2 = D_data[x2];
+
+            if ((int)x2 != virtual_obj) {
+                // Optimisation 3 : Écriture directe quand possible
+                T_data[T->size] = x2;
+                T_data[T->size + 1] = x;
+                Threshold_data[Threshold->size] = w2;
+                T->size += 2;
+                Threshold->size++;
+            } else {
+                virtual_cell = t;
+                T_data[T->size] = x;
+                T_data[T->size + 1] = x2;
+                temp = cs - w2;
+                Threshold_data[Threshold->size] = temp;
+                T->size += 2;
+                Threshold->size++;
+            }
+
+            temp = cs - w2;
+            w -= temp;
+        } else {
+            T_data[T->size] = x;
+            T_data[T->size + 1] = -1;
+            Threshold_data[Threshold->size] = cs;
+            T->size += 2;
+            Threshold->size++;
+            w -= cs;
+        }
+
+        t += 2;
+
+        if (w > 0) {
+            D_data[x] = w;
+            if (w >= cs) {
+                H_data[H_pos++] = x;
+            } else {
+                L_data[L_pos++] = x;
+            }
+        }
+    }
+
+    // Mise à jour des tailles finales
+    H.size = H_pos;
+    L.size = L_pos;
+
+    if (virtual_cell > -1) {
+        int last = t - 2;
+        int last_idx = last / 2;
+        int virtual_idx = virtual_cell / 2;
+
+        if (last_idx < Threshold->size && virtual_idx < Threshold->size) {
+            // Optimisation 4 : Échange direct sans fonction vector_swap
+            int tmp_threshold = Threshold_data[last_idx];
+            Threshold_data[last_idx] = Threshold_data[virtual_idx];
+            Threshold_data[virtual_idx] = tmp_threshold;
+        }
+
+        // Échange des éléments dans T
+        int tmp1 = T_data[last];
+        int tmp2 = T_data[last + 1];
+
+        T_data[last] = T_data[virtual_cell];
+        T_data[last + 1] = T_data[virtual_cell + 1];
+
+        T_data[virtual_cell] = tmp1;
+        T_data[virtual_cell + 1] = tmp2;
+    }
+
+    vector_free(&H);
+    vector_free(&L);
+}
+
 struct sample_alias_integers_s preprocess_alias_integers(int* a, int n) {
     struct sample_alias_integers_s sampler;
 
     // Init des vecteurs
     vector_init(&sampler.T);
     vector_init(&sampler.Threshold);
+    vector_reserve(&sampler.T, 2*n);
+    vector_reserve(&sampler.Threshold, 2*n);
+
     sampler.cs = 0;
 
     VectorInt D;
@@ -246,7 +365,7 @@ struct sample_alias_integers_s preprocess_alias_integers(int* a, int n) {
         n = D.size;
     }
 
-    cons_alias(D.size, &D, sampler.cs, virtual_obj, &sampler.T, &sampler.Threshold);
+    cons_alias3(D.size, &D, sampler.cs, virtual_obj, &sampler.T, &sampler.Threshold);
     
     /*
     printf("Alias table: \n");

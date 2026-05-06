@@ -3,7 +3,7 @@ all: main.out main.out.opt preprocess.out preprocess.out.opt test histogram.out
 SRC_C = flip.c main.c macros.c vector_int.c readio.c sample.c alias_rust.c alias_fractions.c utils.c
 SRC_CPP = main.cpp macros.c readio.c readio.cpp sample.cpp
 
-GSL_FLAGS = $(shell pkg-config --libs --cflags gsl)  # --cflags
+GSL_FLAGS = $(shell pkg-config --cflags --libs gsl)  # --cflags
 CFLAGS = -g -fsanitize=address -O0
 
 main.out: $(SRC_C)

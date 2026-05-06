@@ -258,24 +258,42 @@ int sample_alias_exact(struct sample_alias_exact_s *x) {
     }
 }
 
+// Mettre 2 à la fin de la fonction que vous ne voulez PAS utiliser (ça évite de modifier les appels partout dans le code...)
 // sample_alias_integers
 uint32_t sample_alias_integers(struct sample_alias_integers_s *x) {
-    int q = 0;
+    // ORIGINALE
+    int q;
 
     // Tirage d'une case dans la table
     int n = x->Threshold.size;
     q = uniform(n);
-
-    unsigned int q_index = q;
     
     // Tirage de Bernoulli pour savoir si on prend T[2q] ou T[2q + 1]
-    uint32_t b = bernoulli(x->Threshold.data[q_index], x->cs);
+    uint32_t b = bernoulli(x->Threshold.data[(unsigned int)q], x->cs);
 
     // Calcul de l'index final dans T sans branchement conditionnel
-    uint32_t final_index = 2 * q_index + 1 - b;    
+    uint32_t final_index = 2 * (unsigned int)q + 1 - b;    
 
-    uint32_t result = x->T.data[final_index];
-    return result;
+    return x->T.data[final_index];
+}
+
+uint32_t sample_alias_integers2(struct sample_alias_integers_s *x) {
+    // VERSION 2 d'Antoine
+    int q;
+
+    // Tirage d'une case dans la table
+    int n = x->Threshold.size;
+    q = uniform(n);
+    
+    // Tirage de Bernoulli pour savoir si on prend T[2q] ou T[2q + 1]
+    int numer = x->Threshold.data[(unsigned int)q];
+    int denom = x->cs;
+    uint32_t b = numer==denom || bernoulli(numer, denom);
+
+    // Calcul de l'index final dans T sans branchement conditionnel
+    uint32_t final_index = 2 * (unsigned int)q + 1 - b;    
+
+    return x->T.data[final_index];
 }
 
 // sample_aldr
@@ -302,11 +320,11 @@ static unsigned int alias_rust_rng_index(unsigned int n) {
     return (n <= 1) ? 0u : uniform(n);
 }
 
-static double alias_rust_rng_weight(double max) {
-    if (max <= 1.0) {
-        return 0.0;
+static unsigned int alias_rust_rng_weight(unsigned int max) {
+    if (max <= 1) {
+        return 0;
     }
-    return (double) uniform((uint32_t) max);
+    return (unsigned int) uniform((uint32_t) max);
 }
 
 uint32_t sample_alias_rust(struct sample_alias_rust_s *x){
@@ -327,12 +345,12 @@ uint32_t sample_alias_fractions(struct sample_alias_fractions_s *x) {
 
     uint32_t numer = f.num;
     uint32_t denom = f.denom;
-
     uint32_t b = bernoulli(numer, denom);
 
     return b ? x->table[index].i : x->table[index].j;
 }
 
+// A SUPPRIMER (vérifier dépendances)
 uint32_t sample_alias_fractions2(struct sample_alias_fractions_s *x) {
     uint32_t n = x->taille;
     uint32_t index = uniform(n);

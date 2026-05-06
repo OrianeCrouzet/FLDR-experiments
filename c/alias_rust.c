@@ -4,10 +4,10 @@
 #include "vector_int.h"
 #include "alias_rust.h"
 
-static double pairwise_sum(const double *weights, unsigned int n)
+static unsigned int pairwise_sum(const unsigned int *weights, unsigned int n)
 {
     if (n <= 32) {
-        double sum = 0.0;
+        unsigned int sum = 0;
         for (unsigned int i = 0; i < n; i++)
             sum += weights[i];
         return sum;
@@ -21,7 +21,7 @@ static double pairwise_sum(const double *weights, unsigned int n)
 
 WeightedError weighted_alias_new(
     alias_rust_s *out,
-    const double *weights,
+    const unsigned int *weights,
     unsigned int n
 )
 {
@@ -36,23 +36,23 @@ WeightedError weighted_alias_new(
     vector_init(&out->large);
 
     out->prob =
-        malloc(sizeof(double)*n);
+        malloc(sizeof(unsigned int)*n);
 
-    double sum =
+    unsigned int sum =
         pairwise_sum(weights,n);
 
-    if(sum==0.0)
+    if(sum==0)
         return WEIGHTED_ALL_ZERO;
 
     out->weight_sum = sum;
 
-    double n_double = (double)n;
+    unsigned int n_unsigned = (unsigned int)n;
 
     for(unsigned int i=0;i<n;i++)
     {
 
-        double p =
-            weights[i] * n_double;
+        unsigned int p =
+            weights[i] * n_unsigned;
 
         out->prob[i]=p;
 
@@ -137,13 +137,13 @@ WeightedError weighted_alias_new(
 unsigned int weighted_alias_sample(
     alias_rust_s *dist,
     unsigned int (*rng_index)(unsigned int),
-    double (*rng_weight)(double)
+    unsigned int (*rng_weight)(unsigned int)
 )
 {
     unsigned int i =
         rng_index(dist->n);
 
-    double r =
+    unsigned int r =
         rng_weight(dist->weight_sum);
 
     if(r < dist->prob[i])

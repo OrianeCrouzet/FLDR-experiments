@@ -21,10 +21,8 @@ typedef struct {
 } PileResult;
 
 // Déclarations des fonctions utilitaires
-struct Fraction* ints_to_fractions(int* vals, int N);
 PileResult piles(struct Fraction* distrib, int N);
 struct AliasEntry* algo_alias_fractions(struct Fraction* distrib, int N);
-struct AliasEntry* algo_alias_fractions2(struct Fraction* distrib, int N);
 struct AliasEntry* algo_alias_fractions3(struct Fraction* distrib, int N);
 
 // Benchmark

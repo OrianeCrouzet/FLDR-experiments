@@ -333,9 +333,9 @@ struct sample_alias_rust_s read_sample_alias_rust(char *fname){
     struct array_s weights_raw = load_array(fp);
     fclose(fp);
 
-    double *weights = calloc(weights_raw.length, sizeof(double));
+    unsigned int *weights = calloc(weights_raw.length, sizeof(unsigned int));
     for (int i = 0; i < weights_raw.length; ++i) {
-        weights[i] = (double) weights_raw.a[i];
+        weights[i] = (unsigned int) weights_raw.a[i];
     }
 
     struct sample_alias_rust_s sampler;
