@@ -365,7 +365,9 @@ struct sample_alias_integers_s preprocess_alias_integers(int* a, int n) {
         n = D.size;
     }
 
-    cons_alias3(D.size, &D, sampler.cs, virtual_obj, &sampler.T, &sampler.Threshold);
+    //(printf("before cons_alias\n"), fflush(stdout));
+    cons_alias(D.size, &D, sampler.cs, virtual_obj, &sampler.T, &sampler.Threshold);
+    //(printf("after cons_alias\n"), fflush(stdout));
     
     /*
     printf("Alias table: \n");
@@ -379,6 +381,14 @@ struct sample_alias_integers_s preprocess_alias_integers(int* a, int n) {
     }*/
 
     vector_free(&D);
+
+    // printf("q = %d \n", q);
+    // fflush(stdout);
+
+    // printf("T.size = %u \n", sampler.T.size);
+    // fflush(stdout);
+
+    // printf("T = ")
 
     return sampler;
 }

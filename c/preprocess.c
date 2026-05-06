@@ -131,6 +131,12 @@ int main(int argc, char **argv) {
 
     // printf("%dc %1.6f %1.6f\n", d, t_fldr, t_alias);
 
-    printf("%dc %1.6f %1.6f\n", n, t_alias_integers, t_alias_fractions);
-    fflush(stdout);
+    // Afficher que les tables pratiquement égales en terme de taille
+    if ((temp1.T.size)/2 < temp2.taille + 10) {
+        printf("%dc %1.6f %1.6f\n", n, t_alias_integers, t_alias_fractions);
+        fflush(stdout);
+    }
+
+    // printf("%dc %1.6f %1.6f\n", n, t_alias_integers, t_alias_fractions);
+    // fflush(stdout);
 }

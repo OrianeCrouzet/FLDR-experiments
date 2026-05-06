@@ -262,10 +262,12 @@ int sample_alias_exact(struct sample_alias_exact_s *x) {
 // sample_alias_integers
 uint32_t sample_alias_integers(struct sample_alias_integers_s *x) {
     // ORIGINALE
+    // printf("tirage integers");
+    // fflush(stdout);
     int q;
 
     // Tirage d'une case dans la table
-    int n = x->Threshold.size;
+    uint32_t n = x->Threshold.size;
     q = uniform(n);
     
     // Tirage de Bernoulli pour savoir si on prend T[2q] ou T[2q + 1]

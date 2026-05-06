@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 N = 50
 
 # --- lecture distribution ---
-with open("histogram/general.dist") as f:
+with open("histogram/test2.dist") as f:
     Z = int(f.readline())
     line = f.readline().split()
     n = int(line[0])

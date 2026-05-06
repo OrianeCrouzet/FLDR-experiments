@@ -159,6 +159,7 @@ from discrete_sampling.construct import (
     construct_sample_alias_integers,
     construct_sample_alias_rust,
     construct_sample_aldr,
+    construct_sample_alias_fractions,
     construct_sample_interval,
     construct_sample_ky_encoding,
     construct_sample_ky_matrix,
@@ -178,6 +179,7 @@ from discrete_sampling.writeio import (
     write_sample_alias_integers,
     write_sample_alias_rust,
     write_sample_aldr,
+    write_sample_alias_fractions,
     write_sample_interval,
     write_sample_ky_encoding,
     write_sample_ky_matrix,
@@ -246,6 +248,38 @@ PY
       cat /tmp/w | gxargs -P ${NCPU} -n1 -d'\n' -I% sh -c '%'
       wait
   done
+
+  # for sampler in ${SAMPLERS}; do
+  #     echo "=== Measuring existing sampler: ${sampler} ==="
+  #     rm -rf /tmp/w
+
+  #     echo "[DEBUG] Listing files for sampler ${sampler} in ${stamp}"
+  #     fnames=$(ls "${stamp}"/*.${sampler} 2>/dev/null || true)
+
+  #     if [ -z "${fnames}" ]; then
+  #         echo "[WARN] No files for sampler ${sampler} in ${stamp}" >&2
+  #         continue
+  #     fi
+
+  #     for f in ${fnames}; do
+  #         u=${f}.runtime
+  #         echo "[DEBUG] Preparing job for file: ${f}"
+
+  #         echo "echo '[START] sampler=${sampler} file=${f}' && \
+  # ./main.out.opt ${seed} ${steps} ${sampler} ${f} > ${u} 2>&1 && \
+  # echo '[DONE] ${u}' || echo '[ERROR] sampler=${sampler} file=${f}'" >> /tmp/w
+  #     done
+
+  #     echo "[DEBUG] Jobs to execute:"
+  #     cat /tmp/w
+
+  #     echo "[DEBUG] Launching gxargs with ${NCPU} workers"
+  #     cat /tmp/w | gxargs -P ${NCPU} -n1 -d'\n' -I% sh -c '%'
+
+  #     echo "[DEBUG] Waiting for all jobs to finish..."
+  #     wait
+  #     echo "[DEBUG] Done with sampler ${sampler}"
+  # done
 
   # Reuse existing aggregation commands for readability and maintainability.
   echo "=== Aggregating sizes ==="
