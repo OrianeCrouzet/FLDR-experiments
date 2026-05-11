@@ -84,13 +84,37 @@ int main(int argc, char **argv) {
     }
     char *path = argv[1];
 
-    // Load distribution
 
-    // FILE *fp = fopen(path, "r");
-    // int Z;
-    // fscanf(fp, "%d", &Z);
-    // struct array_s x = load_array(fp);
-    // fclose(fp);
+    //********************************
+    // Mesures pour FLDR et Alias GSL
+    //********************************
+
+    /*FILE *fp = fopen(path, "r");
+    int Z;
+    fscanf(fp, "%d", &Z);
+    struct array_s x = load_array(fp);
+    fclose(fp);
+
+    // Measure time of FLDR.
+    clock_t t;
+    t = clock();
+    int d = preprocess_fldr(x, Z);
+    t = clock() - t;
+    double t_fldr = ((double) t) / CLOCKS_PER_SEC;
+
+    // Measure time of Alias GSL.
+    t = clock();
+    preprocess_alias_gsl(x, Z);
+    t = clock() - t;
+    double t_alias = ((double) t) / CLOCKS_PER_SEC;
+
+    printf("%dc %1.6f %1.6f\n", d, t_fldr, t_alias); */
+
+    
+
+    //***********************************************
+    // Mesures pour Alias Integers et Alias Fractions
+    //***********************************************
 
     FILE *fp = fopen(path, "r");
     int kmul;
@@ -116,27 +140,12 @@ int main(int argc, char **argv) {
     t = clock() - t;
     double t_alias_fractions = ((double) t) / CLOCKS_PER_SEC;
 
-    // // Measure time of FLDR.
-    // clock_t t;
-    // t = clock();
-    // int d = preprocess_fldr(x, Z);
-    // t = clock() - t;
-    // double t_fldr = ((double) t) / CLOCKS_PER_SEC;
+    // // Afficher que les tables pratiquement égales en terme de taille
+    // if ((temp1.T.size)/2 < temp2.taille + 10) {
+    //     printf("%dc %1.6f %1.6f\n", n, t_alias_integers, t_alias_fractions);
+    //     fflush(stdout);
+    // }
 
-    // // Measure time of Alias GSL.
-    // t = clock();
-    // preprocess_alias_gsl(x, Z);
-    // t = clock() - t;
-    // double t_alias = ((double) t) / CLOCKS_PER_SEC;
-
-    // printf("%dc %1.6f %1.6f\n", d, t_fldr, t_alias);
-
-    // Afficher que les tables pratiquement égales en terme de taille
-    if ((temp1.T.size)/2 < temp2.taille + 10) {
-        printf("%dc %1.6f %1.6f\n", n, t_alias_integers, t_alias_fractions);
-        fflush(stdout);
-    }
-
-    // printf("%dc %1.6f %1.6f\n", n, t_alias_integers, t_alias_fractions);
-    // fflush(stdout);
+    printf("%dc %1.6f %1.6f\n", n, t_alias_integers, t_alias_fractions);
+    fflush(stdout);
 }

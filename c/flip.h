@@ -21,6 +21,7 @@ int randint(int k);
 uint32_t flip_n(uint32_t n);
 uint32_t uniform(uint32_t n);
 uint32_t bernoulli(uint32_t numer, uint32_t denom);
+uint32_t bernoulli2(uint32_t numer, uint32_t denom);
 
 // Macros for min and max.
 #define max(a, b)            \

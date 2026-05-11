@@ -1,4 +1,4 @@
-all: main.out main.out.opt preprocess.out preprocess.out.opt test histogram.out
+all: main.out main.out.opt preprocess.out preprocess.out.opt test #histogram.out
 
 SRC_C = flip.c main.c macros.c vector_int.c readio.c sample.c alias_rust.c alias_fractions.c utils.c
 SRC_CPP = main.cpp macros.c readio.c readio.cpp sample.cpp

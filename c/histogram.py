@@ -3,15 +3,19 @@ import matplotlib.pyplot as plt
 
 N = 50
 
+# Commande : python3 histogram.py
+
 # --- lecture distribution ---
-with open("histogram/test2.dist") as f:
+# Changer ici pour tester d'autres distributions
+with open("histogram/test4.dist") as f:
     Z = int(f.readline())
     line = f.readline().split()
     n = int(line[0])
     weights = np.array(list(map(int, line[1:])))
 
 # --- lecture tirages ---
-with open("histogram/alias.integers.histo") as f:
+# Changer ici pour tester d'autres algorithmes
+with open("histogram/aldr.histo") as f:
     draws = np.array(list(map(int, f.read().split())))
 draws = np.array(draws)
 # on ignore l'objet virtuel
@@ -40,5 +44,5 @@ plt.bar(x, weights_norm, alpha=0.5, color="pink", label="distribution théorique
 plt.bar(x, counts_norm, alpha=0.5, color="blue", label="tirages (empirique)")
 
 plt.legend()
-plt.title("Validation sampler : Alias Integers")
+plt.title("Validation sampler : ALDR")
 plt.show()

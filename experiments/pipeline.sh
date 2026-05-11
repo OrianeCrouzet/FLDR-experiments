@@ -62,6 +62,8 @@ if [ ${cmd} = 'initialize' ]; then
 fi
 
 if [ ${cmd} = 'initialize-2' ]; then
+# Pour la future figure avec n qui varie et entropie fixée
+
   # format attendu :
   #   dists.H.maxpow.seed
   # exemple :
@@ -366,6 +368,7 @@ if [ ${cmd} = 'run-all-memory-runtime' ]; then
 fi
 
 if [ ${cmd} = 'run-all-memory-runtime-2' ]; then
+# Pour la future figure avec n qui varie et entropie fixée
   H=${3}
   seed=${5:-2}
 
@@ -387,7 +390,6 @@ Zs_pp='10 100 1000 10000 100000 1000000'
 # Ns_pp='10 20 30'
 # Zs_pp='10 15 50'
 if [ ${cmd} = 'preprocess-initialize' ]; then
-# ORIGINALE
   seed=$(echo ${stamp} | cut -d. -f3);
   mkdir -p ${stamp};
   counter=0
@@ -418,71 +420,7 @@ if [ ${cmd} = 'preprocess-initialize' ]; then
   exit 0
 fi
 
-if [ "${cmd}" = 'preprocess-initialize2' ]; then
-# TEST AVEC DEBUG
-  seed=$(echo ${stamp} | cut -d. -f3)
-  mkdir -p "${stamp}"
-
-  counter=0
-  total=0
-
-  echo "[INFO] Démarrage preprocess avec seed=${seed}"
-
-  for n in ${Ns_pp}; do
-    (
-      for Z in ${Zs_pp}; do
-        if [ ${n} -lt ${Z} ]; then
-          total=$((total + 1))
-          echo "[START] tâche #${total} n=${n} Z=${Z} seed=${seed}"
-
-          d=dists.${n}.${Z}.${seed}
-
-          start=$(date +%s)
-
-          ./dists.py generate-distributions \
-              N=${n} Z=${Z} seed=${seed} samplers='none' \
-              thin=600 offset=500
-
-          status=$?
-          end=$(date +%s)
-
-          if [ ${status} -ne 0 ]; then
-            echo "[ERROR] échec pour n=${n} Z=${Z}"
-          else
-            echo "[DONE] n=${n} Z=${Z} durée=$((end - start))s"
-          fi
-
-          for x in $(ls ${d}/* 2>/dev/null); do
-            fx=$(echo "$x" | tr '/' '.' | sed 's/d.00000.//g')
-            dx=${stamp}/${fx}
-            mv "$x" "${dx}"
-            echo "[MOVE] $x -> ${dx}"
-          done
-
-          rm -rf "${d}"
-        fi
-      done
-    ) &
-
-    counter=$((counter + 1))
-    echo "[INFO] jobs lancés: ${counter}"
-
-    if [ ${counter} -eq 60 ]; then
-      echo "[WAIT] limite atteinte, attente des jobs..."
-      wait
-      echo "[WAIT] reprise"
-      counter=0
-    fi
-  done
-
-  wait
-  echo "[INFO] Tous les jobs sont terminés"
-
-  exit 0
-fi
-
 if [ ${cmd} = 'preprocess-measure' ]; then
-# ORIGINALE
   fnames=$(ls ${stamp}/*.dist);
   rm -rf /tmp/w
   rm -rf ${stamp}/preprocess
@@ -496,52 +434,6 @@ if [ ${cmd} = 'preprocess-measure' ]; then
   exit 0;
 fi
 
-if [ "${cmd}" = 'preprocess-measure2' ]; then
-# TEST AVEC DEBUG
-  echo "[INFO] Démarrage preprocess-measure"
-
-  fnames=$(ls ${stamp}/*.dist 2>/dev/null)
-  if [ -z "${fnames}" ]; then
-    echo "[ERROR] Aucun fichier .dist trouvé dans ${stamp}"
-    exit 1
-  fi
-
-  rm -rf /tmp/w
-  rm -rf ${stamp}/preprocess
-
-  total=0
-
-  for fn in ${fnames}; do
-    u=${fn%.dist}.preprocess
-    total=$((total + 1))
-
-    echo "[QUEUE] tâche #${total} fichier=${fn}"
-
-    echo "echo '[START] ${fn}'; \
-    start=\$(date +%s); \
-    ./preprocess.out.opt ${fn} > ${u}.c; \
-    status=\$?; \
-    end=\$(date +%s); \
-    if [ \$status -ne 0 ]; then \
-      echo '[ERROR] ${fn}'; \
-    else \
-      echo '[DONE] ${fn} durée='\$((end - start))'s'; \
-    fi; \
-    echo '${u}.c'" >> /tmp/w
-  done
-
-  echo "[INFO] ${total} tâches en file, exécution avec ${NCPU} CPU"
-
-  cat /tmp/w | gxargs -P ${NCPU} -n1 -d'\n' -I% sh -c '%'
-
-  echo "[INFO] Fusion des résultats..."
-  cat ${stamp}/*.preprocess.c > ${stamp}/preprocess
-
-  echo "[DONE] Fichier final: ${stamp}/preprocess"
-
-  exit 0
-fi
-
 if [ ${cmd} = 'preprocess-aggregate' ]; then
   seed=$(echo ${stamp} | cut -d. -f3);
   Zs=$(ls ${stamp}/dists.*.c | cut -f2 -d/ | cut -f3 -d. | sort | uniq);
@@ -553,69 +445,6 @@ if [ ${cmd} = 'preprocess-aggregate' ]; then
     for n in ${Ns}; do
       if [ ${n} -lt ${Z} ]; then
         cat ${stamp}/dists.${n}.${Z}.${seed}.preprocess.c >> ${fout}.c;
-      fi
-    done
-    echo ${fout}.c
-  done
-  exit 0
-fi
-
-if [ ${cmd} = 'preprocess-initialize-aliases' ]; then
-  seed=$(echo ${stamp} | cut -d. -f3);
-  mkdir -p ${stamp};
-  counter=0
-  for n in ${Ns_pp}; do (
-    for Z in ${Zs_pp}; do
-      if [ ${n} -lt ${Z} ]; then
-        d=dists.${n}.${Z}.${seed}
-        ./dists.py generate-distributions \
-            N=${n} Z=${Z} seed=${seed} samplers='none'\
-            thin=600 offset=500;
-        for x in $(ls ${d}/*); do
-          fx=$(echo $x | tr '/' '.' | sed 's/d.00000.//g')
-          dx=${stamp}/${fx};
-          mv $x ${dx};
-          echo ${dx};
-        done
-        rm -rf ${d};
-      fi
-    done
-    wait;
-  ) &
-  counter=$((counter + 1))
-  if [ ${counter} -eq 60 ]; then
-    wait
-    counter=0;
-  fi
-  done
-  exit 0
-fi
-
-if [ ${cmd} = 'preprocess-measure-aliases' ]; then
-  fnames=$(ls ${stamp}/*.dist);
-  rm -rf /tmp/w
-  rm -rf ${stamp}/preprocess_aliases
-  for fn in ${fnames}; do
-      u=${fn%.dist}.preprocess_aliases
-      echo "./preprocess_aliases.out.opt ${fn} > ${u}.c && echo ${u}.c" >> /tmp/w
-  done
-  cat /tmp/w | gxargs -P ${NCPU} -n1 -d'\n' -I% sh -c '%'
-  cat ${stamp}/*.preprocess_aliases.c > ${stamp}/preprocess_aliases
-  echo ${stamp}/preprocess_aliases
-  exit 0;
-fi
-
-if [ ${cmd} = 'preprocess-aggregate-aliases' ]; then
-  seed=$(echo ${stamp} | cut -d. -f3);
-  Zs=$(ls ${stamp}/dists.*.c | cut -f2 -d/ | cut -f3 -d. | sort | uniq);
-  Ns=$(ls ${stamp}/dists.*.c | cut -f2 -d/ | cut -f2 -d. | sort -h | uniq);
-  for Z in ${Zs}; do
-    fout=${stamp}/aggregate.${Z}.preprocess_aliases
-    rm -rf ${fout}.c;
-    rm -rf ${fout}.cpp;
-    for n in ${Ns}; do
-      if [ ${n} -lt ${Z} ]; then
-        cat ${stamp}/dists.${n}.${Z}.${seed}.preprocess_aliases.c >> ${fout}.c;
       fi
     done
     echo ${fout}.c

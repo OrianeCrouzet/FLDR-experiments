@@ -79,12 +79,10 @@ int main(int argc, char **argv)
     int steps = atoi(argv[2]);
 
     char samplers[][32] = {
-        //"alias.exact",
         "alias.integers",
         "aldr",
         "alias.rust",
         "alias.fractions",
-        //"rej.enc"
     };
 
     for (int i = 0; i < 4; i++) {

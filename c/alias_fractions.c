@@ -16,150 +16,7 @@
 #include "fraction.h"
 #include <stdint.h>
 
-PileResult piles(struct Fraction* distrib, int N) {
-    PileResult res;
-
-    // pdsCase = 1 / N
-    res.pdsCase.num = 1;
-    res.pdsCase.denom = (uint32_t) N;
-
-    res.S0 = malloc(N * sizeof(int));
-    res.S1 = malloc(N * sizeof(int));
-    for (int i = 0; i < N; i++) {
-        res.S0[i] = -1;
-        res.S1[i] = -1;
-    }
-
-    res.lenS0 = 0;
-    res.lenS1 = 0;
-
-    for (int n = 0; n < N; n++) {
-
-        // distrib[n] > 1/N
-        // then distrib[n].num / distrib[n].denom > 1 / N
-        // then distrib[n].num * N > distrib[n].denom
-
-        uint64_t left  = (uint64_t)distrib[n].num * (uint64_t)N;
-        uint64_t right = distrib[n].denom;
-
-        if (left > right) {
-            res.S0[res.lenS0++] = n;
-        } else {
-            res.S1[res.lenS1++] = n;
-        }
-    }
-
-    return res;
-}
-
 struct AliasEntry* algo_alias_fractions(struct Fraction* distrib, int N) {
-    // ORIGINALE
-    
-    PileResult res = piles(distrib, N);
-    struct Fraction pdsCase = res.pdsCase;
-
-    int* S0 = res.S0;
-    int* S1 = res.S1;
-    int lenS0 = res.lenS0;
-    int lenS1 = res.lenS1;
-
-    struct AliasEntry* T = malloc(N * sizeof(struct AliasEntry));
-
-    int idx0 = 0;
-    int idx1 = 0;
-
-    for (int t = 0; t < N; t++) {
-
-        if ((lenS0 - idx0 == 0) && (lenS1 - idx1 == 0)) {
-            fprintf(stderr, "ERREUR: plus de lourds et légers à t=%d\n", t);
-            exit(EXIT_FAILURE);
-        }
-
-        if (lenS1 - idx1 > 0) {
-            int moins = S1[idx1];
-
-            if (frac_eq(distrib[moins], pdsCase)) {
-
-                T[t].i = moins;
-                T[t].j = -1;
-                T[t].prob = frac_copy(pdsCase);
-                idx1++;
-
-            } else {
-                int plus = S0[idx0];
-                T[t].i = moins;
-                T[t].j = plus;
-                T[t].prob = frac_copy(distrib[moins]);
-
-                idx1++;
-
-                // diff = pdsCase - distrib[moins]
-                struct Fraction diff = frac_sub(pdsCase, distrib[moins]);
-                diff = frac_reduce(diff);
-
-                // distrib[plus] -= diff
-                struct Fraction new_plus = frac_sub(distrib[plus], diff);
-                new_plus = frac_reduce(new_plus);
-                distrib[plus] = new_plus;
-
-                // distrib[moins] = 0
-                distrib[moins] = frac_zero();
-
-                if (frac_le(distrib[plus], pdsCase)) {
-                    S1[--idx1] = plus;
-                    idx0++;
-                }
-            }
-
-        } else {
-
-            int only_heavy = S0[idx0];
-
-            T[t].i = only_heavy;
-            T[t].j = -1;
-            T[t].prob = frac_copy(pdsCase);
-
-            distrib[only_heavy] =
-                frac_sub(distrib[only_heavy], pdsCase);
-
-            distrib[only_heavy] = frac_reduce(distrib[only_heavy]);
-
-            if (frac_le(distrib[only_heavy], pdsCase)) {
-                S1[--idx1] = only_heavy;
-                idx0++;
-            }
-        }
-    }
-
-    // normalization step (ancien mpq_div)
-    for (int t = 0; t < N; t++) {
-
-        // T[t].prob = T[t].prob / pdsCase
-        uint64_t num = (uint64_t)T[t].prob.num * pdsCase.denom;
-        uint64_t den = (uint64_t)T[t].prob.denom * pdsCase.num;
-
-        T[t].prob.num = (uint32_t)num;
-        T[t].prob.denom = (uint32_t)den;
-
-        T[t].prob = frac_reduce(T[t].prob);
-    }
-
-    for (int i = 0; i < N; i++) {
-        printf("%d: i=%d j=%d prob=%d/%d\n",
-            i,
-            T[i].i,
-            T[i].j,
-            T[i].prob.num,
-            T[i].prob.denom);
-    }
-
-    free(res.S0);
-    free(res.S1);
-
-    return T;
-}
-
-struct AliasEntry* algo_alias_fractions3(struct Fraction* distrib, int N) {
     // Version qui prend des fractions déjà normalisées
     // Mais on va travailler en entiers pour la précision
     
@@ -245,7 +102,7 @@ struct sample_alias_fractions_s preprocess_alias_fractions(int* a, int n) {
         distrib[i].denom = (uint32_t)total;
     }
 
-    struct AliasEntry* T = algo_alias_fractions3(distrib, n);
+    struct AliasEntry* T = algo_alias_fractions(distrib, n);
 
     free(distrib);
 

@@ -98,3 +98,20 @@ Ce notebook propose aussi une régression linéaire pour la figure 4b, pour la l
 Dans les deux options, il faut penser à bien modifier le notebook en fonction des samplers que vous voulez voir apparaître sur la figure, et à modifier les paramètres `n`, `Z` et `dist_type` (si présent) pour charger le bon jeu de données. 
 
 Lancer un nouveau kernel pour voir la figure renouvelée. 
+
+# Commandes pour reproduire la figure 5
+
+La figure 5 permet de comparer le temps de préprocessing des algorithmes souhaités. Le code se trouve dans `c/preprocess.c`. Dans ce fichier, l'ancien code qui permettait de comparer FLDR et Alias GSL a été conservé en commentaires. La version actuelle permet de comparer le temps de préprocessing d'Alias Integers et Alias Fractions. 
+
+Pour relancer tous les calculs, il faut lancer les commandes suivantes : 
+
+    $ cd experiments
+    $ ./pipeline.sh pp.mn.418 preprocess-initialize
+    $ ./pipeline.sh pp.mn.418 preprocess-measure 
+    $ ./pipeline.sh pp.mn.418 preprocess-aggregate
+
+Ensuite, comme d'habitude, il faut lancer :
+
+    $ python3 -m jupyterlab
+
+Puis, il faut charger le notebook `figure-5-preprocessing-time.ipynb` et relancer un nouveau kernel. 
