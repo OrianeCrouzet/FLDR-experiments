@@ -261,8 +261,28 @@ int sample_alias_exact(struct sample_alias_exact_s *x) {
 // Mettre 2 à la fin de la fonction que vous ne voulez PAS utiliser (ça évite de modifier les appels partout dans le code...)
 
 // sample_alias_integers
+uint32_t sample_alias_integers2(struct sample_alias_integers_s *x) {
+    // ORIGINALE : bernoulli + uniform
+    int q = 0;
+
+    // Tirage d'une case dans la table
+    int n = x->Threshold.size;
+    q = uniform(n);
+
+    unsigned int q_index = q;
+    
+    // Tirage de Bernoulli pour savoir si on prend T[2q] ou T[2q + 1]
+    uint32_t b = bernoulli(x->Threshold.data[q_index], x->cs);
+
+    // Calcul de l'index final dans T sans branchement conditionnel
+    uint32_t final_index = 2 * q_index + 1 - b;    
+
+    uint32_t result = x->T.data[final_index];
+    return result;
+}
+
 uint32_t sample_alias_integers(struct sample_alias_integers_s *x) {
-    // ORIGINALE
+    // ORIGINALE : uniform + uniform
     int q = 0;
 
     // Tirage d'une case dans la table
@@ -286,7 +306,7 @@ uint32_t sample_alias_integers(struct sample_alias_integers_s *x) {
     return result;
 }
 
-uint32_t sample_alias_integers2(struct sample_alias_integers_s *x) {
+uint32_t sample_alias_integers_antoine(struct sample_alias_integers_s *x) {
     // VERSION 2 d'Antoine
     int q;
 

@@ -34,6 +34,8 @@ int sample_alias_exact(struct sample_alias_exact_s *x);
 // ***** Mes ajouts *****
 
 uint32_t sample_alias_integers(struct sample_alias_integers_s *x);
+uint32_t sample_alias_integers2(struct sample_alias_integers_s *x);
+uint32_t sample_alias_integers_antoine(struct sample_alias_integers_s *x);
 int sample_aldr(struct sample_aldr_s *x);
 uint32_t sample_alias_rust(struct sample_alias_rust_s *x);
 uint32_t sample_alias_fractions(struct sample_alias_fractions_s *x);

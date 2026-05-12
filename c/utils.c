@@ -77,7 +77,7 @@ int binary_search_interval_nested(int *arr, int arr_denominator, int length,
 // ***** Mes ajouts *****
 
 void cons_alias(unsigned int n, VectorInt* D, uint32_t cs, int virtual_obj, VectorInt* T, VectorInt* Threshold){
-    // ORIGINALE
+    // ORIGINALE, avec vecteurs dynamiques
     VectorInt H, L;
     vector_init(&H);
     vector_init(&L);
@@ -91,7 +91,7 @@ void cons_alias(unsigned int n, VectorInt* D, uint32_t cs, int virtual_obj, Vect
     for (unsigned int i = 0; i < n; i++) {
         if (D->data[i] >= cs){
             vector_push(&H, i);
-        }else{
+        } else{
             vector_push(&L, i);
         }
     }
@@ -114,6 +114,7 @@ void cons_alias(unsigned int n, VectorInt* D, uint32_t cs, int virtual_obj, Vect
                 vector_push(T, x2);
                 vector_push(T, x);
                 vector_push(Threshold, w2);
+                temp = cs - w2;
             } else {
                 virtual_cell = t;
                 vector_push(T, x);
@@ -121,8 +122,6 @@ void cons_alias(unsigned int n, VectorInt* D, uint32_t cs, int virtual_obj, Vect
                 temp = cs - w2;
                 vector_push(Threshold, temp);
             }
-
-            temp = cs - w2;
             w -= temp;
         } else {
             vector_push(T, x);
@@ -173,10 +172,12 @@ int compare_pairs(const void *a, const void *b) {
     return 0;
 }
 
-// // Sort the array
+// Sort the array
 //    qsort(table, size, sizeof(Pair), compare_pairs);
 
 void cons_alias_2(unsigned int n, VectorInt* D, uint32_t cs, int virtual_obj, VectorInt* T, VectorInt* Threshold){
+    // Version améliorée, faite avec Antoine et Mehdi 
+    // On avait vu que cette version ne faisait économiser que 1 seul bit aléatoire
     struct sample_inversion_bernoulli_s table[n];
     for (unsigned int i = 0; i < n; i++) {
         table[i].a = D->data[i];
@@ -209,7 +210,7 @@ void cons_alias_2(unsigned int n, VectorInt* D, uint32_t cs, int virtual_obj, Ve
 }
 
 void cons_alias3(unsigned int n, VectorInt* D, uint32_t cs, int virtual_obj, VectorInt* T, VectorInt* Threshold) {
-    // Version optimisée
+    // Version optimisée (test)
     VectorInt H, L;
     vector_init(&H);
     vector_init(&L);
@@ -320,52 +321,137 @@ void cons_alias3(unsigned int n, VectorInt* D, uint32_t cs, int virtual_obj, Vec
     vector_free(&L);
 }
 
+void cons_alias4(unsigned int n, VectorInt* D, uint32_t cs, int virtual_obj, VectorInt* T, VectorInt* Threshold){
+    // Version originale, avec des tableaux fixes pour small et large
+    int* small = malloc(n * sizeof(int));
+    int* large = malloc(n * sizeof(int));
+
+    int virtual_cell = -1;
+    int t = 0;
+    int n_small = 0, n_large = 0;
+
+    for (unsigned int i = 0; i < n; i++) {
+        if (D->data[i] >= cs) {
+            large[n_large++] = i;
+        } else {
+            small[n_small++] = i;
+        }
+    }
+
+    int w = 0;
+    int w2 = 0;
+    int temp = 0;
+
+    while (n_large > 0) {
+        unsigned int x = large[--n_large];
+        w = D->data[x];
+
+        if (n_small > 0) {
+            unsigned int x2 = small[--n_small];
+            w2 = D->data[x2];
+
+            if ((int)x2 != virtual_obj) {
+                vector_push(T, x2);
+                vector_push(T, x);
+                vector_push(Threshold, w2);
+                temp = cs - w2;
+            } else {
+                virtual_cell = t;
+                vector_push(T, x);
+                vector_push(T, x2);
+                temp = cs - w2;
+                vector_push(Threshold, temp);
+            }
+            w -= temp;
+        } else {
+            vector_push(T, x);
+            vector_push(T, -1);
+            vector_push(Threshold, cs);
+            w -= cs;
+        }
+
+        t += 2;
+
+        if (w > 0) {
+            D->data[x] = w;
+            if (w >= cs) {
+                large[n_large++] = x;
+            } else {
+                small[n_small++] = x;
+            }
+        }
+    }
+
+    if (virtual_cell > -1) {
+        int last = t - 2;
+
+        int tmp1 = vector_get(T, last);
+        int tmp2 = vector_get(T, last + 1);
+
+        if ((last/2) < Threshold->size && (virtual_cell/2) < Threshold->size)
+            vector_swap(Threshold, last/2, virtual_cell/2);
+
+        T->data[last] = T->data[virtual_cell];
+        T->data[last + 1] = T->data[virtual_cell + 1];
+
+        T->data[virtual_cell] = tmp1;
+        T->data[virtual_cell + 1] = tmp2;
+    }
+
+    free(small);
+    free(large);
+}
+
+
 struct sample_alias_integers_s preprocess_alias_integers(int* a, int n) {
     struct sample_alias_integers_s sampler;
 
     // Init des vecteurs
     vector_init(&sampler.T);
     vector_init(&sampler.Threshold);
-    //vector_reserve(&sampler.T, 2*n);
-    //vector_reserve(&sampler.Threshold, 2*n);
+    vector_reserve(&sampler.T, 2*n);
+    vector_reserve(&sampler.Threshold, 2*n);
 
     sampler.cs = 0;
 
     VectorInt D;
     vector_init(&D);
 
+    int w = 0;
     // Copie a[] dans un VectorInt D
     for (int i = 0; i < n; ++i) {
         uint32_t val = a[i];
         vector_push(&D, val);
+        w += val;
     }
 
-    int w = 0;
-    int w2 = 0;
-    int q = 0;
+    //int w = 0;
+    //int w2 = 0;
+    //int q = 0;
     int r = 0;
 
-    w = poids_total_v2(D, D.size);
-    w2 = w;
+    //w = poids_total_v2(D, D.size);
+    //w2 = w;
     sampler.cs = w / n;
-    q = w / sampler.cs;
+    //q = w / sampler.cs;
     r = w % sampler.cs;
 
     int virtual_obj = -1;
     if (r > 0) {
         virtual_obj = n;
 
-        int delta = 0;
-        delta = sampler.cs - r;
-        w2 = w + delta;
-        q++;
+        //int delta = sampler.cs - r;
+        //delta = sampler.cs - r;
+        //w2 = w + delta;
+        //q++;
 
-        vector_push(&D, delta);            // ajout de l’objet virtuel
+        vector_push(&D, sampler.cs - r);            // ajout de l’objet virtuel
 
-        n = D.size;
+        //n = D.size;
+        n++;
     }
 
-    cons_alias(D.size, &D, sampler.cs, virtual_obj, &sampler.T, &sampler.Threshold);
+    cons_alias4(n, &D, sampler.cs, virtual_obj, &sampler.T, &sampler.Threshold);
 
     vector_free(&D);
 
