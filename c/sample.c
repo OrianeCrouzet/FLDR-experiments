@@ -271,11 +271,16 @@ uint32_t sample_alias_integers(struct sample_alias_integers_s *x) {
 
     unsigned int q_index = q;
     
-    // Tirage de Bernoulli pour savoir si on prend T[2q] ou T[2q + 1]
-    uint32_t b = bernoulli(x->Threshold.data[q_index], x->cs);
+    // Tirage uniforme pour savoir si on prend T[2q] ou T[2q + 1]
+    uint32_t b;
+    if (x->Threshold.data[q_index] == x->cs) {
+        b = 1;
+    } else {
+        b = uniform(x->cs) < x->Threshold.data[q_index];
+    }
 
     // Calcul de l'index final dans T sans branchement conditionnel
-    uint32_t final_index = 2 * q_index + 1 - b;    
+    uint32_t final_index = 2 * q_index + (b ? 0 : 1);
 
     uint32_t result = x->T.data[final_index];
     return result;

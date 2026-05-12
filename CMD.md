@@ -115,3 +115,36 @@ Ensuite, comme d'habitude, il faut lancer :
     $ python3 -m jupyterlab
 
 Puis, il faut charger le notebook `figure-5-preprocessing-time.ipynb` et relancer un nouveau kernel. 
+
+# Commandes pour reproduire les histogrammes
+
+## c/histogram.c
+
+Il faut lancer la commande : 
+
+    $ ./histogram.out histogram/<name_dist>.dist <steps>
+
+--> avec `name_dist` le nom de la distribution que vous voulez tester, parmi les fichiers *.dist dans `c/histogram`.
+
+Au préalable, penser à bien regarder si tous les algos que vous voulez tester soient bien présents dans les `samplers` du `main()`.
+
+## c/histogram.py
+
+Enfin, dans le fichier `histogram.py`, il faut modifier dans les `open` les paramètres pour afficher les bonnes données. 
+
+Typiquement, si à l'étape précédente vous avez testé les algorithmes sur la distribution `test.py`, alors il faut bien mettre cette distribution dans la lecture de la distribution. 
+
+Ensuite, dans la lecture des tirages, ajouter les mesures que vous voulez afficher. Par exemple : 
+
+```python
+    with open("histogram/<my_algo>.histo")
+```
+
+--> avec `my_algo` le nom de l'algorithme que vous voulez afficher. 
+
+Une fois que tout a été paramétré, il faut simplement lancer : 
+
+    $ python3 histogram.py
+
+Si l'algorithme de tirage est correct, vous verrez que les deux histogrammes se superposent pratiquement à la perfection.
+

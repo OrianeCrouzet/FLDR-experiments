@@ -17,6 +17,7 @@
 #include "sstructs.h"
 #include "alias_fractions.h"
 #include "utils.h"
+#include "alias_rust.h"
 
 int ceil_log2(unsigned long long x) {
   static const unsigned long long t[6] = {
@@ -140,12 +141,19 @@ int main(int argc, char **argv) {
     t = clock() - t;
     double t_alias_fractions = ((double) t) / CLOCKS_PER_SEC;
 
+    // Measure time of Alias Rust
+    t = clock();
+    alias_rust_s temp3;
+    weighted_alias_new(&temp3, array, n);
+    t = clock() - t;
+    double t_alias_rust = ((double) t) / CLOCKS_PER_SEC;
+
     // // Afficher que les tables pratiquement égales en terme de taille
-    // if ((temp1.T.size)/2 < temp2.taille + 10) {
+    // if ((temp1.T.size)/2 < temp2.taille + 2) {
     //     printf("%dc %1.6f %1.6f\n", n, t_alias_integers, t_alias_fractions);
     //     fflush(stdout);
     // }
 
-    printf("%dc %1.6f %1.6f\n", n, t_alias_integers, t_alias_fractions);
+    printf("%dc %1.6f %1.6f\n", n, t_alias_integers, t_alias_rust);
     fflush(stdout);
 }

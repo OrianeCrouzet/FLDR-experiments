@@ -61,59 +61,59 @@ if [ ${cmd} = 'initialize' ]; then
   exit 0
 fi
 
-if [ ${cmd} = 'initialize-2' ]; then
-# Pour la future figure avec n qui varie et entropie fixée
+# if [ ${cmd} = 'initialize-2' ]; then
+# # Pour la future figure avec n qui varie et entropie fixée
 
-  # format attendu :
-  #   dists.H.maxpow.seed
-  # exemple :
-  #   dists.3.12.1
-  # => H=3 maxpow=12 seed=1
+#   # format attendu :
+#   #   dists.H.maxpow.seed
+#   # exemple :
+#   #   dists.3.12.1
+#   # => H=3 maxpow=12 seed=1
 
-  if [[ "${stamp}" =~ ^dists\.entropy\.([0-9]+([.][0-9]+)?)\.([0-9]+)\.([0-9]+)$ ]]; then
-    H=${BASH_REMATCH[1]}
-    maxpow=${BASH_REMATCH[3]}
-    seed=${BASH_REMATCH[4]}
-    target_samplers="${SAMPLERS}"
+#   if [[ "${stamp}" =~ ^dists\.entropy\.([0-9]+([.][0-9]+)?)\.([0-9]+)\.([0-9]+)$ ]]; then
+#     H=${BASH_REMATCH[1]}
+#     maxpow=${BASH_REMATCH[3]}
+#     seed=${BASH_REMATCH[4]}
+#     target_samplers="${SAMPLERS}"
 
-  else
-    # appel direct :
-    # ./pipeline.sh alias.integers initialize
-    case "${stamp}" in
-      interval|alias.exact|ky.enc|rej.binary|rej.enc|rej.matc|rej.table|rej.uniform|alias.integers|aldr|alias.rust|alias.fractions)
-        H=10
-        maxpow=12
-        Z=-1
-        seed=1
-        target_samplers="${stamp}"
-        ;;
-      *)
-        echo "Unknown sampler init key: ${stamp}" >&2
-        exit 2
-        ;;
-    esac
-  fi
+#   else
+#     # appel direct :
+#     # ./pipeline.sh alias.integers initialize
+#     case "${stamp}" in
+#       interval|alias.exact|ky.enc|rej.binary|rej.enc|rej.matc|rej.table|rej.uniform|alias.integers|aldr|alias.rust|alias.fractions)
+#         H=10
+#         maxpow=12
+#         Z=-1
+#         seed=1
+#         target_samplers="${stamp}"
+#         ;;
+#       *)
+#         echo "Unknown sampler init key: ${stamp}" >&2
+#         exit 2
+#         ;;
+#     esac
+#   fi
 
-  echo "=== Initialize: Generating distributions ==="
-  echo "H = ${H}, maxpow = ${maxpow}, seed = ${seed}, samplers = ${target_samplers}"
+#   echo "=== Initialize: Generating distributions ==="
+#   echo "H = ${H}, maxpow = ${maxpow}, seed = ${seed}, samplers = ${target_samplers}"
 
-  for sampler in ${target_samplers}; do
-      echo "--- Generating distributions for sampler: ${sampler} ---"
+#   for sampler in ${target_samplers}; do
+#       echo "--- Generating distributions for sampler: ${sampler} ---"
 
-      ./dists.py generate-distributions-entropy \
-          H=${H} \
-          maxpow=${maxpow} \
-          Z=-1 \
-          seed=${seed} \
-          samplers="${sampler}" \
-          thin=5
+#       ./dists.py generate-distributions-entropy \
+#           H=${H} \
+#           maxpow=${maxpow} \
+#           Z=-1 \
+#           seed=${seed} \
+#           samplers="${sampler}" \
+#           thin=5
 
-      echo "Finished sampler: ${sampler}"
-  done
+#       echo "Finished sampler: ${sampler}"
+#   done
 
-  echo "=== All samplers initialized ==="
-  exit 0
-fi
+#   echo "=== All samplers initialized ==="
+#   exit 0
+# fi
 
 if [ ${cmd} = 'aggregate-sizes' ]; then
   for sampler in ${SAMPLERS}; do
@@ -367,26 +367,26 @@ if [ ${cmd} = 'run-all-memory-runtime' ]; then
   exit 0
 fi
 
-if [ ${cmd} = 'run-all-memory-runtime-2' ]; then
-# Pour la future figure avec n qui varie et entropie fixée
-  H=${3}
-  seed=${5:-2}
+# if [ ${cmd} = 'run-all-memory-runtime-2' ]; then
+# # Pour la future figure avec n qui varie et entropie fixée
+#   H=${3}
+#   seed=${5:-2}
 
-  for maxpow in ${4}; do
-      stamp=dists.entropy.${H}.${maxpow}.${seed}
-      echo ${stamp}
+#   for maxpow in ${4}; do
+#       stamp=dists.entropy.${H}.${maxpow}.${seed}
+#       echo ${stamp}
 
-      ./pipeline.sh ${stamp} initialize-2;
-      ./pipeline.sh ${stamp} aggregate-sizes;
-      ./pipeline.sh ${stamp} measure-runtimes 1000000;
-      ./pipeline.sh ${stamp} aggregate-runtimes 1000000;
-  done
-  exit 0
-fi
+#       ./pipeline.sh ${stamp} initialize-2;
+#       ./pipeline.sh ${stamp} aggregate-sizes;
+#       ./pipeline.sh ${stamp} measure-runtimes 1000000;
+#       ./pipeline.sh ${stamp} aggregate-runtimes 1000000;
+#   done
+#   exit 0
+# fi
 
 # The Ns are designed to be linearly spaced on log scale.
 Ns_pp='2 3 4 5 6 7 8 9 10 11 12 13 14 15 17 18 19 21 23 25 27 29 31 34 36 39 42 46 50 54 58 63 68 73 79 85 92 100 107 116 125 135 146 158 171 184 199 215 232 251 271 292 316 341 368 398 429 464 501 541 584 630 681 735 794 857 926 1000 1079 1165 1258 1359 1467 1584 1711 1847 1995 2154 2326 2511 2712 2928 3162 3414 3686 3981 4298 4641 5011 5411 5843 6309 6812 7356 7943 8576 9261 10000 12589 15848 19952 25118 31622 39810 50118 63095 79432'
-Zs_pp='10 100 1000 10000 100000 1000000'
+Zs_pp='10 100 1000000 10000000 100000 100000000'
 # Ns_pp='10 20 30'
 # Zs_pp='10 15 50'
 if [ ${cmd} = 'preprocess-initialize' ]; then
