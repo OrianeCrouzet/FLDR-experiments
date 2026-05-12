@@ -261,7 +261,7 @@ int sample_alias_exact(struct sample_alias_exact_s *x) {
 // Mettre 2 à la fin de la fonction que vous ne voulez PAS utiliser (ça évite de modifier les appels partout dans le code...)
 
 // sample_alias_integers
-uint32_t sample_alias_integers2(struct sample_alias_integers_s *x) {
+uint32_t sample_alias_integers(struct sample_alias_integers_s *x) {
     // ORIGINALE : bernoulli + uniform
     int q = 0;
 
@@ -281,7 +281,7 @@ uint32_t sample_alias_integers2(struct sample_alias_integers_s *x) {
     return result;
 }
 
-uint32_t sample_alias_integers(struct sample_alias_integers_s *x) {
+uint32_t sample_alias_integers2(struct sample_alias_integers_s *x) {
     // ORIGINALE : uniform + uniform
     int q = 0;
 
