@@ -11,6 +11,9 @@ from numpy.random import RandomState
 
 from discrete_sampling.construct import construct_sample_alias
 from discrete_sampling.construct import construct_sample_alias_integers
+from discrete_sampling.construct import construct_sample_alias_rust
+from discrete_sampling.construct import construct_sample_alias_fractions
+from discrete_sampling.construct import construct_sample_aldr
 from discrete_sampling.construct import construct_sample_interval
 from discrete_sampling.construct import construct_sample_rejection_binary_search
 from discrete_sampling.construct import construct_sample_rejection_encoding

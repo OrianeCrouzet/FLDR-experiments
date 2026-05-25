@@ -23,7 +23,7 @@ static int flip_pos = 0;
 // assume RAND_MAX is a Mersenne number
 uint32_t flip_k = 32 - __builtin_clz(RAND_MAX);
 
-int flip(void){
+int flip_old(void){
     if (flip_pos == 0) {
         NUM_RNG_CALLS++;
         flip_word = rand();
@@ -57,6 +57,12 @@ void check_refill(void) {
         }
         flip_pos = flip_k;
     }
+}
+
+int flip(void){
+    check_refill();
+    --flip_pos;
+    return (flip_word >> flip_pos) & 1;
 }
 
 uint32_t flip_n(uint32_t n) {
