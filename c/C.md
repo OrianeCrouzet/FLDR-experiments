@@ -23,7 +23,7 @@ Définissez la structure utilisée par `my_algo` :
 ```c
 // sample_my_algo
 struct sample_my_algo_s {
-    //tout c edont vous avez besoin pour votre structure de données
+    //tout ce dont vous avez besoin pour votre structure de données
 };
 ```
 

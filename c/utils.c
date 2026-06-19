@@ -402,6 +402,107 @@ void cons_alias4(unsigned int n, VectorInt* D, uint32_t cs, int virtual_obj, Vec
     free(large);
 }
 
+void cons_alias5(unsigned int n, VectorInt* D, uint32_t cs, int virtual_obj, VectorInt* T, VectorInt* Threshold){
+    // ORIGINALE, sauf qu'on met les objets exactement de poids cs dans les légers
+    VectorInt H, L;
+    vector_init(&H);
+    vector_init(&L);
+    vector_reserve(&H, n);
+    vector_reserve(&L, n);
+
+    int virtual_cell = -1;
+    int t = 0;
+
+
+    for (unsigned int i = 0; i < n; i++) {
+        if (D->data[i] > cs){
+            vector_push(&H, i);
+        } else{
+            vector_push(&L, i);
+        }
+    }
+
+    int w = 0;
+    int w2 = 0;
+    int temp = 0;
+
+    while (H.size > 0) {
+        unsigned int x = vector_get(&H, H.size - 1);
+        H.size--; // pop
+        w = D->data[x];
+
+        if (L.size > 0) {
+            unsigned int x2 = vector_get(&L, L.size - 1);
+            L.size--; // pop
+            w2 = D->data[x2];
+
+            int delta = cs - w2;
+
+            if ((int)x2 != virtual_obj) {
+                if(w2 < cs){
+                    vector_push(T, x2);
+                    vector_push(T, x);
+                    vector_push(Threshold, w2);
+                }
+                else{
+                    vector_push(T, x2);
+                    vector_push(T, -1);
+                    vector_push(Threshold, cs);
+                }
+            } else {
+                virtual_cell = t;
+                vector_push(T, x);
+                vector_push(T, x2);
+                vector_push(Threshold, delta);
+            }
+            w -= delta;
+        } else {
+            vector_push(T, x);
+            vector_push(T, -1);
+            vector_push(Threshold, cs);
+            w -= cs;
+        }
+
+        t += 2;
+
+        if (w > 0) {
+            D->data[x] = w;
+            if (w > cs) {
+                vector_push(&H, x);
+            } else {
+                vector_push(&L, x);
+            }
+        }
+    }
+
+    while (L.size > 0) {
+        unsigned int element = vector_get(&L, L.size - 1);
+        L.size--;
+
+        vector_push(T, element);
+        vector_push(T, -1);
+        vector_push(Threshold, cs);
+    }
+
+    if (virtual_cell > -1) {
+        int last = t - 2;
+
+        int tmp1 = vector_get(T, last);
+        int tmp2 = vector_get(T, last + 1);
+
+        if ((last/2) < Threshold->size && (virtual_cell/2) < Threshold->size)
+            vector_swap(Threshold, last/2, virtual_cell/2);
+
+        T->data[last] = T->data[virtual_cell];
+        T->data[last + 1] = T->data[virtual_cell + 1];
+
+        T->data[virtual_cell] = tmp1;
+        T->data[virtual_cell + 1] = tmp2;
+    }
+
+    vector_free(&H);
+    vector_free(&L);
+}
 
 struct sample_alias_integers_s preprocess_alias_integers(int* a, int n) {
     struct sample_alias_integers_s sampler;
@@ -451,7 +552,7 @@ struct sample_alias_integers_s preprocess_alias_integers(int* a, int n) {
         n++;
     }
 
-    cons_alias4(n, &D, sampler.cs, virtual_obj, &sampler.T, &sampler.Threshold);
+    cons_alias(n, &D, sampler.cs, virtual_obj, &sampler.T, &sampler.Threshold);
 
     vector_free(&D);
 

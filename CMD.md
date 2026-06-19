@@ -122,6 +122,7 @@ Puis, il faut charger le notebook `figure-5-preprocessing-time.ipynb` et relance
 
 Il faut lancer la commande : 
 
+    $ make all
     $ ./histogram.out histogram/<name_dist>.dist <steps>
 
 --> avec `name_dist` le nom de la distribution que vous voulez tester, parmi les fichiers *.dist dans `c/histogram`.

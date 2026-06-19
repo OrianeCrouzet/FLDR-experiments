@@ -161,6 +161,6 @@ int main(int argc, char **argv) {
     //     fflush(stdout);
     // }
 
-    printf("%dc %1.6f %1.6f\n", n, t_alias_fractions, t_alias_rust);
+    printf("%dc %1.6f %1.6f\n", n, t_alias_integers, t_alias_fractions);
     fflush(stdout);
 }

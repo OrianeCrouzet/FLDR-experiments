@@ -95,7 +95,7 @@ def sparse_family(n):
 
 def gaussian_family(n):
     x = np.arange(n)
-    mu = n      # Mu fixé à n pour tester le rapport sigma/entropie
+    mu = n/2      # Mu fixé à n pour tester le rapport sigma/entropie
     sigma = 10**np.random.uniform(
         np.log10(0.5),
         np.log10(np.sqrt(n)),
