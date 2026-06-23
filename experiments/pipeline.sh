@@ -2,6 +2,7 @@
 
 set -e
 
+# Ajout pour Antoine
 # Set PYTHONPATH to find the discrete_sampling module
 export PYTHONPATH="$(cd "$(dirname "$0")/.." && pwd)/build/lib:$PYTHONPATH"
 
@@ -28,10 +29,16 @@ export PYTHONPATH="$(cd "$(dirname "$0")/.." && pwd)/build/lib:$PYTHONPATH"
 #      ^ run-all-memory-runtime <Z> <Ns> [warmup=0]
 # ============================================================================
 
-if [ -z ${JOBS} ]; then
+if [ -z "${JOBS:-}" ]; then
   NCPU=$(python3 -c 'import multiprocessing; print(multiprocessing.cpu_count())')
 else
   NCPU=${JOBS}
+fi
+
+# Detect GNU xargs (common on macOS via homebrew) or fallback to xargs
+XARGS_BIN="xargs"
+if command -v gxargs >/dev/null 2>&1; then
+  XARGS_BIN="gxargs"
 fi
 
 set -u
@@ -41,7 +48,7 @@ cmd=${2}
 
 # rej.enc == fldr
 #SAMPLERS='interval alias.exact ky.enc rej.binary rej.enc rej.matc rej.table rej.uniform alias.integers aldr alias.rust alias.fractions'
-SAMPLERS='alias.exact rej.enc aldr alias.integers alias.rust alias.fractions'
+SAMPLERS='alias.rust alias.rust alias.integers_old alias.integers_old aldr aldr alias.integers alias.integers alias.exact alias.exact rej.enc rej.enc'
 
 #if [ ${cmd} = 'initialize' ]; then
  # N=$(echo ${stamp} | cut -d. -f2)
@@ -52,7 +59,7 @@ SAMPLERS='alias.exact rej.enc aldr alias.integers alias.rust alias.fractions'
   #exit 0;
 #fi
 
-if [ ${cmd} = 'initialize' ]; then
+if [ "${cmd}" = 'initialize' ]; then
   if [[ "${stamp}" =~ ^dists\.([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
     N=${BASH_REMATCH[1]}
     Z=${BASH_REMATCH[2]}
@@ -61,7 +68,7 @@ if [ ${cmd} = 'initialize' ]; then
   else
     # support des appels direct : ./pipeline.sh alias.integers initialize
     case "${stamp}" in
-      interval|alias.exact|ky.enc|rej.binary|rej.enc|rej.matc|rej.table|rej.uniform|alias.integers|aldr|alias.rust|alias.fractions)
+      interval|alias.exact|ky.enc|rej.binary|rej.enc|rej.matc|rej.table|rej.uniform|alias.integers|alias.integers_old|aldr|alias.rust|alias.fractions)
         N=5; Z=10; seed=1; target_samplers="${stamp}";
         ;;
       *)
@@ -138,11 +145,11 @@ fi
 #   exit 0
 # fi
 
-if [ ${cmd} = 'aggregate-sizes' ]; then
+if [ "${cmd}" = 'aggregate-sizes' ]; then
   for sampler in ${SAMPLERS}; do
       fn=${stamp}/${sampler}.sizes;
-      stat -f %z ${stamp}/*.${sampler} > ${fn};
-      #stat ${stamp}/*.${sampler} -c %s > ${fn};  --> pour WSL / Linux
+      # Portable file size: -f %z for BSD/macOS, -c %s for GNU/Linux
+      stat -f %z ${stamp}/*.${sampler} 2>/dev/null > "${fn}" || stat -c %s ${stamp}/*.${sampler} > "${fn}";
       echo ${fn};
   done
   exit 0;
@@ -156,7 +163,7 @@ fi
 # warmup = 1 pour lancer un tour de chauffe avant les vraies mesures (optionnel, défaut 0)
 # On effectue une copie du dossier des distributions pour les garder intacts,
 # le nouveau dossier s'appelle <dir>-work et c'est dans ce dossier que les fichiers de runtime seront créés.
-if [ ${cmd} = 'measure-runtimes-existing' ]; then
+if [ "${cmd}" = 'measure-runtimes-existing' ]; then
   steps=${3}
   seed=${4:-1}
   warmup=${5:-0}
@@ -254,15 +261,15 @@ for dist_path in sorted(stamp.glob('*.dist')):
         f_construct, f_write = structures[sampler]
         out_path = dist_path.with_name(dist_path.stem + '.' + sampler)
         struc = f_construct(p_target)
-        if sampler in {'alias.integers', 'alias.rust', 'aldr', 'alias.fractions'}:
-            f_write(*struc, entropy, str(out_path))
+        if sampler in {'alias.integers', 'alias.rust'}:
+            f_write(*struc, Z, entropy, str(out_path))
         else:
-            f_write(*struc, str(out_path))
+            f_write(*struc, entropy, str(out_path))
 PY
   fi
 
   # Warmup phase if requested
-  if [ ${warmup} -eq 1 ]; then
+  if [ "${warmup}" -eq 1 ]; then
     echo "=== WARMUP PHASE ==="
     for sampler in ${SAMPLERS}; do
         echo "=== Warmup existing sampler: ${sampler} ==="
@@ -270,28 +277,32 @@ PY
         if [ -z "${fnames}" ]; then
             continue
         fi
+        tmp_warmup=$(mktemp)
         for f in ${fnames}; do
             printf '%s\n' "./main.out.opt ${seed} ${steps} ${sampler} ${f} > /dev/null 2>&1"
-        done | gxargs -P ${NCPU} -n1 -d'\n' -I% sh -c '%'
+        done > "${tmp_warmup}"
+        cat "${tmp_warmup}" | ${XARGS_BIN} -P ${NCPU} -n1 -d'\n' -I% sh -c '%'
         wait
+        rm -f "${tmp_warmup}"
     done
     echo "=== END WARMUP PHASE ==="
   fi
 
   for sampler in ${SAMPLERS}; do
       echo "=== Measuring existing sampler: ${sampler} ==="
-      rm -rf /tmp/w
       fnames=$(ls "${stamp}"/*.${sampler} 2>/dev/null || true)
       if [ -z "${fnames}" ]; then
           echo "No files for sampler ${sampler} in ${stamp}" >&2
           continue
       fi
+      tmp_jobs=$(mktemp)
       for f in ${fnames}; do
           u=${f}.runtime
-          echo "./main.out.opt ${seed} ${steps} ${sampler} ${f} > ${u} && echo ${u}" >> /tmp/w
+          echo "./main.out.opt ${seed} ${steps} ${sampler} ${f} > ${u} && echo ${u}" >> "${tmp_jobs}"
       done
-      cat /tmp/w | gxargs -P ${NCPU} -n1 -d'\n' -I% sh -c '%'
+      cat "${tmp_jobs}" | ${XARGS_BIN} -P ${NCPU} -n1 -d'\n' -I% sh -c '%'
       wait
+      rm -f "${tmp_jobs}"
   done
 
   # for sampler in ${SAMPLERS}; do
@@ -347,10 +358,13 @@ if [ ${cmd} = 'measure-runtimes' ]; then
     for sampler in ${SAMPLERS}; do
         echo "=== Warmup sampler: ${sampler} ==="
         fnames=$(ls ${stamp}/*.${sampler});
+        tmp_warmup=$(mktemp)
         for f in ${fnames}; do
             printf '%s\n' "./main.out.opt ${seed} ${steps} ${sampler} ${f} > /dev/null 2>&1"
-        done | gxargs -P ${NCPU} -n1 -d'\n' -I% sh -c '%'
+        done > "${tmp_warmup}"
+        cat "${tmp_warmup}" | ${XARGS_BIN} -P ${NCPU} -n1 -d'\n' -I% sh -c '%'
         wait
+        rm -f "${tmp_warmup}"
     done
     echo "=== END WARMUP PHASE ==="
   fi
@@ -359,15 +373,16 @@ if [ ${cmd} = 'measure-runtimes' ]; then
   echo "=== MEASUREMENT PHASE ==="
   for sampler in ${SAMPLERS}; do
       echo "=== Measuring sampler: ${sampler} ==="   # <-- log
-      rm -rf /tmp/w
       fnames=$(ls ${stamp}/*.${sampler});
+      tmp_jobs=$(mktemp)
       for f in ${fnames}; do
           u=${f}.runtime
-          echo "./main.out.opt ${seed} ${steps} ${sampler} ${f} > ${u} && echo ${u}" >>/tmp/w
+          echo "./main.out.opt ${seed} ${steps} ${sampler} ${f} > ${u} && echo ${u}" >> "${tmp_jobs}"
       done
       echo "Starting ${sampler} runs..."
-      cat /tmp/w | gxargs -P ${NCPU} -n1 -d'\n' -I% sh -c '%'
+      cat "${tmp_jobs}" | ${XARGS_BIN} -P ${NCPU} -n1 -d'\n' -I% sh -c '%'
       wait
+      rm -f "${tmp_jobs}"
       echo "Finished ${sampler}"  # <-- log
   done
   exit 0;
@@ -497,13 +512,14 @@ if [ ${cmd} = 'preprocess-measure' ]; then
     echo "=== END WARMUP PHASE ==="
   fi
   
-  rm -rf /tmp/w
   rm -rf ${stamp}/preprocess
+  tmp_pre=$(mktemp)
   for fn in ${fnames}; do
       u=${fn%.dist}.preprocess
-      echo "./preprocess.out.opt ${fn} > ${u}.c && echo ${u}.c" >> /tmp/w
+      echo "./preprocess.out.opt ${fn} > ${u}.c && echo ${u}.c" >> "${tmp_pre}"
   done
-  cat /tmp/w | gxargs -P ${NCPU} -n1 -d'\n' -I% sh -c '%'
+  cat "${tmp_pre}" | ${XARGS_BIN} -P ${NCPU} -n1 -d'\n' -I% sh -c '%'
+  rm -f "${tmp_pre}"
   cat ${stamp}/*.preprocess.c > ${stamp}/preprocess
   echo ${stamp}/preprocess
   exit 0;

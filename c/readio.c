@@ -276,6 +276,10 @@ void free_sample_alias_exact_s (struct sample_alias_exact_s x) {
 struct sample_alias_integers_s read_sample_alias_integers(char *fname){
     // Load the distribution.
     FILE *fp = fopen(fname, "r");
+    if (fp == NULL) {
+        perror(fname);
+        exit(EXIT_FAILURE);
+    }
     int Z;
     fscanf(fp, "%d", &Z);
     int n;
@@ -295,6 +299,35 @@ void free_sample_alias_integers_s(struct sample_alias_integers_s x){
     vector_free(&x.Threshold);
     vector_free(&x.T);
 }
+// old
+struct sample_alias_integers_s read_sample_alias_integers_old(char *fname){
+    // Load the distribution.
+    FILE *fp = fopen(fname, "r");
+    if (fp == NULL) {
+        perror(fname);
+        exit(EXIT_FAILURE);
+    }
+    int Z;
+    fscanf(fp, "%d", &Z);
+    int n;
+    fscanf(fp, "%d", &n);
+    int* array = calloc(n, sizeof(int));
+    for (int i = 0; i < n; ++i) {
+        fscanf(fp, "%d", &array[i]);
+    }
+    fclose(fp);
+
+    struct sample_alias_integers_s sampler = preprocess_alias_integers_old(array, n);
+    free(array);
+    return sampler;
+}
+
+void free_sample_alias_integers_s_old(struct sample_alias_integers_s x){
+    vector_free(&x.Threshold);
+    vector_free(&x.T);
+}
+
+
 
 // Load sample_aldr data structure from file path.
 struct sample_aldr_s read_sample_aldr(char *fname){

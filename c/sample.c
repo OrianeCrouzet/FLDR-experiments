@@ -27,7 +27,7 @@ int sample_ky_encoding(struct sample_ky_encoding_s *x) {
     int *enc = x->encoding.a;
     int c = 0;
     while (true) {
-        int b = flip();
+        int b = get_random_bits_spsc(1);
         c = enc[c+b];
         if (enc[c] < 0) {
             return -enc[c];
@@ -45,7 +45,7 @@ int sample_ky_matrix(struct sample_ky_matrix_s *x) {
     int d = 0;
 
     while (true) {
-        int b = flip();
+        int b = get_random_bits_spsc(1);
         d = 2 * d + (1-b);
         for (int r = 0; r < x->P.nrows; r++) {
             d = d - P[r][c];
@@ -73,7 +73,7 @@ int sample_ky_matrix_cached(struct sample_ky_matrix_cached_s *x) {
     int d = 0;
 
     while (true) {
-        int b = flip();
+        int b = get_random_bits_spsc(1);
         d = 2 * d + (1-b);
         if (d < h[c]) {
             return T[d][c] + 1;
@@ -92,7 +92,7 @@ int sample_fdr(struct sample_fdr_s *x) {
     int c = 0;
 
     while (true) {
-        int b = flip();
+        int b = get_random_bits_spsc(1);
         v = v << 1;
         c = (c << 1) + b;
         if (x->n <= v) {
@@ -119,7 +119,7 @@ int sample_inversion_bernoulli(struct sample_inversion_bernoulli_s *x) {
         } else {
             y = 0;
         }
-        int b = flip();
+        int b = get_random_bits_spsc(1);
         if (b == 1) {
             return y;
         }
@@ -163,7 +163,7 @@ int sample_rejection_encoding(struct sample_ky_encoding_s *x) {
     int n = x->n;
     int c = 0; int s;
     while (true) {
-        int b = flip();
+        int b = get_random_bits_spsc(1);
         c = enc[c+b];
         s = -enc[c];
         if (s > 0) {
@@ -196,7 +196,7 @@ int sample_rejection_matrix_cached(struct sample_ky_matrix_cached_s *x) {
     int d = 0;
 
     while (true) {
-        int b = flip();
+        int b = get_random_bits_spsc(1);
         d = 2 * d + (1-b);
         if (d < h[c]) {
             int s = T[d][c];
@@ -222,7 +222,7 @@ int sample_interval(struct sample_interval_s *x) {
     int b = 0;
 
     while (location == -1) {
-        b = flip();
+        b = get_random_bits_spsc(1);
 
         alpha_prev = alpha;
         alpha = 2 * alpha + (beta - alpha) * b;
@@ -281,8 +281,10 @@ uint32_t sample_alias_integers(struct sample_alias_integers_s *x) {
     return result;
 }
 
-uint32_t sample_alias_integers2(struct sample_alias_integers_s *x) {
-    // ORIGINALE : uniform + uniform
+
+
+uint32_t sample_alias_integers_old(struct sample_alias_integers_s *x) {
+    // ORIGINALE : bernoulli + uniform
     int q = 0;
 
     // Tirage d'une case dans la table
@@ -291,38 +293,14 @@ uint32_t sample_alias_integers2(struct sample_alias_integers_s *x) {
 
     unsigned int q_index = q;
     
-    // Tirage uniforme pour savoir si on prend T[2q] ou T[2q + 1]
-    uint32_t b;
-    if (x->Threshold.data[q_index] == x->cs) {
-        b = 1;
-    } else {
-        b = uniform(x->cs) < x->Threshold.data[q_index];
-    }
+    // Tirage de Bernoulli pour savoir si on prend T[2q] ou T[2q + 1]
+    uint32_t b = bernoulli(x->Threshold.data[q_index], x->cs);
 
     // Calcul de l'index final dans T sans branchement conditionnel
-    uint32_t final_index = 2 * q_index + (b ? 0 : 1);
+    uint32_t final_index = 2 * q_index + 1 - b;    
 
     uint32_t result = x->T.data[final_index];
     return result;
-}
-
-uint32_t sample_alias_integers_antoine(struct sample_alias_integers_s *x) {
-    // VERSION 2 d'Antoine
-    int q;
-
-    // Tirage d'une case dans la table
-    int n = x->Threshold.size;
-    q = uniform(n);
-    
-    // Tirage de Bernoulli pour savoir si on prend T[2q] ou T[2q + 1]
-    int numer = x->Threshold.data[(unsigned int)q];
-    int denom = x->cs;
-    uint32_t b = numer==denom || bernoulli(numer, denom);
-
-    // Calcul de l'index final dans T sans branchement conditionnel
-    uint32_t final_index = 2 * (unsigned int)q + 1 - b;    
-
-    return x->T.data[final_index];
 }
 
 // sample_aldr
@@ -338,7 +316,7 @@ int sample_aldr(struct sample_aldr_s *x){
                 else break;
             }
             location += x->breadths[depth];
-            val = ((val - x->breadths[depth]) << 1) | flip();
+            val = ((val - x->breadths[depth]) << 1) | get_random_bits_spsc(1);
             ++depth;
         }
     }

@@ -402,23 +402,20 @@ void cons_alias4(unsigned int n, VectorInt* D, uint32_t cs, int virtual_obj, Vec
     free(large);
 }
 
-void cons_alias5(unsigned int n, VectorInt* D, uint32_t cs, int virtual_obj, VectorInt* T, VectorInt* Threshold){
-    // ORIGINALE, sauf qu'on met les objets exactement de poids cs dans les légers
-    VectorInt H, L;
-    vector_init(&H);
-    vector_init(&L);
-    vector_reserve(&H, n);
-    vector_reserve(&L, n);
 
-    int virtual_cell = -1;
+void cons_alias5(unsigned int n, VectorInt* D, uint32_t cs,VectorInt* T, VectorInt* Threshold){
+    // Version originale, avec des tableaux fixes pour small et large
+    int* small = malloc(n * sizeof(int));
+    int* large = malloc(n * sizeof(int));
+
     int t = 0;
-
+    int n_small = 0, n_large = 0;
 
     for (unsigned int i = 0; i < n; i++) {
-        if (D->data[i] > cs){
-            vector_push(&H, i);
-        } else{
-            vector_push(&L, i);
+        if (D->data[i] > cs) {
+            large[n_large++] = i;
+        } else {
+            small[n_small++] = i;
         }
     }
 
@@ -426,36 +423,26 @@ void cons_alias5(unsigned int n, VectorInt* D, uint32_t cs, int virtual_obj, Vec
     int w2 = 0;
     int temp = 0;
 
-    while (H.size > 0) {
-        unsigned int x = vector_get(&H, H.size - 1);
-        H.size--; // pop
+    while (n_large > 0) {
+        unsigned int x = large[--n_large];
         w = D->data[x];
 
-        if (L.size > 0) {
-            unsigned int x2 = vector_get(&L, L.size - 1);
-            L.size--; // pop
+        if (n_small > 0) {
+            unsigned int x2 = small[--n_small];
             w2 = D->data[x2];
 
-            int delta = cs - w2;
-
-            if ((int)x2 != virtual_obj) {
-                if(w2 < cs){
-                    vector_push(T, x2);
-                    vector_push(T, x);
-                    vector_push(Threshold, w2);
-                }
-                else{
-                    vector_push(T, x2);
-                    vector_push(T, -1);
-                    vector_push(Threshold, cs);
-                }
-            } else {
-                virtual_cell = t;
-                vector_push(T, x);
+            if (w2 != cs) {
                 vector_push(T, x2);
-                vector_push(Threshold, delta);
+                vector_push(T, x);
+                vector_push(Threshold, w2);
+                temp = cs - w2;
+            } else {
+                vector_push(T, x2);
+                vector_push(T, -1);
+                vector_push(Threshold, cs);
+                temp = 0;
             }
-            w -= delta;
+            w -= temp;
         } else {
             vector_push(T, x);
             vector_push(T, -1);
@@ -465,43 +452,26 @@ void cons_alias5(unsigned int n, VectorInt* D, uint32_t cs, int virtual_obj, Vec
 
         t += 2;
 
-        if (w > 0) {
-            D->data[x] = w;
-            if (w > cs) {
-                vector_push(&H, x);
-            } else {
-                vector_push(&L, x);
-            }
+
+        D->data[x] = w;
+        if (w > cs) {
+            large[n_large++] = x;
+        } else {
+            small[n_small++] = x;
         }
     }
-
-    while (L.size > 0) {
-        unsigned int element = vector_get(&L, L.size - 1);
-        L.size--;
-
-        vector_push(T, element);
+    while (n_small > 0) {
+        
+        unsigned int x2 = small[--n_small];
+        vector_push(T, x2);
         vector_push(T, -1);
         vector_push(Threshold, cs);
+
+        t += 2;
     }
 
-    if (virtual_cell > -1) {
-        int last = t - 2;
-
-        int tmp1 = vector_get(T, last);
-        int tmp2 = vector_get(T, last + 1);
-
-        if ((last/2) < Threshold->size && (virtual_cell/2) < Threshold->size)
-            vector_swap(Threshold, last/2, virtual_cell/2);
-
-        T->data[last] = T->data[virtual_cell];
-        T->data[last + 1] = T->data[virtual_cell + 1];
-
-        T->data[virtual_cell] = tmp1;
-        T->data[virtual_cell + 1] = tmp2;
-    }
-
-    vector_free(&H);
-    vector_free(&L);
+    free(small);
+    free(large);
 }
 
 struct sample_alias_integers_s preprocess_alias_integers(int* a, int n) {
@@ -552,8 +522,52 @@ struct sample_alias_integers_s preprocess_alias_integers(int* a, int n) {
         n++;
     }
 
-    cons_alias(n, &D, sampler.cs, virtual_obj, &sampler.T, &sampler.Threshold);
+    cons_alias4(n, &D, sampler.cs, virtual_obj,&sampler.T, &sampler.Threshold);
+    
+    vector_free(&D);
 
+    return sampler;
+}
+
+
+
+struct sample_alias_integers_s preprocess_alias_integers_old(int* a, int n) {
+    struct sample_alias_integers_s sampler;
+
+    // Init des vecteurs
+    vector_init(&sampler.T);
+    vector_init(&sampler.Threshold);
+    vector_reserve(&sampler.T, 2*n);
+    vector_reserve(&sampler.Threshold, 2*n);
+
+    sampler.cs = 0;
+
+    VectorInt D;
+    vector_init(&D);
+
+    int w = 0;
+    // Copie a[] dans un VectorInt D
+    for (int i = 0; i < n; ++i) {
+        uint32_t val = a[i];
+        vector_push(&D, val);
+        w += val;
+    }
+
+    int r = 0;
+
+    sampler.cs = w / n;
+    r = w % sampler.cs;
+
+    int virtual_obj = -1;
+    if (r > 0) {
+        virtual_obj = n;
+        vector_push(&D, sampler.cs - r);            // ajout de l’objet virtuel
+        //n = D.size;
+        n++;
+    }
+
+    //cons_alias4(n, &D, sampler.cs, virtual_obj, &sampler.T, &sampler.Threshold);
+    cons_alias5(n, &D, sampler.cs, &sampler.T, &sampler.Threshold);
     vector_free(&D);
 
     return sampler;

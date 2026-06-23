@@ -89,6 +89,10 @@ def write_sample_alias_integers(Z, T, entropy, fname):
         #print(f"[DEBUG] Ligne 3 écrite : {entropy:.5f}")
 
 
+def write_sample_alias_integers_old(Z, T, entropy, fname):
+    write_sample_alias_integers(Z, T, entropy, fname)
+
+
 def write_sample_alias_rust(Z, Ms, entropy, fname):
     """
     Écrit l'entrée brute attendue par l'implémentation C de alias.rust :

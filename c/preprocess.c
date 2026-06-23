@@ -130,20 +130,20 @@ int main(int argc, char **argv) {
 
     // Measure time of Alias Integers.
     // Echauffement
-    struct sample_alias_integers_s temp10 = preprocess_alias_integers(array, n);
+    struct sample_alias_integers_s temp10 = preprocess_alias_integers_old(array, n);
     clock_t t;
     t = clock();
-    struct sample_alias_integers_s temp1 = preprocess_alias_integers(array, n);
+    struct sample_alias_integers_s temp1 = preprocess_alias_integers_old(array, n);
     t = clock() - t;
     double t_alias_integers = ((double) t) / CLOCKS_PER_SEC;
 
     // Measure time of Alias Fractions.
     // Echauffement
-    struct sample_alias_fractions_s temp20 = preprocess_alias_fractions(array, n);
-    t = clock();
-    struct sample_alias_fractions_s temp2 = preprocess_alias_fractions(array, n);
-    t = clock() - t;
-    double t_alias_fractions = ((double) t) / CLOCKS_PER_SEC;
+    // struct sample_alias_fractions_s temp20 = preprocess_alias_fractions(array, n);
+    // t = clock();
+    // struct sample_alias_fractions_s temp2 = preprocess_alias_fractions(array, n);
+    // t = clock() - t;
+    // double t_alias_fractions = ((double) t) / CLOCKS_PER_SEC;
 
     // Measure time of Alias Rust
     // Echauffement
@@ -161,6 +161,6 @@ int main(int argc, char **argv) {
     //     fflush(stdout);
     // }
 
-    printf("%dc %1.6f %1.6f\n", n, t_alias_integers, t_alias_fractions);
+    printf("%dc %1.6f %1.6f\n", n, t_alias_integers, t_alias_rust);
     fflush(stdout);
 }

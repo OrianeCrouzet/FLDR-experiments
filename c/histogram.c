@@ -64,6 +64,12 @@ void run_sampler(char *name, char *path, int steps)
         sample_alias_fractions,
         free_sample_alias_fractions_s)
 
+    RUN("alias.integers_old",
+        struct sample_alias_integers_s,
+        read_sample_alias_integers_old,
+        sample_alias_integers_old,
+        free_sample_alias_integers_s)
+
     printf("Unknown sampler %s\n", name);
 }
 
@@ -75,6 +81,9 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    pthread_t prod_thread;
+    bool is_spsc_sampler = false;
+
     char *dist = argv[1];
     int steps = atoi(argv[2]);
 
@@ -83,11 +92,33 @@ int main(int argc, char **argv)
         "aldr",
         "alias.rust",
         "alias.fractions",
+        "alias.integers_old",
     };
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 5; i++) {
+        // Vérifie si l'échantillonneur actuel est 'alias.integers_old'
+        if (strcmp(samplers[i], "alias.integers_old") == 0 || strcmp(samplers[i], "alias.rust") == 0) {
+            is_spsc_sampler = true;
+            init_spsc_queue(); // Initialise la file SPSC
+            //printf("[Main] Initialisation de la file SPSC et démarrage du thread producteur.\n");
+            if (pthread_create(&prod_thread, NULL, spsc_producer, NULL) != 0) {
+                perror("Erreur lors de la création du thread producteur SPSC");
+                return EXIT_FAILURE;
+            }
+        }
+
         printf("=== %s ===\n", samplers[i]);
         run_sampler(samplers[i], dist, steps);
+    }
+
+    if (is_spsc_sampler) {
+        //printf("[Main] Signalement au producteur SPSC de s'arrêter et attente de la fin du thread.\n");
+        q.running = false; // Signale au thread producteur de s'arrêter
+        if (pthread_join(prod_thread, NULL) != 0) {
+            perror("Erreur lors de l'attente de la fin du thread producteur SPSC");
+            return EXIT_FAILURE;
+        }
+        //printf("[Main] Thread producteur SPSC arrêté.\n");
     }
 
     return 0;
