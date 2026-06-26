@@ -134,6 +134,9 @@ uint32_t uniform(uint32_t n) {
 }
 
 uint32_t bernoulli(uint32_t numer, uint32_t denom) {
+    if (numer == denom) {
+        return 1;
+    }
 
     while (numer != denom) {
         numer <<= 1;
@@ -144,5 +147,5 @@ uint32_t bernoulli(uint32_t numer, uint32_t denom) {
             numer -= denom;
         }
     }
-    return get_random_bits_spsc(1);
+    return 1;
 }

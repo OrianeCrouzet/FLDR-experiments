@@ -116,6 +116,7 @@ struct sample_alias_integers_s {
     VectorInt T;
     VectorInt Threshold;
     uint32_t cs;
+    int virtual_obj; // index de l'objet virtuel, -1 si absent
 };
 
 // sample_aldr

@@ -157,15 +157,19 @@ def sample_alias(n, qs, Ms, j, bitstream):
         return n
     return j[n-1] + 1
 
-def sample_alias_integers(K, T, Threshold, cs, bitstream):
+def sample_alias_integers(K, T, Threshold, cs, bitstream, virtual_obj=-1):
     """
     Échantillonnage Alias integers utilisant un bitstream (comme sample_alias).
     """
     n_cell = K // 2
-    q = sample_fdr(n_cell, bitstream) - 1
-    b = sample_inversion_bernoulli(Threshold[q], cs, bitstream)
-    final_index = 2 * q + 1 - b
-    return T[final_index]
+    while True:
+        q = sample_fdr(n_cell, bitstream) - 1
+        b = sample_inversion_bernoulli(Threshold[q], cs, bitstream)
+        final_index = 2 * q + 1 - b
+        result = T[final_index]
+        if virtual_obj is not None and virtual_obj >= 0 and result == virtual_obj:
+            continue
+        return result
 
 
 def sample_aldr(length_breadths, breadths, length_leaves_flat, leaves_flat, bitstream):

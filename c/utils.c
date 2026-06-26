@@ -522,7 +522,11 @@ struct sample_alias_integers_s preprocess_alias_integers(int* a, int n) {
         n++;
     }
 
-    cons_alias4(n, &D, sampler.cs, virtual_obj,&sampler.T, &sampler.Threshold);
+    /* store virtual object index in sampler for use at sampling time */
+    sampler.virtual_obj = virtual_obj;
+    printf("virtual_obj: %d\n", virtual_obj);
+
+    cons_alias5(n, &D, sampler.cs, &sampler.T, &sampler.Threshold);
     
     vector_free(&D);
 
@@ -565,6 +569,9 @@ struct sample_alias_integers_s preprocess_alias_integers_old(int* a, int n) {
         //n = D.size;
         n++;
     }
+    /* store virtual object index in sampler for use at sampling time */
+    sampler.virtual_obj = virtual_obj;
+    printf("virtual_obj_old: %d\n", virtual_obj);
 
     //cons_alias4(n, &D, sampler.cs, virtual_obj, &sampler.T, &sampler.Threshold);
     cons_alias5(n, &D, sampler.cs, &sampler.T, &sampler.Threshold);

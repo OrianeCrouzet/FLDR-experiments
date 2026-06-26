@@ -71,17 +71,19 @@ def alias_integers_preprocess(p_target):
                 L.append(x)
 
     K = len(T)
-    return K, T, Threshold, cs
+    return K, T, Threshold, cs, virtual_obj
 
 
-def alias_integers_sample(K, T, Threshold, cs):
+def alias_integers_sample(K, T, Threshold, cs, virtual_obj=-1):
     """
     Tire un indice à partir de la table Alias
     """
-    # Tirage uniforme d'une case
-    q = np.random.randint(0, K // 2)  # chaque cellule correspond à 2 indices
-    b = np.random.randint(0, cs) < Threshold[q]
-
-    # Calcul de l'indice final (équivalent au C)
-    final_index = 2 * q + 1 - int(b)
-    return T[final_index]
+    n_cell = K // 2
+    while True:
+        q = np.random.randint(0, n_cell)
+        b = np.random.randint(0, cs) < Threshold[q]
+        final_index = 2 * q + 1 - int(b)
+        result = T[final_index]
+        if virtual_obj is not None and virtual_obj >= 0 and result == virtual_obj:
+            continue
+        return result

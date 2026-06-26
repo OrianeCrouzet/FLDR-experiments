@@ -136,7 +136,7 @@ def construct_sample_alias_integers(p_target):
     from discrete_sampling.utils import get_common_denominator, get_common_numerators
     Z = get_common_denominator(p_target)
     Ms = get_common_numerators(Z, p_target)
-    K, T, Threshold, cs = alias_integers_preprocess(Ms)
+    K, T, Threshold, cs, virtual_obj = alias_integers_preprocess(Ms)
 
     return Z, Ms
 

@@ -258,48 +258,46 @@ int sample_alias_exact(struct sample_alias_exact_s *x) {
     }
 }
 
-// Mettre 2 à la fin de la fonction que vous ne voulez PAS utiliser (ça évite de modifier les appels partout dans le code...)
-
-// sample_alias_integers
+// REJET OBJ VIRTUEL
 uint32_t sample_alias_integers(struct sample_alias_integers_s *x) {
-    // ORIGINALE : bernoulli + uniform
     int q = 0;
-
-    // Tirage d'une case dans la table
     int n = x->Threshold.size;
-    q = uniform(n);
+    uint32_t result;
 
-    unsigned int q_index = q;
-    
-    // Tirage de Bernoulli pour savoir si on prend T[2q] ou T[2q + 1]
-    uint32_t b = bernoulli(x->Threshold.data[q_index], x->cs);
+    do {
+        unsigned int q_index = (unsigned int)uniform(n);
 
-    // Calcul de l'index final dans T sans branchement conditionnel
-    uint32_t final_index = 2 * q_index + 1 - b;    
+        uint32_t b = bernoulli(x->Threshold.data[q_index], x->cs);
 
-    uint32_t result = x->T.data[final_index];
+        uint32_t final_index = 2 * q_index + 1 - b;
+
+        result = x->T.data[final_index];
+
+    } while (x->virtual_obj != -1 &&
+             result == (uint32_t)x->virtual_obj);
+
     return result;
 }
 
 
-
+// REJET OBJ VIRTUEL
 uint32_t sample_alias_integers_old(struct sample_alias_integers_s *x) {
-    // ORIGINALE : bernoulli + uniform
     int q = 0;
-
-    // Tirage d'une case dans la table
     int n = x->Threshold.size;
-    q = uniform(n);
+    uint32_t result;
 
-    unsigned int q_index = q;
-    
-    // Tirage de Bernoulli pour savoir si on prend T[2q] ou T[2q + 1]
-    uint32_t b = bernoulli(x->Threshold.data[q_index], x->cs);
+    do {
+        unsigned int q_index = (unsigned int)uniform(n);
 
-    // Calcul de l'index final dans T sans branchement conditionnel
-    uint32_t final_index = 2 * q_index + 1 - b;    
+        uint32_t b = bernoulli(x->Threshold.data[q_index], x->cs);
 
-    uint32_t result = x->T.data[final_index];
+        uint32_t final_index = 2 * q_index + 1 - b;
+
+        result = x->T.data[final_index];
+
+    } while (x->virtual_obj != -1 &&
+             result == (uint32_t)x->virtual_obj);
+
     return result;
 }
 

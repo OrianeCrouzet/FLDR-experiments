@@ -15,11 +15,11 @@ with open("histogram/test3.dist") as f:
 
 # --- lecture tirages ---
 # Changer ici pour tester d'autres algorithmes
-with open("histogram/alias.rust.histo") as f:
+with open("histogram/alias.integers.histo") as f:
     draws = np.array(list(map(int, f.read().split())))
 draws = np.array(draws)
 # on ignore l'objet virtuel
-draws = draws[draws < n]
+#draws = draws[draws < n]
 
 # Alias exact
 #draws = draws[(draws >= 1) & (draws <= n)]
@@ -44,5 +44,5 @@ plt.bar(x, weights_norm, alpha=0.5, color="pink", label="distribution théorique
 plt.bar(x, counts_norm, alpha=0.5, color="blue", label="tirages (empirique)")
 
 plt.legend()
-plt.title("Validation sampler : Alias Integers Old")
+plt.title("Validation sampler : Alias Integers")
 plt.show()
