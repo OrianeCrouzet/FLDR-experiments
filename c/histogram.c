@@ -34,12 +34,6 @@ void run_sampler(char *name, char *path, int steps)
         sample_alias_exact,
         free_sample_alias_exact_s)
 
-    RUN("alias.integers",
-        struct sample_alias_integers_s,
-        read_sample_alias_integers,
-        sample_alias_integers,
-        free_sample_alias_integers_s)
-
     RUN("aldr",
         struct sample_aldr_s,
         read_sample_aldr,
@@ -68,7 +62,7 @@ void run_sampler(char *name, char *path, int steps)
         struct sample_alias_integers_s,
         read_sample_alias_integers_old,
         sample_alias_integers_old,
-        free_sample_alias_integers_s)
+        free_sample_alias_integers_s_old)
 
     printf("Unknown sampler %s\n", name);
 }
@@ -88,7 +82,6 @@ int main(int argc, char **argv)
     int steps = atoi(argv[2]);
 
     char samplers[][32] = {
-        "alias.integers",
         "aldr",
         "alias.rust",
         "alias.fractions",

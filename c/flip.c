@@ -25,17 +25,17 @@
 unsigned long NUM_RNG_CALLS = 0;
 
 
-int randint(int k) {
-    int n = 0;
+// int randint(int k) {
+//     int n = 0;
 
-    for (int i = 0; i < k; i++) {
-        int b = get_random_bits_spsc(1);
-        n <<= 1;
-        n += b;
-    }
+//     for (int i = 0; i < k; i++) {
+//         int b = get_random_bits_spsc(1);
+//         n <<= 1;
+//         n += b;
+//     }
 
-    return n;
-}
+//     return n;
+// }
 
 
 // Initialisation globale de notre queue

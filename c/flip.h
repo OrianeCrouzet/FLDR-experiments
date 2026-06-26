@@ -25,7 +25,7 @@
 extern unsigned long NUM_RNG_CALLS;
 
 
-int randint(int k);
+//int randint(int k);
 
 uint32_t uniform(uint32_t n);
 uint32_t bernoulli(uint32_t numer, uint32_t denom);
