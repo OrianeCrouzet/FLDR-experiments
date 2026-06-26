@@ -2,32 +2,8 @@
 
 set -e
 
-# Ajout pour Antoine
 # Set PYTHONPATH to find the discrete_sampling module
 export PYTHONPATH="$(cd "$(dirname "$0")/.." && pwd)/build/lib:$PYTHONPATH"
-
-# ============================================================================
-# WARMUP
-# ============================================================================
-# Les commandes supportent maintenant une option "warmup" pour faire un tour de chauffe avant les vraies mesures.
-# Cela aide à stabiliser les métriques de performance en permettant aux caches CPU de se remplir, etc.
-#
-# IMPORTANT: warmup est le dernier argument (optionnel). Par défaut, il est désactivé (0).
-# Pour l'activer, mettre 1 en dernier argument de la commande ([warmup]).
-#
-# Exemples d'utilisation :
-#   ./pipeline.sh dists.1000.40001.2 measure-runtimes 1000000 [warmup]
-#      ^ measure-runtimes <steps> [warmup=0]
-#
-#   ./pipeline.sh mydir measure-runtimes-existing 1000000 [seed] [warmup]
-#      ^ measure-runtimes-existing <steps> [seed=1] [warmup=0]
-#
-#   ./pipeline.sh pp.mn.418 preprocess-measure [warmup]
-#      ^ preprocess-measure [warmup=0]
-#
-#   ./pipeline.sh pp.mn.418 run-all-memory-runtime 40001 1000 [warmup]
-#      ^ run-all-memory-runtime <Z> <Ns> [warmup=0]
-# ============================================================================
 
 if [ -z "${JOBS:-}" ]; then
   NCPU=$(python3 -c 'import multiprocessing; print(multiprocessing.cpu_count())')
@@ -48,7 +24,7 @@ cmd=${2}
 
 # rej.enc == fldr
 #SAMPLERS='alias.exact rej.enc  rej.table rej.uniform alias.integers aldr alias.rust alias.fractions'
-SAMPLERS='alias.rust alias.rust alias.integers_old alias.integers_old aldr aldr alias.integers alias.integers alias.exact alias.exact rej.enc rej.enc'
+SAMPLERS='alias.rust alias.rust alias.integers_old alias.integers_old aldr aldr alias.exact alias.exact rej.enc rej.enc alias.fractions alias.fractions'
 
 #if [ ${cmd} = 'initialize' ]; then
  # N=$(echo ${stamp} | cut -d. -f2)
@@ -157,18 +133,16 @@ fi
 
 # Pour charger nos *.dist dans un dossier, au lieu de les générer à la volée (mesures habituelles)
 # Les distributions doivent avoir le même format que les distributions générées à la base !
-# Commande : ./pipeline.sh <dir> measure-runtimes-existing <steps> [seed] [warmup]
+# Commande : ./pipeline.sh <dir> measure-runtimes-existing <steps> [seed]
 # steps = nombre de tirage par distribution et par sampler
 # seed = graine aléatoire (optionnel, défaut 1)
-# warmup = 1 pour lancer un tour de chauffe avant les vraies mesures (optionnel, défaut 0)
 # On effectue une copie du dossier des distributions pour les garder intacts,
 # le nouveau dossier s'appelle <dir>-work et c'est dans ce dossier que les fichiers de runtime seront créés.
 if [ "${cmd}" = 'measure-runtimes-existing' ]; then
   steps=${3}
   seed=${4:-1}
-  warmup=${5:-0}
   if [ -z "${steps}" ]; then
-      echo "Usage: $0 <dir> measure-runtimes-existing <steps> [seed] [warmup]" >&2
+      echo "Usage: $0 <dir> measure-runtimes-existing <steps> [seed]" >&2
       exit 1
   fi
 
@@ -268,26 +242,6 @@ for dist_path in sorted(stamp.glob('*.dist')):
 PY
   fi
 
-  # Warmup phase if requested
-  if [ "${warmup}" -eq 1 ]; then
-    echo "=== WARMUP PHASE ==="
-    for sampler in ${SAMPLERS}; do
-        echo "=== Warmup existing sampler: ${sampler} ==="
-        fnames=$(ls "${stamp}"/*.${sampler} 2>/dev/null || true)
-        if [ -z "${fnames}" ]; then
-            continue
-        fi
-        tmp_warmup=$(mktemp)
-        for f in ${fnames}; do
-            printf '%s\n' "./main.out.opt ${seed} ${steps} ${sampler} ${f} > /dev/null 2>&1"
-        done > "${tmp_warmup}"
-        cat "${tmp_warmup}" | ${XARGS_BIN} -P ${NCPU} -n1 -d'\n' -I% sh -c '%'
-        wait
-        rm -f "${tmp_warmup}"
-    done
-    echo "=== END WARMUP PHASE ==="
-  fi
-
   for sampler in ${SAMPLERS}; do
       echo "=== Measuring existing sampler: ${sampler} ==="
       fnames=$(ls "${stamp}"/*.${sampler} 2>/dev/null || true)
@@ -349,25 +303,7 @@ fi
 
 if [ ${cmd} = 'measure-runtimes' ]; then
   steps=${3}
-  warmup=${4:-0}
   seed=$(echo ${stamp} | cut -d. -f4)
-  
-  # Warmup phase if requested
-  if [ ${warmup} -eq 1 ]; then
-    echo "=== WARMUP PHASE ==="
-    for sampler in ${SAMPLERS}; do
-        echo "=== Warmup sampler: ${sampler} ==="
-        fnames=$(ls ${stamp}/*.${sampler});
-        tmp_warmup=$(mktemp)
-        for f in ${fnames}; do
-            printf '%s\n' "./main.out.opt ${seed} ${steps} ${sampler} ${f} > /dev/null 2>&1"
-        done > "${tmp_warmup}"
-        cat "${tmp_warmup}" | ${XARGS_BIN} -P ${NCPU} -n1 -d'\n' -I% sh -c '%'
-        wait
-        rm -f "${tmp_warmup}"
-    done
-    echo "=== END WARMUP PHASE ==="
-  fi
   
   # Actual measurement phase
   echo "=== MEASUREMENT PHASE ==="
@@ -433,13 +369,12 @@ fi
 if [ ${cmd} = 'run-all-memory-runtime' ]; then
   Z=${3}
   Ns="${4}"
-  warmup=${5:-0}
   for n in ${Ns}; do
       stamp=dists.${n}.${Z}.2
       echo ${stamp}
       ./pipeline.sh ${stamp} initialize;
       ./pipeline.sh ${stamp} aggregate-sizes;
-      ./pipeline.sh ${stamp} measure-runtimes 1000000 ${warmup};
+      ./pipeline.sh ${stamp} measure-runtimes 1000000;
       ./pipeline.sh ${stamp} aggregate-runtimes 1000000;
   done
   exit 0
@@ -499,18 +434,7 @@ if [ ${cmd} = 'preprocess-initialize' ]; then
 fi
 
 if [ ${cmd} = 'preprocess-measure' ]; then
-  warmup=${3:-0}
   fnames=$(ls ${stamp}/*.dist);
-  
-  # Warmup phase if requested
-  if [ ${warmup} -eq 1 ]; then
-    echo "=== WARMUP PHASE ==="
-    for fn in ${fnames}; do
-        printf '%s\n' "./preprocess.out.opt ${fn} > /dev/null 2>&1"
-    done | gxargs -P ${NCPU} -n1 -d'\n' -I% sh -c '%'
-    wait
-    echo "=== END WARMUP PHASE ==="
-  fi
   
   rm -rf ${stamp}/preprocess
   tmp_pre=$(mktemp)
