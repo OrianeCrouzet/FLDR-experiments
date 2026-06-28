@@ -124,7 +124,23 @@ struct sample_alias_integers_s preprocess_alias_integers_old(int* a, int n) {
     printf("virtual_obj_old: %d\n", virtual_obj);
 
     cons_alias5(n, &D, sampler.cs, &sampler.T, &sampler.Threshold);
+
     vector_free(&D);
+
+    // // calcul la taille de la structure
+    // size_t sampler_size = 0;
+    // sampler_size += sizeof(sampler.T);
+    // if (sampler.T.data != NULL) {
+    //     sampler_size += sampler.T.size * sizeof(int);
+    // }
+    // sampler_size += sizeof(sampler.Threshold);
+    // if (sampler.Threshold.data != NULL) {
+    //     sampler_size += sampler.Threshold.size * sizeof(int);
+    // }
+    // sampler_size += sizeof(sampler.cs);
+    // sampler_size += sizeof(sampler.virtual_obj);
+    // printf("sampler total size: %zu bytes\n", sampler_size);
+    // // fin du calcul et de son affichage
 
     return sampler;
 }
@@ -174,12 +190,24 @@ struct sample_aldr_s preprocess_aldr_flat_k(int* a, int n, int kmul) {
         }
     }
 
-    return (struct sample_aldr_s){
-            .length_breadths = K+1,
+    struct sample_aldr_s sampler = (struct sample_aldr_s){
+            .length_breadths = K + 1,
             .length_leaves_flat = num_leaves,
             .breadths = breadths,
             .leaves_flat = leaves_flat
         };
+
+    // // Taille totale = structure + tableaux alloues dynamiquement.
+    // size_t sampler_size = sizeof(sampler);
+    // if (sampler.breadths != NULL) {
+    //     sampler_size += (size_t)sampler.length_breadths * sizeof(int);
+    // }
+    // if (sampler.leaves_flat != NULL) {
+    //     sampler_size += (size_t)sampler.length_leaves_flat * sizeof(int);
+    // }
+    // printf("sampler ALDR total size: %zu bytes\n", sampler_size);
+
+    return sampler;
 }
 
 
