@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "vector_int.h"
 #include "alias_rust.h"
@@ -128,6 +129,28 @@ WeightedError weighted_alias_new(
     }
 
     out->n=n;
+
+    // // Taille logique (size) et taille allouee (capacity) de la structure resultat.
+    // size_t out_size_by_size = sizeof(*out);
+
+    // if (out->prob != NULL) {
+    //     out_size_by_size += (size_t)out->n * sizeof(unsigned int);
+    // }
+
+    // if (out->aliases.data != NULL) {
+    //     out_size_by_size += (size_t)out->aliases.size * sizeof(int);
+    // }
+
+    // // if (out->small.data != NULL) {
+    // //     out_size_by_size += (size_t)out->small.size * sizeof(int);
+    // // }
+
+    // // if (out->large.data != NULL) {
+    // //     out_size_by_size += (size_t)out->large.size * sizeof(int);
+    // // }
+
+    // printf("alias_rust: out size (using size) = %zu bytes\n", out_size_by_size);
+
 
     return WEIGHTED_OK;
 }
