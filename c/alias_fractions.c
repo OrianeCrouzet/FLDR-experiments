@@ -78,6 +78,11 @@ struct AliasEntry* algo_alias_fractions(struct Fraction* distrib, int N) {
     free(scaled);
     free(small);
     free(large);
+
+    // // Taille de la table Alias T (sans compter les buffers temporaires).
+    // size_t t_size = (size_t)N * sizeof(struct AliasEntry);
+    // printf("alias_fractions: T size = %zu bytes (%d entries, %zu bytes/entry)\n",
+    //        t_size, N, sizeof(struct AliasEntry));
     
     return T;
 }
