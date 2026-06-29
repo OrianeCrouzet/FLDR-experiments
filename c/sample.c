@@ -14,8 +14,6 @@
 #include "sample.h"
 #include "sstructs.h"
 #include "construct.h"
-#include "alias_rust.h"
-#include "alias_fractions.h"
 #include "fraction.h"
 
 
@@ -199,6 +197,27 @@ int sample_aldr(struct sample_aldr_s *x){
 // *********************************************************************************
 //              ALIAS FROM RUST
 // *********************************************************************************
+
+unsigned int weighted_alias_sample(
+    alias_rust_s *dist,
+    unsigned int (*rng_index)(unsigned int),
+    unsigned int (*rng_weight)(unsigned int)
+)
+{
+    unsigned int i =
+        rng_index(dist->n);
+
+    unsigned int r =
+        rng_weight(dist->weight_sum);
+
+    if(r < dist->prob[i])
+        return i;
+
+    return vector_get(
+        &dist->aliases,
+        i
+    );
+}
 
 static unsigned int alias_rust_rng_index(unsigned int n) {
     return (n <= 1) ? 0u : uniform(n);

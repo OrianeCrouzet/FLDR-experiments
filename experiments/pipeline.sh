@@ -25,7 +25,7 @@ cmd=${2}
 # rej.enc == fldr
 #SAMPLERS='alias.exact rej.enc  rej.table rej.uniform alias.integers aldr alias.rust alias.fractions'
 #SAMPLERS='alias.rust alias.rust alias.integers_old alias.integers_old aldr aldr alias.exact alias.exact rej.enc rej.enc alias.fractions alias.fractions'
-SAMPLERS='alias.integers_old'
+SAMPLERS='alias.rust alias.rust alias.fractions alias.fractions'
 
 #if [ ${cmd} = 'initialize' ]; then
  # N=$(echo ${stamp} | cut -d. -f2)

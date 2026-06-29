@@ -95,7 +95,7 @@ int main(int argc, char **argv)
         "alias.integers_old",
     };
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 4; i++) {
         // Vérifie si l'échantillonneur actuel utilise la file SPSC
         if (strcmp(samplers[i], "alias.integers") == 0 || strcmp(samplers[i], "alias.integers_old") == 0 || strcmp(samplers[i], "alias.rust") == 0) {
             is_spsc_sampler = true;

@@ -110,6 +110,25 @@ struct sample_aldr_s {
 //              ALIAS FROM RUST
 // *********************************************************************************
 
+typedef struct {
+    VectorInt aliases;
+    //double *prob;
+    unsigned int *prob;
+    VectorInt small;
+    VectorInt large;
+    unsigned int n;
+    //double weight_sum;
+    unsigned int weight_sum;
+} alias_rust_s;
+
+typedef enum {
+    WEIGHTED_OK = 0,
+    WEIGHTED_NO_ITEM,
+    WEIGHTED_TOO_MANY,
+    WEIGHTED_INVALID_WEIGHT,
+    WEIGHTED_ALL_ZERO
+} WeightedError;
+
 struct sample_alias_rust_s {
     VectorInt aliases;
     double *prob;

@@ -13,8 +13,6 @@
 #include "sstructs.h"
 #include "vector_int.h"
 #include "construct.h"
-#include "alias_rust.h"
-#include "alias_fractions.h"
 
 
 // *********************************************************************************
@@ -277,7 +275,10 @@ struct sample_alias_rust_s read_sample_alias_rust(char *fname){
 }
 
 void free_sample_alias_rust_s(struct sample_alias_rust_s x){
-    weighted_alias_free((alias_rust_s *)&x);
+    vector_free(&x.aliases);
+    vector_free(&x.small);
+    vector_free(&x.large);
+    free(x.prob);
 }
 
 
@@ -309,5 +310,5 @@ struct sample_alias_fractions_s read_sample_alias_fractions(char *fname) {
 }
 
 void free_sample_alias_fractions_s(struct sample_alias_fractions_s x) {
-    free_sample_alias_fractions(x);
+    free(x.table);
 }

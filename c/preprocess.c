@@ -15,9 +15,7 @@
 
 #include "readio.h"
 #include "sstructs.h"
-#include "alias_fractions.h"
 #include "construct.h"
-#include "alias_rust.h"
 
 int ceil_log2(unsigned long long x) {
   static const unsigned long long t[6] = {
