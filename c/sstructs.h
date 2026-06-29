@@ -17,8 +17,14 @@
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 #include <gmp.h>
+
 #include "vector_int.h"
 #include "fraction.h"
+
+
+// *********************************************************************************
+//              UTILS
+// *********************************************************************************
 
 // matrix
 struct matrix_s {
@@ -33,15 +39,6 @@ struct array_s {
     int *a;
 };
 
-
-// sample_ky_encoding
-struct sample_ky_encoding_s {
-    int n;
-    int k;
-    struct array_s encoding;
-};
-
-
 // sample_fdr
 struct sample_fdr_s {
     int n;
@@ -52,6 +49,23 @@ struct sample_inversion_bernoulli_s {
     int a;
     int M;
 };
+
+
+// *********************************************************************************
+//              FLDR
+// *********************************************************************************
+
+// sample_ky_encoding
+struct sample_ky_encoding_s {
+    int n;
+    int k;
+    struct array_s encoding;
+};
+
+
+// *********************************************************************************
+//              ALIAS WALKER/VOSE
+// *********************************************************************************
 
 // sample_alias_gsl
 struct sample_alias_exact_s {
@@ -66,17 +80,23 @@ struct sample_alias_gsl_s {
     gsl_ran_discrete_t *distribution;
 };
 
-// ***** Mes ajouts *****
 
-// sample_alias_integers
+// *********************************************************************************
+//              ALIAS INTEGERS
+// *********************************************************************************
+
 struct sample_alias_integers_s {
     VectorInt T;
     VectorInt Threshold;
     uint32_t cs;
-    int virtual_obj; // index de l'objet virtuel, -1 si absent
+    int virtual_obj; // index of the virtual object, -1 if absent
 };
 
-// sample_aldr
+
+// *********************************************************************************
+//              ALDR
+// *********************************************************************************
+
 struct sample_aldr_s {
     // flattened ALDR tree
     int length_breadths;
@@ -85,7 +105,11 @@ struct sample_aldr_s {
     int *leaves_flat;
 };
 
-// sample_alias_rust
+
+// *********************************************************************************
+//              ALIAS FROM RUST
+// *********************************************************************************
+
 struct sample_alias_rust_s {
     VectorInt aliases;
     double *prob;
@@ -95,17 +119,21 @@ struct sample_alias_rust_s {
     double weight_sum;
 };
 
-// sample_alias_fractions
+
+// *********************************************************************************
+//              ALIAS FRACTIONS
+// *********************************************************************************
+
 struct AliasEntry{
     int i;          
     int j;          // -1 if NULL
     struct Fraction prob;     // = k / pdsCase
 };
 
-// Structure de l'Alias Fractions
+// Structure of Alias Fractions
 struct sample_alias_fractions_s{
-    int taille;           // Nombre d'éléments
-    struct AliasEntry* table;    // Tableau de AliasEntry
+    int taille;           // Number of elements
+    struct AliasEntry* table;    // AliasEntry table
 };
 
 #endif

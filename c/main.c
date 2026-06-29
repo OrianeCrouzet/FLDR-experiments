@@ -23,8 +23,9 @@
 #include "readio.h"
 #include "sample.h"
 #include "sstructs.h"
-
+#include "construct.h"
 #include "macros.c"
+
 
 #define CACHE_SIZE_BYTES (32 * 1024 * 1024 * 4) // 128 Mo (à adapter selon votre CPU)
 
@@ -81,41 +82,6 @@ int main(int argc, char **argv) {
         sample_ky_encoding,
         free_sample_ky_encoding_s,
         path, steps, t, x)
-    // else READ_SAMPLE_TIME("ky.mat",
-    //     sampler,
-    //     sample_ky_matrix_s,
-    //     read_sample_ky_matrix,
-    //     sample_ky_matrix,
-    //     free_sample_ky_matrix_s,
-    //     path, steps, t, x)
-    // else READ_SAMPLE_TIME("ky.matc",
-    //     sampler,
-    //     sample_ky_matrix_cached_s,
-    //     read_sample_ky_matrix_cached,
-    //     sample_ky_matrix_cached,
-    //     free_sample_ky_matrix_cached_s,
-    //     path, steps, t, x)
-    // else READ_SAMPLE_TIME("ky.approx.enc",
-    //     sampler,
-    //     sample_ky_encoding_s,
-    //     read_sample_ky_encoding,
-    //     sample_ky_encoding,
-    //     free_sample_ky_encoding_s,
-    //     path, steps, t, x)
-    // else READ_SAMPLE_TIME("ky.approx.mat",
-    //     sampler,
-    //     sample_ky_matrix_s,
-    //     read_sample_ky_matrix,
-    //     sample_ky_matrix,
-    //     free_sample_ky_matrix_s,
-    //     path, steps, t, x)
-    // else READ_SAMPLE_TIME("ky.approx.matc",
-    //     sampler,
-    //     sample_ky_matrix_cached_s,
-    //     read_sample_ky_matrix_cached,
-    //     sample_ky_matrix_cached,
-    //     free_sample_ky_matrix_cached_s,
-    //     path, steps, t, x)
     else READ_SAMPLE_TIME("fdr",
         sampler,
         sample_fdr_s,
@@ -130,27 +96,6 @@ int main(int argc, char **argv) {
         sample_inversion_bernoulli,
         free_sample_inversion_bernoulli_s,
         path, steps, t, x)
-    // else READ_SAMPLE_TIME("rej.uniform",
-    //     sampler,
-    //     sample_rejection_uniform_s,
-    //     read_sample_rejection_uniform,
-    //     sample_rejection_uniform,
-    //     free_sample_rejection_uniform_s,
-    //     path, steps, t, x)
-    // else READ_SAMPLE_TIME("rej.table",
-    //     sampler,
-    //     sample_rejection_hash_table_s,
-    //     read_sample_rejection_hash_table,
-    //     sample_rejection_hash_table,
-    //     free_sample_rejection_hash_table_s,
-    //     path, steps, t, x)
-    // else READ_SAMPLE_TIME("rej.binary",
-    //     sampler,
-    //     sample_rejection_binary_search_s,
-    //     read_sample_rejection_binary_search,
-    //     sample_rejection_binary_search,
-    //     free_sample_rejection_binary_search_s,
-    //     path, steps, t, x)
     else READ_SAMPLE_TIME("rej.enc",    // FLDR
         sampler,
         sample_ky_encoding_s,
@@ -158,27 +103,6 @@ int main(int argc, char **argv) {
         sample_rejection_encoding,
         free_sample_ky_encoding_s,
         path, steps, t, x)
-    // else READ_SAMPLE_TIME("rej.mat",
-    //     sampler,
-    //     sample_ky_matrix_s,
-    //     read_sample_ky_matrix,
-    //     sample_rejection_matrix,
-    //     free_sample_ky_matrix_s,
-    //     path, steps, t, x)
-    // else READ_SAMPLE_TIME("rej.matc",
-    //     sampler,
-    //     sample_ky_matrix_cached_s,
-    //     read_sample_ky_matrix_cached,
-    //     sample_rejection_matrix_cached,
-    //     free_sample_ky_matrix_cached_s,
-    //     path, steps, t, x)
-    // else READ_SAMPLE_TIME("interval",
-    //     sampler,
-    //     sample_interval_s,
-    //     read_sample_interval,
-    //     sample_interval,
-    //     free_sample_interval_s,
-    //     path, steps, t, x)
     else READ_SAMPLE_TIME("alias.exact",
         sampler,
         sample_alias_exact_s,

@@ -25,18 +25,9 @@
 unsigned long NUM_RNG_CALLS = 0;
 
 
-// int randint(int k) {
-//     int n = 0;
-
-//     for (int i = 0; i < k; i++) {
-//         int b = get_random_bits_spsc(1);
-//         n <<= 1;
-//         n += b;
-//     }
-
-//     return n;
-// }
-
+// *********************************************************************************
+//              RANDOM BIT GENERATOR
+// *********************************************************************************
 
 // Initialisation globale de notre queue
 SPSC_RandomQueue q;
@@ -115,6 +106,9 @@ uint32_t get_random_bits_spsc(size_t nbbits) {
 }
 
 
+// *********************************************************************************
+//              UNIFORM AND BERNOULLI - LUMBROSO
+// *********************************************************************************
 
 uint32_t uniform(uint32_t n) {
     uint32_t num_bits_presample = 32 - __builtin_clz(n - 1);

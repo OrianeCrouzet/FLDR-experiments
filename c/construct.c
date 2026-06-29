@@ -1,6 +1,6 @@
 /*
-  Name:     utils.c
-  Purpose:  Utilities for searching.
+  Name:     construct.c
+  Purpose:  Utilities for constructing data structures.
   Author:   F. A. Saad and C. E. Freer
   Copyright (C) 2020 Feras A. Saad and C. E. Freer, All Rights Reserved.
 
@@ -8,12 +8,14 @@
 */
 
 #include <stdint.h>
-#include "utils.h"
+#include "construct.h"
 #include "vector_int.h"
 #include "sstructs.h"
 
 
-// ***** Mes ajouts *****
+// *********************************************************************************
+//              ALIAS INTEGERS
+// *********************************************************************************
 
 void cons_alias5(unsigned int n, VectorInt* D, uint32_t cs,VectorInt* T, VectorInt* Threshold){
     // Version originale, avec des tableaux fixes pour small et large
@@ -145,13 +147,10 @@ struct sample_alias_integers_s preprocess_alias_integers_old(int* a, int n) {
     return sampler;
 }
 
-// uint32_t poids_total_v2(VectorInt D, unsigned int size){
-//     uint32_t result = 0;
-//     for (unsigned int i = 0; i < size; i++) {
-//         result += D.data[i];
-//     }
-//     return result;
-// }
+
+// *********************************************************************************
+//              ALDR
+// *********************************************************************************
 
 struct sample_aldr_s preprocess_aldr_flat_k(int* a, int n, int kmul) {
     // assume k <= 31

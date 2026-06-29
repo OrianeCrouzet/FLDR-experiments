@@ -1,3 +1,10 @@
+/*
+  Name:     histogram.c
+  Purpose:  Constructing histograms for sampling algorithms.
+  Author:   Oriane Crouzet
+  Copyright (C) 2026 Oriane Crouzet, All Rights Reserved.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

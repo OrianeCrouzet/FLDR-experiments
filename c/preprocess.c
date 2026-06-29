@@ -1,6 +1,6 @@
 /*
   Name:     preprocess.c
-  Purpose:  Preprocessing algorithm for FLDR.
+  Purpose:  Preprocessing algorithms.
   Author:   F. A. Saad
   Copyright (C) 2020 Feras A. Saad, All Rights Reserved.
 
@@ -16,7 +16,7 @@
 #include "readio.h"
 #include "sstructs.h"
 #include "alias_fractions.h"
-#include "utils.h"
+#include "construct.h"
 #include "alias_rust.h"
 
 int ceil_log2(unsigned long long x) {
@@ -113,9 +113,9 @@ int main(int argc, char **argv) {
 
     
 
-    //***********************************************
-    // Mesures pour Alias Integers et Alias Fractions
-    //***********************************************
+    //*************************************************************
+    // Mesures pour Alias Integers, Alias Fractions and Alias Rust
+    //*************************************************************
 
     FILE *fp = fopen(path, "r");
     int kmul;
