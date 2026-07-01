@@ -24,17 +24,7 @@ cmd=${2}
 
 # rej.enc == fldr
 #SAMPLERS='alias.exact rej.enc  rej.table rej.uniform alias.integers aldr alias.rust alias.fractions'
-#SAMPLERS='alias.rust alias.rust alias.integers_old alias.integers_old aldr aldr alias.exact alias.exact rej.enc rej.enc alias.fractions alias.fractions'
-SAMPLERS='alias.rust alias.rust alias.fractions alias.fractions'
-
-#if [ ${cmd} = 'initialize' ]; then
- # N=$(echo ${stamp} | cut -d. -f2)
-  #Z=$(echo ${stamp} | cut -d. -f3)
-  #seed=$(echo ${stamp} | cut -d. -f4)
-  #qs=$(echo ${SAMPLERS} | xargs -I% echo "'%'")
-  #./dists.py generate-distributions N=${N} Z=${Z} seed=${seed} samplers="${qs}" thin=5;
-  #exit 0;
-#fi
+SAMPLERS='alias.rust alias.rust alias.integers_old alias.integers_old aldr aldr alias.fractions alias.fractions' #alias.exact alias.exact rej.enc rej.enc
 
 if [ "${cmd}" = 'initialize' ]; then
   if [[ "${stamp}" =~ ^dists\.([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
@@ -125,10 +115,37 @@ fi
 if [ "${cmd}" = 'aggregate-sizes' ]; then
   for sampler in ${SAMPLERS}; do
       fn=${stamp}/${sampler}.sizes;
-      # Portable file size: -f %z for BSD/macOS, -c %s for GNU/Linux
-      stat -f %z ${stamp}/*.${sampler} 2>/dev/null > "${fn}" || stat -c %s ${stamp}/*.${sampler} > "${fn}";
-      echo ${stamp}/*.${sampler};
-      echo ${fn};
+      if [ -f "${fn}" ]; then
+          echo "=== ${sampler} sizes done ===" >&2
+          #cat "${fn}" >&2
+      else
+          echo "File ${fn} not found" >&2
+      fi
+  done
+  exit 0;
+fi
+
+if [ "${cmd}" = 'measure-structure-sizes' ]; then
+  for sampler in ${SAMPLERS}; do
+      echo "=== Measuring structure sizes: ${sampler} ==="
+      fnames=$(ls "${stamp}"/*.${sampler} 2>/dev/null || true)
+      if [ -z "${fnames}" ]; then
+          echo "No files for sampler ${sampler} in ${stamp}" >&2
+          continue
+      fi
+
+      sizes_file="${stamp}/${sampler}.sizes"
+      rm -f "${sizes_file}"
+
+      for f in ${fnames}; do
+          dist_name=$(basename "${f}" .${sampler})
+          size_out=$(mktemp)
+          ../c/measure_sizes.out.opt "${sampler}" "${f}" "${size_out}"
+          size=$(cat "${size_out}")
+          echo "${size}" >> "${sizes_file}"
+          rm -f "${size_out}"
+      done
+      echo "Wrote ${sizes_file}"
   done
   exit 0;
 fi
@@ -375,9 +392,10 @@ if [ ${cmd} = 'run-all-memory-runtime' ]; then
       stamp=dists.${n}.${Z}.2
       echo ${stamp}
       ./pipeline.sh ${stamp} initialize;
-      ./pipeline.sh ${stamp} aggregate-sizes;
       ./pipeline.sh ${stamp} measure-runtimes 1000000;
+      ./pipeline.sh ${stamp} measure-structure-sizes;
       ./pipeline.sh ${stamp} aggregate-runtimes 1000000;
+      ./pipeline.sh ${stamp} aggregate-sizes;
   done
   exit 0
 fi

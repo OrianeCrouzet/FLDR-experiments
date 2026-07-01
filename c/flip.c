@@ -110,27 +110,23 @@ uint32_t get_random_bits_spsc(size_t nbbits) {
 //              UNIFORM AND BERNOULLI - LUMBROSO
 // *********************************************************************************
 
+
 uint32_t uniform(uint32_t n) {
     uint32_t num_bits_presample = 32 - __builtin_clz(n - 1);
     uint32_t bound = 1 << num_bits_presample;
     uint32_t x = get_random_bits_spsc(num_bits_presample);
-    for (;;) {
+    while (bound < n || x >= n) {
         if (bound >= n) {
-            if (x < n) {
-                return x;
-            }
             bound -= n;
             x -= n;
         }
         bound <<= 1;
         x = (x << 1) | get_random_bits_spsc(1);
     }
+    return x;
 }
 
 uint32_t bernoulli(uint32_t numer, uint32_t denom) {
-    if (numer == denom) {
-        return 1;
-    }
 
     while (numer != denom) {
         numer <<= 1;
@@ -141,5 +137,5 @@ uint32_t bernoulli(uint32_t numer, uint32_t denom) {
             numer -= denom;
         }
     }
-    return 1;
+    return get_random_bits_spsc(1);
 }

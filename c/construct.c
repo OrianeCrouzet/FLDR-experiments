@@ -95,8 +95,6 @@ struct sample_alias_integers_s preprocess_alias_integers_old(int* a, int n) {
     // Init des vecteurs
     vector_init(&sampler.T);
     vector_init(&sampler.Threshold);
-    vector_reserve(&sampler.T, 2*n);
-    vector_reserve(&sampler.Threshold, 2*n);
 
     sampler.cs = 0;
 
@@ -114,7 +112,11 @@ struct sample_alias_integers_s preprocess_alias_integers_old(int* a, int n) {
     int r = 0;
 
     sampler.cs = w / n;
+    int q = w / n;
     r = w % sampler.cs;
+
+    vector_reserve(&sampler.T, q);
+    vector_reserve(&sampler.Threshold, q);
 
     int virtual_obj = -1;
     if (r > 0) {
@@ -124,7 +126,6 @@ struct sample_alias_integers_s preprocess_alias_integers_old(int* a, int n) {
     }
     /* store virtual object index in sampler for use at sampling time */
     sampler.virtual_obj = virtual_obj;
-    printf("virtual_obj_old: %d\n", virtual_obj);
 
     cons_alias5(n, &D, sampler.cs, &sampler.T, &sampler.Threshold);
 
