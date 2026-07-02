@@ -127,6 +127,9 @@ uint32_t uniform(uint32_t n) {
 }
 
 uint32_t bernoulli(uint32_t numer, uint32_t denom) {
+    if(numer == denom){
+        return 1;
+    }
 
     while (numer != denom) {
         numer <<= 1;

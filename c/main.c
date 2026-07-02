@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
     }
 
     double e = ((double)t) / CLOCKS_PER_SEC;
-    printf("%s %1.5f %ld\n", sampler, e, NUM_RNG_CALLS);
+    printf("%s %1.5f %ld %ld\n", sampler, e, NUM_RNG_CALLS, REJET);
     
      if (is_spsc_sampler) {
         //printf("[Main] Signalement au producteur SPSC de s'arrêter et attente de la fin du thread.\n");

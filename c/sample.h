@@ -12,6 +12,7 @@
 
 #include "sstructs.h"
 
+extern unsigned long REJET;
 
 // *************************** UTILS ***************************
 

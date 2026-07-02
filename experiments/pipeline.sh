@@ -23,7 +23,7 @@ stamp=${1}
 cmd=${2}
 
 # rej.enc == fldr
-#SAMPLERS='alias.exact rej.enc  rej.table rej.uniform alias.integers aldr alias.rust alias.fractions'
+#SAMPLERS='alias.exact rej.enc alias.integers aldr alias.rust alias.fractions'
 SAMPLERS='alias.rust alias.rust alias.integers_old alias.integers_old aldr aldr alias.fractions alias.fractions' #alias.exact alias.exact rej.enc rej.enc
 
 if [ "${cmd}" = 'initialize' ]; then
@@ -352,15 +352,17 @@ if [ ${cmd} = 'aggregate-runtimes' ]; then
       fn_runtime=${stamp}/${sampler}.runtimes
       fn_calls=${stamp}/${sampler}.calls
       fn_bits=${stamp}/${sampler}.bits
+      fn_rejet=${stamp}/${sampler}.rejet
 
       fnames=$(ls ${stamp}/*.${sampler}.runtime 2>/dev/null || true)
 
-      rm -f ${fn_runtime} ${fn_calls} ${fn_bits}
+      rm -f ${fn_runtime} ${fn_calls} ${fn_bits} ${fn_rejet}
 
       for f in ${fnames}; do
           echo $f
           cat ${f} | tail -n1 | cut -f2 -d ' ' >> ${fn_runtime}
           cat ${f} | tail -n1 | cut -f3 -d ' ' >> ${fn_calls}
+          cat ${f} | tail -n1 | cut -f4 -d ' ' >> ${fn_rejet}
 
           # calcul des bits ici
           # on divise par steps pour obtenir le nombre de bits par tirage
@@ -370,6 +372,7 @@ if [ ${cmd} = 'aggregate-runtimes' ]; then
       echo ${fn_runtime}
       echo ${fn_calls}
       echo ${fn_bits}
+      echo ${fn_rejet}
 
       # moyenne pour ce sampler
       if [ -f ${fn_bits} ]; then

@@ -16,6 +16,7 @@
 #include "construct.h"
 #include "fraction.h"
 
+unsigned long REJET = 0;
 
 // *********************************************************************************
 //              UTILS
@@ -155,6 +156,8 @@ uint32_t sample_alias_integers_old(struct sample_alias_integers_s *x) {
     int n = x->Threshold.size;
     uint32_t result;
 
+    REJET -= 1;
+    
     do {
         unsigned int q_index = (unsigned int)uniform(n);
 
@@ -164,12 +167,14 @@ uint32_t sample_alias_integers_old(struct sample_alias_integers_s *x) {
 
         result = x->T.data[final_index];
 
-    } while (x->virtual_obj != -1 &&
-             result == (uint32_t)x->virtual_obj);
+        REJET += 1; 
+
+    } while (result == (uint32_t)x->virtual_obj);
 
     return result;
 }
 
+// x->virtual_obj != -1 &&
 
 // *********************************************************************************
 //              ALDR
