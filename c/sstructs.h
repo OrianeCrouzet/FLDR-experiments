@@ -17,8 +17,14 @@
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 #include <gmp.h>
+
 #include "vector_int.h"
 #include "fraction.h"
+
+
+// *********************************************************************************
+//              UTILS
+// *********************************************************************************
 
 // matrix
 struct matrix_s {
@@ -33,29 +39,6 @@ struct array_s {
     int *a;
 };
 
-
-// sample_ky_encoding
-struct sample_ky_encoding_s {
-    int n;
-    int k;
-    struct array_s encoding;
-};
-
-// sample_ky_matrix
-struct sample_ky_matrix_s {
-    int k;
-    int l;
-    struct matrix_s P;
-};
-
-// sample_ky_matrix_cached
-struct sample_ky_matrix_cached_s {
-    int k;
-    int l;
-    struct array_s h;
-    struct matrix_s T;
-};
-
 // sample_fdr
 struct sample_fdr_s {
     int n;
@@ -67,34 +50,22 @@ struct sample_inversion_bernoulli_s {
     int M;
 };
 
-// sample_rejection_uniform
-struct sample_rejection_uniform_s {
+
+// *********************************************************************************
+//              FLDR
+// *********************************************************************************
+
+// sample_ky_encoding
+struct sample_ky_encoding_s {
     int n;
-    int M;
-    struct array_s Ms;
-    struct sample_inversion_bernoulli_s *ratios;
+    int k;
+    struct array_s encoding;
 };
 
-// sample_rejection_hash_table
-struct sample_rejection_hash_table_s {
-    int k;
-    int Z;
-    struct array_s T;
-};
 
-// sample_rejection_binary_search
-struct sample_rejection_binary_search_s {
-    int k;
-    int Z;
-    struct array_s cdf;
-};
-
-// sample_interval
-struct sample_interval_s {
-    int k;
-    int Z;
-    struct array_s cdf;
-};
+// *********************************************************************************
+//              ALIAS WALKER/VOSE
+// *********************************************************************************
 
 // sample_alias_gsl
 struct sample_alias_exact_s {
@@ -109,17 +80,23 @@ struct sample_alias_gsl_s {
     gsl_ran_discrete_t *distribution;
 };
 
-// ***** Mes ajouts *****
 
-// sample_alias_integers
+// *********************************************************************************
+//              ALIAS INTEGERS
+// *********************************************************************************
+
 struct sample_alias_integers_s {
     VectorInt T;
     VectorInt Threshold;
     uint32_t cs;
-    int virtual_obj; // index de l'objet virtuel, -1 si absent
+    int virtual_obj; // index of the virtual object, -1 if absent
 };
 
-// sample_aldr
+
+// *********************************************************************************
+//              ALDR
+// *********************************************************************************
+
 struct sample_aldr_s {
     // flattened ALDR tree
     int length_breadths;
@@ -128,7 +105,30 @@ struct sample_aldr_s {
     int *leaves_flat;
 };
 
-// sample_alias_rust
+
+// *********************************************************************************
+//              ALIAS FROM RUST
+// *********************************************************************************
+
+typedef struct {
+    VectorInt aliases;
+    //double *prob;
+    unsigned int *prob;
+    VectorInt small;
+    VectorInt large;
+    unsigned int n;
+    //double weight_sum;
+    unsigned int weight_sum;
+} alias_rust_s;
+
+typedef enum {
+    WEIGHTED_OK = 0,
+    WEIGHTED_NO_ITEM,
+    WEIGHTED_TOO_MANY,
+    WEIGHTED_INVALID_WEIGHT,
+    WEIGHTED_ALL_ZERO
+} WeightedError;
+
 struct sample_alias_rust_s {
     VectorInt aliases;
     double *prob;
@@ -138,17 +138,21 @@ struct sample_alias_rust_s {
     double weight_sum;
 };
 
-// sample_alias_fractions
+
+// *********************************************************************************
+//              ALIAS FRACTIONS
+// *********************************************************************************
+
 struct AliasEntry{
     int i;          
     int j;          // -1 if NULL
     struct Fraction prob;     // = k / pdsCase
 };
 
-// Structure de l'Alias Fractions
+// Structure of Alias Fractions
 struct sample_alias_fractions_s{
-    int taille;           // Nombre d'éléments
-    struct AliasEntry* table;    // Tableau de AliasEntry
+    int taille;           // Number of elements
+    struct AliasEntry* table;    // AliasEntry table
 };
 
 #endif

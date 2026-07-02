@@ -25,11 +25,17 @@
 extern unsigned long NUM_RNG_CALLS;
 
 
-int randint(int k);
+// *********************************************************************************
+//              UNIFORM AND BERNOULLI - LUMBROSO
+// *********************************************************************************
 
 uint32_t uniform(uint32_t n);
 uint32_t bernoulli(uint32_t numer, uint32_t denom);
 
+
+// *********************************************************************************
+//              RANDOM BIT GENERATOR
+// *********************************************************************************
 
 #define BUFFER_SIZE 64  // doit être une puissance de 2 à cause des orépration bis-à-bit.
 #define BUFFER_MASK (BUFFER_SIZE - 1)

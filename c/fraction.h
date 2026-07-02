@@ -1,3 +1,10 @@
+/*
+  Name:     fraction.h
+  Purpose:  Handling fractions as a pair of integers (numerator, denominator).
+  Author:   Oriane Crouzet
+  Copyright (C) 2026 Oriane Crouzet, All Rights Reserved.
+*/
+
 #ifndef FRACTION_H
 #define FRACTION_H
 

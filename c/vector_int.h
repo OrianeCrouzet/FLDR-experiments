@@ -1,3 +1,10 @@
+/*
+  Name:     vector_int.h
+  Purpose:  Vector implementation for integers.
+  Author:   Oriane Crouzet
+  Copyright (C) 2026 Oriane Crouzet, All Rights Reserved.
+*/
+
 #ifndef VECTOR_INT_H
 #define VECTOR_INT_H
 
