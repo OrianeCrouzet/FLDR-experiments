@@ -75,6 +75,7 @@ int main(int argc, char **argv) {
 
     int x = 0;
     clock_t t;
+    REJET = 1;
     READ_SAMPLE_TIME("ky.enc",
         sampler,
         sample_ky_encoding_s,

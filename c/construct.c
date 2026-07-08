@@ -81,7 +81,6 @@ void cons_alias5(unsigned int n, VectorInt* D, uint32_t cs,VectorInt* T, VectorI
         vector_push(T, x2);
         vector_push(T, -1);
         vector_push(Threshold, cs);
-
         t += 2;
     }
 
@@ -96,7 +95,7 @@ struct sample_alias_integers_s preprocess_alias_integers_old(int* a, int n) {
     vector_init(&sampler.T);
     vector_init(&sampler.Threshold);
 
-    sampler.cs = 0;
+    //sampler.cs = 0;
 
     VectorInt D;
     vector_init(&D);
@@ -112,7 +111,7 @@ struct sample_alias_integers_s preprocess_alias_integers_old(int* a, int n) {
     int r = 0;
 
     sampler.cs = w / n;
-    int q = w / n;
+    int q = w / sampler.cs;
     r = w % sampler.cs;
 
     vector_reserve(&sampler.T, q);

@@ -16,7 +16,7 @@
 #include "construct.h"
 #include "fraction.h"
 
-unsigned long REJET = 0;
+unsigned long REJET = 1;
 
 // *********************************************************************************
 //              UTILS
@@ -132,7 +132,7 @@ int sample_alias_exact(struct sample_alias_exact_s *x) {
 uint32_t sample_alias_integers(struct sample_alias_integers_s *x) {
     int q = 0;
     int n = x->Threshold.size;
-    uint32_t result;
+    int result;
 
     do {
         unsigned int q_index = (unsigned int)uniform(n);
@@ -144,22 +144,22 @@ uint32_t sample_alias_integers(struct sample_alias_integers_s *x) {
         result = x->T.data[final_index];
 
     } while (x->virtual_obj != -1 &&
-             result == (uint32_t)x->virtual_obj);
+             result == x->virtual_obj);
 
-    return result;
+    return (uint32_t)result;
 }
 
 
 // REJET OBJ VIRTUEL
 uint32_t sample_alias_integers_old(struct sample_alias_integers_s *x) {
-    int q = 0;
+    //int q = 0;
     int n = x->Threshold.size;
-    uint32_t result;
+    int result;
 
-    REJET -= 1;
+    REJET--;
     
     do {
-        unsigned int q_index = (unsigned int)uniform(n);
+        uint32_t q_index = (uint32_t)uniform(n);
 
         uint32_t b = bernoulli(x->Threshold.data[q_index], x->cs);
 
@@ -167,14 +167,14 @@ uint32_t sample_alias_integers_old(struct sample_alias_integers_s *x) {
 
         result = x->T.data[final_index];
 
-        REJET += 1; 
+        REJET++; 
+        
+    } while (result == x->virtual_obj); //x->virtual_obj != -1 && 
 
-    } while (result == (uint32_t)x->virtual_obj);
-
-    return result;
+    return (uint32_t)result;
 }
 
-// x->virtual_obj != -1 &&
+
 
 // *********************************************************************************
 //              ALDR
