@@ -93,16 +93,24 @@ def sparse_family(n):
     return weights
 
 
-def gaussian_family(n):
+def gaussian_family(n, mu=None, sigma=None):
     x = np.arange(n)
-    mu = n/2      # Mu fixé à n pour tester le rapport sigma/entropie
+    mu = n/2 if mu is None else mu
+    if sigma is None:
+        sigma = 10**np.random.uniform(
+            np.log10(0.5),
+            np.log10(np.sqrt(n)),
+        )
+    weights = np.exp(-(x-mu)**2/(2*sigma**2))
+    return weights
+
+
+def gaussian_family_with_sigma(n, mu=None):
     sigma = 10**np.random.uniform(
         np.log10(0.5),
         np.log10(np.sqrt(n)),
     )
-    weights = np.exp(-(x-mu)**2/(2*sigma**2))
-    # On renvoie sigma pour faire le plot, pas pour les distributions elles-mêmes
-    return weights, sigma
+    return gaussian_family(n, mu=mu, sigma=sigma), sigma
 
 
 def exponential_family(n):
@@ -174,9 +182,8 @@ def main():
             shutil.rmtree(family_dir)
         os.makedirs(family_dir, exist_ok=True)
         for i in range(args.m):
-            # Traitement spécial pour les gaussiennes
             if name == "gaussian":
-                raw, sigma = generator(args.n)
+                raw, sigma = gaussian_family_with_sigma(args.n)
             else:
                 raw = generator(args.n)
 

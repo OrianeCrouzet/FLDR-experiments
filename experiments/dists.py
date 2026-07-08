@@ -24,7 +24,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 
-from create_distributions import normalize_to_Z
+from create_distributions import normalize_to_Z, gaussian_family
 
 from discrete_sampling.construct import construct_sample_alias
 from discrete_sampling.construct import construct_sample_alias_integers
@@ -126,7 +126,6 @@ def write_samplers(args):
         ('rej.binary',
             construct_sample_rejection_binary_search,
             write_sample_rejection_binary_search),
-
         ('rej.enc',
             construct_sample_rejection_encoding,
             write_sample_ky_encoding),
@@ -191,6 +190,11 @@ def write_samplers(args):
         subprocess.check_output(['ln', fpath_dist, fpath])
         print(fpath)
 
+
+# *********************************************************************************
+#              Fonction originale de Saad, Dirichlet
+# *********************************************************************************
+
 @parsable
 def generate_distributions(N=10, Z=-1, seed=1, samplers='', thin=1,
         force=None, offset=0):
@@ -227,6 +231,123 @@ def generate_distributions(N=10, Z=-1, seed=1, samplers='', thin=1,
     ]
     parallel_map(write_samplers, args)
     # list(map(write_samplers, args))
+
+
+# *********************************************************************************
+#              n et Z qui varient, Z gaussien
+# *********************************************************************************
+
+@parsable
+def generate_distribution_diverse(
+    n_stop=1000000,
+    n_step=10000,
+    Z_mean_factor=20.0,
+    seed=1,
+    samplers='',
+    force=None,
+    out_dir=None,
+):
+    """Generate distributions for varying n and Gaussian Z values.
+
+    Fixed starting n at 1000. Produces one distribution per n in
+    [1000, n_stop) with step n_step. Z is sampled from
+    Gaussian(mean=Z_mean_factor*n, std=sqrt(n)).
+    
+    Entropy control: Change 'selected_entropy_sigma' to one of:
+    - small_entropy_sigma
+    - medium_entropy_sigma
+    - high_entropy_sigma
+    Each uses random variation for distribution diversity.
+    """
+
+    samplers = samplers.replace("'", "").split(' ') if samplers != '' else []
+    rng = np.random.RandomState(seed)
+
+    n_start = 1000
+    n_stop = int(n_stop)
+    n_step = int(n_step)
+    if n_step <= 0:
+        raise ValueError('n_step must be positive')
+
+    n_values = list(range(n_start, n_stop, n_step))
+    if not n_values:
+        raise ValueError('No n values generated; check n_stop and n_step')
+
+    distributions = []
+    entropies = []
+    Z_values = []
+
+    for n in n_values:
+        # Three entropy options (each with random variation)
+        small_entropy_sigma = 10**np.random.uniform(np.log10(0.5), np.log10(1.0))
+        medium_entropy_sigma = 10**np.random.uniform(np.log10(0.5), np.log10(np.sqrt(n)))
+        high_entropy_sigma = 10**np.random.uniform(np.log10(1.0), np.log10(np.sqrt(n) * 2))
+        
+        # *** CHANGE THIS TO SELECT ENTROPY LEVEL ***
+        selected_entropy_sigma = medium_entropy_sigma
+        # Options: small_entropy_sigma, medium_entropy_sigma, high_entropy_sigma
+        
+        weights = gaussian_family(n, sigma=selected_entropy_sigma)
+        
+        # sample Z from Gaussian, but ensure Z >= n
+        Z_sample = int(round(rng.normal(loc=Z_mean_factor * n, scale=n)))
+        if Z_sample < n:
+            Z = n
+        else:
+            Z = Z_sample
+        # sanity check
+        assert Z >= n, f'Z ({Z}) must be >= n ({n})'
+        Z_values.append(Z)
+
+        numerators = normalize_to_Z(weights, Z)
+        p_target = [Fraction(int(w), Z) for w in numerators]
+        entropy = compute_entropy(p_target)
+
+        distributions.append(p_target)
+        entropies.append(entropy)
+
+    first_n = n_values[0]
+    first_Z = Z_values[0]
+    if out_dir:
+        dirname = out_dir
+    else:
+        dirname = 'dists.%d.%d.%d' % (first_n, first_Z, seed)
+    if force and os.path.exists(dirname):
+        shutil.rmtree(dirname)
+    if not os.path.exists(dirname):
+        os.mkdir(dirname)
+
+    args = [
+        (samplers, dirname, i, distributions[i], entropies[i])
+        for i in range(len(distributions))
+    ]
+    parallel_map(write_samplers, args)
+    
+    # Save n values and their corresponding entropies/Z to JSON
+    import json
+    entropies_float = [float(e) for e in entropies]
+    avg_entropy = np.mean(entropies_float) if entropies_float else 0.0
+    metadata = {
+        'n_values': n_values,
+        'entropies': entropies_float,
+        'avg_entropy': float(avg_entropy),
+        'Z_values': Z_values,
+        'Z_mean_factor': float(Z_mean_factor),
+        'seed': int(seed),
+        'n_start': int(n_start),
+        'n_stop': int(n_stop),
+        'n_step': int(n_step),
+    }
+    metadata_path = os.path.join(dirname, 'metadata.json')
+    with open(metadata_path, 'w') as f:
+        json.dump(metadata, f, indent=2)
+    print(f'Metadata saved to {metadata_path}')
+
+
+
+# *********************************************************************************
+#              Décider si on garde ou pas
+# *********************************************************************************
 
 @parsable
 def generate_distributions_entropy2(
@@ -306,6 +427,7 @@ def generate_distributions_entropy2(
         ]
 
         parallel_map(write_samplers, args)
+
 
 @parsable
 def generate_distributions_entropy(

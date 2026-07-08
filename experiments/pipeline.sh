@@ -58,6 +58,51 @@ if [ "${cmd}" = 'initialize' ]; then
   exit 0
 fi
 
+if [ "${cmd}" = 'initialize-diverse' ]; then
+  # If stamp is a dists.* name, treat it as the desired output directory
+  out_dir=""
+  if [[ "${stamp}" =~ ^dists\. ]]; then
+    out_dir="${stamp}"
+    if [[ "${stamp}" =~ \.([0-9]+)$ ]]; then
+      seed=${BASH_REMATCH[1]}
+    else
+      seed=1
+    fi
+  else
+    if [[ "${stamp}" =~ ^[0-9]+$ ]]; then
+      seed=${stamp}
+    else
+      seed=1
+    fi
+  fi
+
+  echo "=== Initialize: Generating n/Z varying distributions ==="
+  echo "Seed = ${seed}, samplers = ${SAMPLERS}, out_dir = ${out_dir}"
+
+  force_arg=""
+  if [ -n "${out_dir}" ] && [ -d "${out_dir}" ]; then
+    echo "Removing existing directory ${out_dir}"
+    rm -rf "${out_dir}"
+    force_arg="force=1"
+  else
+    force_arg="force=1"
+  fi
+
+  for sampler in ${SAMPLERS}; do
+    echo "--- Generating distributions for sampler: ${sampler} ---"
+    if [ -n "${out_dir}" ]; then
+      ./dists.py generate-distribution-diverse seed=${seed} samplers="${sampler}" ${force_arg} out_dir="${out_dir}"
+    else
+      ./dists.py generate-distribution-diverse seed=${seed} samplers="${sampler}" ${force_arg}
+    fi
+    force_arg=""
+    echo "Finished sampler: ${sampler}"
+  done
+
+  echo "=== All samplers initialized ==="
+  exit 0
+fi
+
 # if [ ${cmd} = 'initialize-2' ]; then
 # # Pour la future figure avec n qui varie et entropie fixée
 
@@ -324,7 +369,6 @@ if [ ${cmd} = 'measure-runtimes' ]; then
   steps=${3}
   seed=$(echo ${stamp} | cut -d. -f4)
   
-  # Actual measurement phase
   echo "=== MEASUREMENT PHASE ==="
   for sampler in ${SAMPLERS}; do
       echo "=== Measuring sampler: ${sampler} ==="   # <-- log
@@ -400,6 +444,23 @@ if [ ${cmd} = 'run-all-memory-runtime' ]; then
       ./pipeline.sh ${stamp} aggregate-runtimes 1000000;
       ./pipeline.sh ${stamp} aggregate-sizes;
   done
+  exit 0
+fi
+
+if [ ${cmd} = 'run-all-memory-runtime-diverse' ]; then
+  out_stamp=dists.${3}.${4}.2
+  steps=${5:-1000000}
+
+  echo "=== Run all: diverse distributions in ${out_stamp} ==="
+
+  # initialize-diverse will detect the stamp and write into that directory
+  ./pipeline.sh ${out_stamp} initialize-diverse;
+
+  ./pipeline.sh ${out_stamp} measure-runtimes ${steps};
+  ./pipeline.sh ${out_stamp} measure-structure-sizes;
+  ./pipeline.sh ${out_stamp} aggregate-runtimes ${steps};
+  ./pipeline.sh ${out_stamp} aggregate-sizes;
+
   exit 0
 fi
 
