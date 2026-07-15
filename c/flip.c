@@ -131,14 +131,17 @@ uint32_t bernoulli(uint32_t numer, uint32_t denom) {
         return 1;
     }
 
+    numer <<= 1;
+    uint32_t y;
     while (numer != denom) {
-        numer <<= 1;
-        if (get_random_bits_spsc(1)) {
-            return numer > denom;
-        }
-        else if (numer > denom) {
+        y = numer > denom;
+        if (y) {
             numer -= denom;
         }
+        if (get_random_bits_spsc(1)) {
+            return y;
+        }
+        numer <<= 1;
     }
     return get_random_bits_spsc(1);
 }

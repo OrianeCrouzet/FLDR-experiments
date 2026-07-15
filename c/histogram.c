@@ -14,6 +14,16 @@
 #include "readio.h"
 #include "sstructs.h"
 
+void print_vector_int(const char *name, VectorInt *v)
+{
+    printf("[%s] size=%u, capacity=%u, data=[", name, v->size, v->capacity);
+    for (unsigned int i = 0; i < v->size; i++) {
+        printf("%d", v->data[i]);
+        if (i < v->size - 1) printf(", ");
+    }
+    printf("]\n");
+}
+
 #define RUN(NAME, TYPE, READ, SAMPLE, FREE)                     \
 if (strcmp(name, NAME) == 0) {                                  \
     TYPE s = READ(path);                                        \
@@ -74,6 +84,18 @@ void run_sampler(char *name, char *path, int steps)
     printf("Unknown sampler %s\n", name);
 }
 
+void run_sampler_with_debug(char *name, char *path, int steps)
+{
+    if (strcmp(name, "alias.integers_old") == 0) {
+        struct sample_alias_integers_s s = read_sample_alias_integers_old(path);
+        print_vector_int("T", &s.T);
+        print_vector_int("Threshold", &s.Threshold);
+        printf("[alias.integers_old] cs=%u, virtual_obj=%d\n", s.cs, s.virtual_obj);
+        free_sample_alias_integers_s_old(s);
+    }
+    run_sampler(name, path, steps);
+}
+
 int main(int argc, char **argv)
 //      Lancer : ./histogram.out histogram/*.dist 1000000
 {
@@ -108,7 +130,7 @@ int main(int argc, char **argv)
         }
 
         printf("=== %s ===\n", samplers[i]);
-        run_sampler(samplers[i], dist, steps);
+        run_sampler_with_debug(samplers[i], dist, steps);
     }
 
     if (is_spsc_sampler) {

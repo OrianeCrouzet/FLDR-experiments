@@ -31,18 +31,33 @@ int main(int argc, char **argv) {
         struct sample_alias_integers_s s = read_sample_alias_integers_old(path);
         size = get_size_sample_alias_integers_s(&s);
         free_sample_alias_integers_s_old(s);
+        
     } else if (strcmp(sampler, "alias.rust") == 0) {
         struct sample_alias_rust_s s = read_sample_alias_rust(path);
         size = get_size_sample_alias_rust_s(&s);
         free_sample_alias_rust_s(s);
+
     } else if (strcmp(sampler, "aldr") == 0) {
         struct sample_aldr_s s = read_sample_aldr(path);
         size = get_size_sample_aldr_s(&s);
         free_sample_aldr_s(s);
+
     } else if (strcmp(sampler, "alias.fractions") == 0) {
         struct sample_alias_fractions_s s = read_sample_alias_fractions(path);
         size = get_size_sample_alias_fractions_s(&s);
         free_sample_alias_fractions_s(s);
+
+    } else if (strcmp(sampler, "rej.enc") == 0) {
+        struct sample_ky_encoding_s s = read_sample_ky_encoding(path);
+        size = get_size_sample_ky_encoding_s(&s);
+        free_sample_ky_encoding_s(s);
+
+    } else if (strcmp(sampler, "alias.exact") == 0) {
+        struct sample_alias_exact_s s = read_sample_alias_exact(path);
+        size = get_size_sample_alias_exact_s(&s);
+        free_sample_alias_exact_s(s);
+
+
     } else {
         fprintf(stderr, "Unknown sampler: %s\n", sampler);
         return EXIT_FAILURE;

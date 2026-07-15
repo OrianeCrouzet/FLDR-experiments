@@ -281,10 +281,10 @@ def generate_distribution_diverse(
         # Three entropy options (each with random variation)
         small_entropy_sigma = 10**np.random.uniform(np.log10(0.5), np.log10(1.0))
         medium_entropy_sigma = 10**np.random.uniform(np.log10(0.5), np.log10(np.sqrt(n)))
-        high_entropy_sigma = 10**np.random.uniform(np.log10(1.0), np.log10(np.sqrt(n) * 2))
+        high_entropy_sigma = 10**np.random.uniform(np.log10(1.0), np.log10(n/4))
         
         # *** CHANGE THIS TO SELECT ENTROPY LEVEL ***
-        selected_entropy_sigma = medium_entropy_sigma
+        selected_entropy_sigma = small_entropy_sigma
         # Options: small_entropy_sigma, medium_entropy_sigma, high_entropy_sigma
         
         weights = gaussian_family(n, sigma=selected_entropy_sigma)

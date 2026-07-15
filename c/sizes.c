@@ -18,8 +18,8 @@ size_t get_size_sample_alias_integers_s(struct sample_alias_integers_s *s) {
     if (s->Threshold.data != NULL) {
         sampler_size += (size_t)s->Threshold.size * sizeof(s->Threshold.data[0]);
     }
-    sampler_size += sizeof(s->cs);
-    sampler_size += sizeof(s->virtual_obj);
+    // sampler_size += sizeof(s->cs);
+    // sampler_size += sizeof(s->virtual_obj);
 
     return sampler_size;
 }
@@ -48,6 +48,25 @@ size_t get_size_sample_alias_fractions_s(struct sample_alias_fractions_s *s) {
         size += (size_t)s->taille * sizeof(struct AliasEntry);
     }
 
+    return size;
+}
+
+size_t get_size_sample_ky_encoding_s(struct sample_ky_encoding_s *s) {
+    size_t size = sizeof(*s);
+    if (s->encoding.a != NULL) {
+        size += (size_t)s->encoding.length * sizeof(s->encoding.a[0]);
+    }
+    return size;
+}
+
+size_t get_size_sample_alias_exact_s(struct sample_alias_exact_s *s) {
+    size_t size = sizeof(*s);
+    if (s->ratios != NULL) {
+        size += (size_t)s->n * sizeof(s->ratios[0]);
+    }
+    if (s->j.a != NULL) {
+        size += (size_t)s->j.length * sizeof(s->j.a[0]);
+    }
     return size;
 }
 

@@ -112,7 +112,7 @@ struct sample_alias_integers_s preprocess_alias_integers_old(int* a, int n) {
     int r = 0;
 
     sampler.cs = w / n;
-    int q = w / n;
+    int q = w / sampler.cs;
     r = w % sampler.cs;
 
     vector_reserve(&sampler.T, q);

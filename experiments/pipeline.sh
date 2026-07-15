@@ -24,7 +24,7 @@ cmd=${2}
 
 # rej.enc == fldr
 #SAMPLERS='alias.exact rej.enc alias.integers aldr alias.rust alias.fractions'
-SAMPLERS='alias.rust alias.rust alias.integers_old alias.integers_old aldr aldr alias.fractions alias.fractions' #alias.exact alias.exact rej.enc rej.enc
+SAMPLERS='alias.rust alias.rust alias.integers_old alias.integers_old aldr aldr alias.exact alias.exact rej.enc rej.enc' #alias.exact alias.exact rej.enc rej.enc
 
 if [ "${cmd}" = 'initialize' ]; then
   if [[ "${stamp}" =~ ^dists\.([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
