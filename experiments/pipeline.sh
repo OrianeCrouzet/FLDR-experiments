@@ -23,9 +23,8 @@ stamp=${1}
 cmd=${2}
 
 # rej.enc == fldr
-#SAMPLERS='alias.exact rej.enc alias.integers aldr alias.rust alias.fractions'
 #SAMPLERS='alias.rust alias.rust alias.integers_old alias.integers_old aldr aldr alias.exact alias.exact rej.enc rej.enc' #alias.exact alias.exact rej.enc rej.enc
-SAMPLERS='alias.integers_old alias.integers_old alias.integers_gmp alias.integers_gmp'
+SAMPLERS='aldr aldr aldr_gmp aldr_gmp'
 
 
 if [ "${cmd}" = 'initialize' ]; then

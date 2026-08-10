@@ -58,6 +58,12 @@ void run_sampler(char *name, char *path, int steps)
         sample_aldr,
         free_sample_aldr_s)
 
+    RUN("aldr_gmp",
+        struct sample_aldr_gmp_s,
+        read_sample_aldr_gmp,
+        sample_aldr_flat_gmp,
+        free_sample_aldr_gmp_s)
+
     RUN("rej.enc",
         struct sample_ky_encoding_s,
         read_sample_ky_encoding,
@@ -122,10 +128,11 @@ int main(int argc, char **argv)
         "alias.rust",
         "alias.fractions",
         "alias.integers_old",
-        "alias.integers_gmp"
+        "alias.integers_gmp",
+        "aldr_gmp"
     };
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 6; i++) {
         // Vérifie si l'échantillonneur actuel utilise la file SPSC
         if (strcmp(samplers[i], "alias.integers") == 0 || strcmp(samplers[i], "alias.integers_old") == 0 || strcmp(samplers[i], "alias.rust") == 0 || strcmp(samplers[i], "alias.integers_gmp") == 0) {
             is_spsc_sampler = true;

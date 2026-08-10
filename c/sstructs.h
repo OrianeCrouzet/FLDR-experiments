@@ -120,6 +120,20 @@ struct sample_aldr_s {
 
 
 // *********************************************************************************
+//              ALDR - GMP (entiers taille arbitraire)
+// *********************************************************************************
+
+// flattened ALDR tree
+struct sample_aldr_gmp_s
+{
+    mpz_t length_breadths;
+    mpz_t length_leaves_flat;
+    VectorMpz breadths;
+    VectorMpz leaves_flat;
+};
+
+
+// *********************************************************************************
 //              ALIAS FROM RUST
 // *********************************************************************************
 

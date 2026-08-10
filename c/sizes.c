@@ -7,6 +7,11 @@
 
 #include "sizes.h"
 
+
+// *********************************************************************************
+//              ALIAS INTEGERS
+// *********************************************************************************
+
 size_t get_size_sample_alias_integers_s(struct sample_alias_integers_s *s) {
     size_t sampler_size = sizeof(*s);
 
@@ -23,6 +28,11 @@ size_t get_size_sample_alias_integers_s(struct sample_alias_integers_s *s) {
 
     return sampler_size;
 }
+
+
+// *********************************************************************************
+//              ALIAS INTEGERS - GMP (entiers taille arbitraire)
+// *********************************************************************************
 
 size_t get_size_sample_gmp_alias_integers_s(struct sample_gmp_alias_integers_s *s) {
     size_t total = sizeof(*s);
@@ -43,6 +53,11 @@ size_t get_size_sample_gmp_alias_integers_s(struct sample_gmp_alias_integers_s *
     return total;
 }
 
+
+// *********************************************************************************
+//              ALIAS FROM RUST
+// *********************************************************************************
+
 size_t get_size_sample_alias_rust_s(struct sample_alias_rust_s *s) {
     size_t size = sizeof(*s);
     if (s->aliases.data != NULL) {
@@ -61,6 +76,11 @@ size_t get_size_sample_alias_rust_s(struct sample_alias_rust_s *s) {
     return size;
 }
 
+
+// *********************************************************************************
+//              ALIAS FRACTIONS
+// *********************************************************************************
+
 size_t get_size_sample_alias_fractions_s(struct sample_alias_fractions_s *s) {
     size_t size = sizeof(*s);
     if (s->table != NULL) {
@@ -70,6 +90,11 @@ size_t get_size_sample_alias_fractions_s(struct sample_alias_fractions_s *s) {
     return size;
 }
 
+
+// *********************************************************************************
+//              FLDR
+// *********************************************************************************
+
 size_t get_size_sample_ky_encoding_s(struct sample_ky_encoding_s *s) {
     size_t size = sizeof(*s);
     if (s->encoding.a != NULL) {
@@ -77,6 +102,11 @@ size_t get_size_sample_ky_encoding_s(struct sample_ky_encoding_s *s) {
     }
     return size;
 }
+
+
+// *********************************************************************************
+//              ALIAS WALKER/VOSE
+// *********************************************************************************
 
 size_t get_size_sample_alias_exact_s(struct sample_alias_exact_s *s) {
     size_t size = sizeof(*s);
@@ -89,6 +119,11 @@ size_t get_size_sample_alias_exact_s(struct sample_alias_exact_s *s) {
     return size;
 }
 
+
+// *********************************************************************************
+//              ALDR
+// *********************************************************************************
+
 size_t get_size_sample_aldr_s(struct sample_aldr_s *s) {
     size_t size = sizeof(*s);
     if (s->breadths != NULL) {
@@ -99,5 +134,32 @@ size_t get_size_sample_aldr_s(struct sample_aldr_s *s) {
     }
 
     return size;
+}
+
+
+// *********************************************************************************
+//              ALDR - GMP (entiers taille arbitraire)
+// *********************************************************************************
+
+size_t get_size_sample_aldr_gmp_s(struct sample_aldr_gmp_s* x) {
+    size_t total = sizeof(*x);
+
+    if (x->breadths.data != NULL) {
+        total += (size_t)x->breadths.size * sizeof(mpz_t);
+        for (unsigned int i = 0; i < x->breadths.size; i++) {
+            size_t nbits = mpz_sizeinbase(x->breadths.data[i], 2);
+            total += (nbits + 7) / 8;
+        }
+    }
+
+    if (x->leaves_flat.data != NULL) {
+        total += (size_t)x->leaves_flat.size * sizeof(mpz_t);
+        for (unsigned int i = 0; i < x->leaves_flat.size; i++) {
+            size_t nbits = mpz_sizeinbase(x->leaves_flat.data[i], 2);
+            total += (nbits + 7) / 8;
+        }
+    }
+
+    return total;
 }
 

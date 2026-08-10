@@ -230,6 +230,48 @@ int sample_aldr(struct sample_aldr_s *x){
 
 
 // *********************************************************************************
+//              ALDR - GMP (entiers taille arbitraire)
+// *********************************************************************************
+
+int sample_aldr_flat_gmp(struct sample_aldr_gmp_s* f) {
+    mpz_t depth, location, val, breadth, temp, leaf_val;
+    mpz_inits(depth, location, val, breadth, temp, leaf_val, NULL);
+
+    while (1) {
+        mpz_set_ui(depth, 0);
+        mpz_set_ui(location, 0);
+        mpz_set_ui(val, 0);
+
+        for (;;) {
+            vector_mpz_get(breadth, &f->breadths, mpz_get_ui(depth));
+
+            if (mpz_cmp(val, breadth) < 0) {
+                mpz_add(temp, location, val);
+                vector_mpz_get(leaf_val, &f->leaves_flat, mpz_get_ui(temp));
+
+                if (mpz_sgn(leaf_val) != 0) {
+                    int result = mpz_get_si(leaf_val) - 1;
+                    mpz_clears(depth, location, val, breadth, temp, leaf_val, NULL);
+                    return result;
+                } else {
+                    break;
+                }
+            }
+
+            mpz_add(location, location, breadth);
+
+            // val = ((val - breadth) << 1) | flip()
+            mpz_sub(val, val, breadth);
+            mpz_mul_2exp(val, val, 1);          // val <<= 1
+            mpz_add_ui(val, val, get_random_bits_spsc(1));       // val |= flip()
+
+            mpz_add_ui(depth, depth, 1);
+        }
+    }
+}
+
+
+// *********************************************************************************
 //              ALIAS FROM RUST
 // *********************************************************************************
 

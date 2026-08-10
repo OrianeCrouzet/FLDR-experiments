@@ -175,6 +175,9 @@ def construct_sample_aldr(p_target):
 
     return n, Ms
 
+def construct_sample_aldr_gmp(p_target):
+    return construct_sample_aldr(p_target)
+
 def construct_sample_alias_fractions(p_target):
     """
     p_target : liste de Fraction

@@ -30,6 +30,7 @@ uint32_t sample_alias_integers_old(struct sample_alias_integers_s *x);
 uint32_t sample_alias_integers(struct sample_alias_integers_s *x);
 
 uint32_t sample_gmp_alias_integers(struct sample_gmp_alias_integers_s* x);
+int sample_aldr_flat_gmp(struct sample_aldr_gmp_s* f);
 
 int sample_aldr(struct sample_aldr_s *x);
 uint32_t sample_alias_rust(struct sample_alias_rust_s *x);

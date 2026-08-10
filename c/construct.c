@@ -351,6 +351,100 @@ struct sample_aldr_s preprocess_aldr_flat(int* a, int n) {
 
 
 // *********************************************************************************
+//              ALDR - GMP (entiers taille arbitraire)
+// *********************************************************************************
+
+struct sample_aldr_gmp_s preprocess_aldr_flat_k_gmp(int* a, int n, int kmul) {
+    mpz_t m, k, K, c, r, tmp, pow2K, Qi, bit, num_leaves, location, val_ui;
+    mpz_inits(m, k, K, c, r, tmp, pow2K, Qi, bit, num_leaves, location, val_ui, NULL);
+
+    mpz_set_ui(m, 0);
+    for (int i = 0; i < n; ++i) {
+        mpz_add_ui(m, m, a[i]);
+    }
+
+    unsigned long m_ui = mpz_get_ui(m);
+    int pop = __builtin_popcount(m_ui);
+    int clz = __builtin_clz(m_ui);
+    int k_int = 32 - clz - (pop == 1);
+    mpz_set_ui(k, k_int);
+
+    mpz_mul_ui(K, k, kmul);
+
+    mpz_ui_pow_ui(pow2K, 2, mpz_get_ui(K));
+
+    mpz_fdiv_q(c, pow2K, m);
+
+    mpz_fdiv_r(r, pow2K, m);
+
+    mpz_set_ui(num_leaves, __builtin_popcountll(mpz_get_ui(r)));
+
+    for (int i = 0; i < n; ++i) {
+        mpz_mul_ui(Qi, c, a[i]);
+        mpz_add_ui(num_leaves, num_leaves, __builtin_popcountll(mpz_get_ui(Qi)));
+    }
+
+    // Result
+    struct sample_aldr_gmp_s result;
+    mpz_init(result.length_breadths);
+    mpz_init(result.length_leaves_flat);
+    vector_mpz_init(&result.breadths);
+    vector_mpz_init(&result.leaves_flat);
+    mpz_set(result.length_breadths, K);
+    mpz_add_ui(result.length_breadths, result.length_breadths, 1);
+    mpz_set(result.length_leaves_flat, num_leaves);
+
+    mpz_set_ui(location, 0);
+
+    for (unsigned long j = 0; j <= mpz_get_ui(K); ++j) {
+        // bit = 1 << (K - j)
+        mpz_set_ui(tmp, j);
+        mpz_sub(tmp, K, tmp);  // tmp = K - j
+
+        mpz_ui_pow_ui(bit, 2, mpz_get_ui(tmp));      // bit = 2^(K - j)
+
+        // if (r & bit)
+        if (mpz_tstbit(r, mpz_get_ui(tmp))) {
+            mpz_set_ui(val_ui, 0);
+            vector_mpz_push(&result.leaves_flat, val_ui);
+
+            // breadths[j]++
+            while (result.breadths.size <= j) {
+                mpz_set_ui(val_ui, 0);
+                vector_mpz_push(&result.breadths, val_ui);
+            }
+            mpz_add_ui(result.breadths.data[j], result.breadths.data[j], 1);
+            mpz_add_ui(location, location, 1);
+        }
+
+        for (int i = 0; i < n; ++i) {
+            mpz_mul_ui(Qi, c, a[i]);
+            if (mpz_tstbit(Qi, mpz_get_ui(tmp))) {
+                mpz_set_ui(val_ui, i + 1);
+                vector_mpz_push(&result.leaves_flat, val_ui);
+
+                while (result.breadths.size <= j) {
+                    mpz_set_ui(val_ui, 0);
+                    vector_mpz_push(&result.breadths, val_ui);
+                }
+                mpz_add_ui(result.breadths.data[j], result.breadths.data[j], 1);
+                mpz_add_ui(location, location, 1);
+            }
+        }
+    }
+
+    // Cleaning
+    mpz_clears(m, k, K, c, r, tmp, pow2K, Qi, bit, num_leaves, location, val_ui, NULL);
+
+    return result;
+}
+
+struct sample_aldr_gmp_s preprocess_aldr_flat_gmp(int* a, int n) {
+    return preprocess_aldr_flat_k_gmp(a, n, 2);
+}
+
+
+// *********************************************************************************
 //              ALIAS FRACTIONS
 // *********************************************************************************
 

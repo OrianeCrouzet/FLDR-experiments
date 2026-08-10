@@ -138,6 +138,13 @@ int main(int argc, char **argv) {
         sample_aldr,
         free_sample_aldr_s,
         path, steps, t, x)
+    else READ_SAMPLE_TIME("aldr_gmp",
+        sampler,
+        sample_aldr_gmp_s,
+        read_sample_aldr_gmp,
+        sample_aldr_flat_gmp,
+        free_sample_aldr_gmp_s,
+        path, steps, t, x)
     else READ_SAMPLE_TIME("alias.rust",
         sampler,
         sample_alias_rust_s,

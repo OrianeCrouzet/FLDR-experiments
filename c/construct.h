@@ -28,6 +28,9 @@ struct sample_gmp_alias_integers_s preprocess_gmp_alias_integers(int* a, int n);
 struct sample_aldr_s preprocess_aldr_flat_k(int* a, int n, int kmul);
 struct sample_aldr_s preprocess_aldr_flat(int* a, int n);
 
+struct sample_aldr_gmp_s preprocess_aldr_flat_k_gmp(int* a, int n, int kmul);
+struct sample_aldr_gmp_s preprocess_aldr_flat_gmp(int* a, int n);
+
 struct AliasEntry* algo_alias_fractions(struct Fraction* distrib, int N);
 struct sample_alias_fractions_s preprocess_alias_fractions(int* a, int n);
 

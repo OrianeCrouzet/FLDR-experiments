@@ -47,6 +47,11 @@ int main(int argc, char **argv) {
         size = get_size_sample_aldr_s(&s);
         free_sample_aldr_s(s);
 
+    } else if (strcmp(sampler, "aldr_gmp") == 0) {
+        struct sample_aldr_gmp_s s = read_sample_aldr_gmp(path);
+        size = get_size_sample_aldr_gmp_s(&s);
+        free_sample_aldr_gmp_s(s);
+
     } else if (strcmp(sampler, "alias.fractions") == 0) {
         struct sample_alias_fractions_s s = read_sample_alias_fractions(path);
         size = get_size_sample_alias_fractions_s(&s);

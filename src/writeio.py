@@ -120,6 +120,9 @@ def write_sample_aldr(n, Ms, entropy, fname):
         write_array(Ms, f)
         f.write('%.5f\n' % entropy)
 
+def write_sample_aldr_gmp(n, Ms, entropy, fname):
+    write_sample_aldr(n, Ms, entropy, fname)
+
 def write_sample_alias_fractions(Z, T, entropy, fname):
     """
     Écrit les poids pour alias.fractions dans un fichier

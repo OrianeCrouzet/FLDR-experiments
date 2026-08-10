@@ -268,6 +268,36 @@ void free_sample_aldr_s(struct sample_aldr_s x){
     free(x.leaves_flat);
 }
 
+
+// *********************************************************************************
+//              ALDR - GMP (entiers taille arbitraire)
+// *********************************************************************************
+
+// Load sample_aldr_gmp data structure from file path.
+struct sample_aldr_gmp_s read_sample_aldr_gmp(char *fname){
+    // Load the distribution
+    FILE *fp = fopen(fname, "r");
+    int kmul;
+    fscanf(fp, "%d", &kmul);
+    int n;
+    fscanf(fp, "%d", &n);
+    int* array = calloc(n, sizeof(int));
+    for (int i = 0; i < n; ++i) {
+        fscanf(fp, "%d", &array[i]);
+    }
+    fclose(fp);
+
+    struct sample_aldr_gmp_s sampler = preprocess_aldr_flat_gmp(array, n);
+    free(array);
+    return sampler;
+}
+
+void free_sample_aldr_gmp_s (struct sample_aldr_gmp_s x) {
+    mpz_clears(x.length_breadths, x.length_leaves_flat, NULL);
+    vector_mpz_free(&x.breadths);
+    vector_mpz_free(&x.leaves_flat);
+}
+
 // *********************************************************************************
 //              ALIAS FROM RUST
 // *********************************************************************************

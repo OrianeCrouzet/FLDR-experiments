@@ -33,6 +33,7 @@ from discrete_sampling.construct import construct_sample_alias_integers_gmp
 from discrete_sampling.construct import construct_sample_alias_rust
 from discrete_sampling.construct import construct_sample_alias_fractions
 from discrete_sampling.construct import construct_sample_aldr
+from discrete_sampling.construct import construct_sample_aldr_gmp
 from discrete_sampling.construct import construct_sample_interval
 from discrete_sampling.construct import construct_sample_ky_approx_encoding
 from discrete_sampling.construct import construct_sample_ky_approx_matrix
@@ -54,6 +55,7 @@ from discrete_sampling.writeio import write_sample_alias_integers_gmp
 from discrete_sampling.writeio import write_sample_alias_rust
 from discrete_sampling.writeio import write_sample_alias_fractions
 from discrete_sampling.writeio import write_sample_aldr
+from discrete_sampling.writeio import write_sample_aldr_gmp
 from discrete_sampling.writeio import write_sample_interval
 from discrete_sampling.writeio import write_sample_ky_encoding
 from discrete_sampling.writeio import write_sample_ky_matrix
@@ -159,6 +161,9 @@ def write_samplers(args):
         ('aldr',
             construct_sample_aldr,
             write_sample_aldr),
+        ('aldr_gmp',
+            construct_sample_aldr_gmp,
+            write_sample_aldr_gmp),
         ('alias.fractions',
             construct_sample_alias_fractions,
             write_sample_alias_fractions),
@@ -169,7 +174,7 @@ def write_samplers(args):
             continue
         fpath = os.path.join(dirname, 'd.%05d.%s' % (idx, suffix))
         struc = f_construct(p_target)
-        if suffix in {'alias.integers', 'alias.integers_old', 'alias.rust', 'alias.fractions', 'aldr', 'alias.integers_gmp'}:
+        if suffix in {'alias.integers', 'alias.integers_old', 'alias.rust', 'alias.fractions', 'aldr', 'alias.integers_gmp', 'aldr_gmp'}:
             f_write(*struc, entropy, fpath)
         else:
             f_write(*struc, fpath)
