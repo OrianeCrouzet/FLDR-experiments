@@ -31,6 +31,11 @@ int main(int argc, char **argv) {
         struct sample_alias_integers_s s = read_sample_alias_integers_old(path);
         size = get_size_sample_alias_integers_s(&s);
         free_sample_alias_integers_s_old(s);
+
+    } else if (strcmp(sampler, "alias.integers_gmp") == 0) {
+        struct sample_gmp_alias_integers_s s = read_sample_alias_integers_gmp(path);
+        size = get_size_sample_gmp_alias_integers_s(&s);
+        free_sample_gmp_alias_integers(s);
         
     } else if (strcmp(sampler, "alias.rust") == 0) {
         struct sample_alias_rust_s s = read_sample_alias_rust(path);

@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include "construct.h"
 #include "vector_int.h"
+#include"vector_mpz.h"
 #include "sstructs.h"
 #include "fraction.h"
 
@@ -131,24 +132,166 @@ struct sample_alias_integers_s preprocess_alias_integers_old(int* a, int n) {
 
     vector_free(&D);
 
-    // // calcul la taille de la structure
-    // size_t sampler_size = 0;
-    // sampler_size += sizeof(sampler.T);
-    // if (sampler.T.data != NULL) {
-    //     sampler_size += sampler.T.size * sizeof(int);
-    // }
-    // sampler_size += sizeof(sampler.Threshold);
-    // if (sampler.Threshold.data != NULL) {
-    //     sampler_size += sampler.Threshold.size * sizeof(int);
-    // }
-    // sampler_size += sizeof(sampler.cs);
-    // sampler_size += sizeof(sampler.virtual_obj);
-    // printf("sampler total size: %zu bytes\n", sampler_size);
-    // // fin du calcul et de son affichage
-
     return sampler;
 }
 
+
+// *********************************************************************************
+//              ALIAS INTEGERS - GMP (entiers taille arbitraire)
+// *********************************************************************************
+
+void poids_total(VectorMpz D, unsigned int size, mpz_t result) {
+    mpz_set_ui(result, 0);
+    for (unsigned int i = 0; i < size; i++) {
+        mpz_add(result, result, D.data[i]);
+    }
+}
+
+void cons_alias(unsigned int n, VectorMpz D, mpz_t cs, VectorInt* T, VectorMpz* Threshold) {
+    int* small = malloc(n * sizeof(int));
+    int* large = malloc(n * sizeof(int));
+    // VectorInt H, L;
+    // vector_init(&H);
+    // vector_init(&L);
+    //int virtual_cell = -1;
+    int t = 0;
+    int n_small = 0, n_large = 0;
+
+
+    for (unsigned int i = 0; i < n; i++) {
+        if (mpz_cmp(D.data[i], cs) > 0){
+            large[n_large++] = i;
+        }else{
+            small[n_small++] = i;
+        }
+    }
+
+    mpz_t w, w2, temp;
+    mpz_inits(w, w2, temp, NULL);
+
+    while (n_large > 0) {
+        // unsigned int x = vector_get(&H, H.size - 1);
+        // H.size--; // pop
+        unsigned int x = large[--n_large];
+        mpz_set(w, D.data[x]);
+
+        if (n_small > 0) {
+            // unsigned int x2 = vector_get(&L, L.size - 1);
+            // L.size--; // pop
+            unsigned int x2 = small[--n_small];
+            mpz_set(w2, D.data[x2]);
+
+            if (mpz_cmp(w2, cs) != 0) {
+                vector_push(T, x2);
+                vector_push(T, x);
+                vector_mpz_push(Threshold, w2);
+                mpz_sub(temp, cs, w2);
+            } else {
+                //virtual_cell = t;
+                vector_push(T, x2);
+                vector_push(T, -1);
+                vector_mpz_push(Threshold, cs);
+                mpz_set_ui(temp, 0);
+            }
+            //mpz_sub(temp, cs, w2);
+            mpz_sub(w, w, temp);
+        } else {
+            vector_push(T, x);
+            vector_push(T, -1);
+            vector_mpz_push(Threshold, cs);
+            mpz_sub(w, w, cs);
+        }
+
+        t += 2;
+
+        //if (mpz_cmp_ui(w, 0) > 0) {
+        mpz_set(D.data[x], w);
+        if (mpz_cmp(w, cs) > 0) {
+            large[n_large++] = x;
+        } else {
+            small[n_small++] = x;
+        }
+        //}
+    }
+
+    while (n_small > 0) {
+        
+        unsigned int x2 = small[--n_small];
+        vector_push(T, x2);
+        vector_push(T, -1);
+        vector_mpz_push(Threshold, cs);
+
+        t += 2;
+    }
+
+    mpz_clears(w, w2, temp, NULL);
+    free(small);
+    free(large);
+}
+
+struct sample_gmp_alias_integers_s preprocess_gmp_alias_integers(int* a, int n) {
+    struct sample_gmp_alias_integers_s sampler;
+
+    // Init des vecteurs et de cs
+    vector_init(&sampler.T);
+    vector_mpz_init(&sampler.Threshold);
+    mpz_init(sampler.cs);
+
+    VectorMpz D;
+    vector_mpz_init(&D);
+
+    mpz_t val, w;
+    mpz_inits(w, val, NULL);
+    // Copie a[] dans un VectorMpz D
+    for (int i = 0; i < n; ++i) {
+        mpz_init_set_ui(val, a[i]);
+        vector_mpz_push(&D, val);
+        mpz_add(w, w, val);
+    }
+    mpz_clear(val);
+
+    mpz_t q, r;
+    //mpz_t w2;
+    mpz_inits(q, r, NULL);
+    //mpz_inits(w2, NULL);
+
+    poids_total(D, D.size, w);                 // w = somme des poids
+    //mpz_set(w2, w);
+    mpz_fdiv_q_ui(sampler.cs, w, D.size);      // cs = w / n
+    mpz_fdiv_qr(q, r, w, sampler.cs);          // q = w // cs ; r = w % cs
+
+    vector_reserve(&sampler.T, mpz_get_ui(q));
+    vector_mpz_reserve(&sampler.Threshold, q);
+
+    int virtual_obj = -1;
+    if (mpz_cmp_ui(r, 0) > 0) {
+        virtual_obj = n;
+
+        mpz_t delta;
+        mpz_init(delta);
+        mpz_sub(delta, sampler.cs, r);         // delta = cs - r
+        //mpz_add(w2, w, delta);                 // w2 = w + delta
+        //mpz_add_ui(q, q, 1);                   // q++
+
+        vector_mpz_push(&D, delta);            // ajout de l’objet virtuel
+        mpz_clear(delta);
+
+        //n = D.size;
+        n++;
+    }
+
+    sampler.virtual_obj = virtual_obj;
+
+    //cons_alias(D.size, D, sampler.cs, virtual_obj, &sampler.T, &sampler.Threshold);
+    cons_alias(n, D, sampler.cs, &sampler.T, &sampler.Threshold);
+
+    
+    mpz_clears(w, q, r, NULL);
+    //mpz_clears(w2, NULL);
+    vector_mpz_free(&D);
+
+    return sampler;
+}
 
 // *********************************************************************************
 //              ALDR
@@ -197,16 +340,6 @@ struct sample_aldr_s preprocess_aldr_flat_k(int* a, int n, int kmul) {
             .breadths = breadths,
             .leaves_flat = leaves_flat
         };
-
-    // // Taille totale = structure + tableaux alloues dynamiquement.
-    // size_t sampler_size = sizeof(sampler);
-    // if (sampler.breadths != NULL) {
-    //     sampler_size += (size_t)sampler.length_breadths * sizeof(int);
-    // }
-    // if (sampler.leaves_flat != NULL) {
-    //     sampler_size += (size_t)sampler.length_leaves_flat * sizeof(int);
-    // }
-    // printf("sampler ALDR total size: %zu bytes\n", sampler_size);
 
     return sampler;
 }
@@ -447,28 +580,6 @@ WeightedError weighted_alias_new(
     }
 
     out->n=n;
-
-    // // Taille logique (size) et taille allouee (capacity) de la structure resultat.
-    // size_t out_size_by_size = sizeof(*out);
-
-    // if (out->prob != NULL) {
-    //     out_size_by_size += (size_t)out->n * sizeof(unsigned int);
-    // }
-
-    // if (out->aliases.data != NULL) {
-    //     out_size_by_size += (size_t)out->aliases.size * sizeof(int);
-    // }
-
-    // // if (out->small.data != NULL) {
-    // //     out_size_by_size += (size_t)out->small.size * sizeof(int);
-    // // }
-
-    // // if (out->large.data != NULL) {
-    // //     out_size_by_size += (size_t)out->large.size * sizeof(int);
-    // // }
-
-    // printf("alias_rust: out size (using size) = %zu bytes\n", out_size_by_size);
-
 
     return WEIGHTED_OK;
 }

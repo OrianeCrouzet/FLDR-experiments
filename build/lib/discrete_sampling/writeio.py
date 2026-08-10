@@ -92,6 +92,9 @@ def write_sample_alias_integers(Z, T, entropy, fname):
 def write_sample_alias_integers_old(Z, T, entropy, fname):
     write_sample_alias_integers(Z, T, entropy, fname)
 
+def write_sample_alias_integers_gmp(Z, T, entropy, fname):
+    write_sample_alias_integers(Z, T, entropy, fname)
+
 
 def write_sample_alias_rust(Z, Ms, entropy, fname):
     """

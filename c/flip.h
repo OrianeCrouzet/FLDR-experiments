@@ -20,10 +20,16 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <string.h>
+#include <gmp.h>
 
 
 extern unsigned long NUM_RNG_CALLS;
 
+// *********************************************************************************
+//                                      UTILS
+// *********************************************************************************
+
+unsigned int bit_length(unsigned int x);
 
 // *********************************************************************************
 //              UNIFORM AND BERNOULLI - LUMBROSO
@@ -31,6 +37,9 @@ extern unsigned long NUM_RNG_CALLS;
 
 uint32_t uniform(uint32_t n);
 uint32_t bernoulli(uint32_t numer, uint32_t denom);
+
+void uniform_with_gmp(mpz_t result, const mpz_t n);
+int bernoulli_with_gmp(const mpz_t numer, const mpz_t denom);
 
 
 // *********************************************************************************

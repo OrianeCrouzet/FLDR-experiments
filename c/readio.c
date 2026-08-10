@@ -12,6 +12,7 @@
 #include "readio.h"
 #include "sstructs.h"
 #include "vector_int.h"
+#include"vector_mpz.h"
 #include "construct.h"
 
 
@@ -177,7 +178,7 @@ void free_sample_alias_gsl_s (struct sample_alias_gsl_s x) {
 //              ALIAS INTEGERS
 // *********************************************************************************
 
-// Alias integers - denrière version
+// Alias integers - dernière version
 struct sample_alias_integers_s read_sample_alias_integers_old(char *fname){
     // Load the distribution.
     FILE *fp = fopen(fname, "r");
@@ -202,6 +203,39 @@ struct sample_alias_integers_s read_sample_alias_integers_old(char *fname){
 
 void free_sample_alias_integers_s_old(struct sample_alias_integers_s x){
     vector_free(&x.Threshold);
+    vector_free(&x.T);
+}
+
+
+// *********************************************************************************
+//              ALIAS INTEGERS - GMP (entiers taille arbitraire)
+// *********************************************************************************
+
+struct sample_gmp_alias_integers_s read_sample_alias_integers_gmp(char *fname){
+    // Load the distribution.
+    FILE *fp = fopen(fname, "r");
+    if (fp == NULL) {
+        perror(fname);
+        exit(EXIT_FAILURE);
+    }
+    int Z;
+    fscanf(fp, "%d", &Z);
+    int n;
+    fscanf(fp, "%d", &n);
+    int* array = calloc(n, sizeof(int));
+    for (int i = 0; i < n; ++i) {
+        fscanf(fp, "%d", &array[i]);
+    }
+    fclose(fp);
+
+    struct sample_gmp_alias_integers_s sampler = preprocess_gmp_alias_integers(array, n);
+    free(array);
+    return sampler;
+}
+
+void free_sample_gmp_alias_integers(struct sample_gmp_alias_integers_s x) {
+    mpz_clear(x.cs);
+    vector_mpz_free(&x.Threshold);
     vector_free(&x.T);
 }
 

@@ -17,6 +17,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <string.h>
+#include <gmp.h>
 
 
 #include "flip.h"
@@ -144,4 +145,74 @@ uint32_t bernoulli(uint32_t numer, uint32_t denom) {
         numer <<= 1;
     }
     return get_random_bits_spsc(1);
+}
+
+// ***** GMP - entiers de taille arbitraire *****
+
+// FDR with GMP, translated from flip.c (Saad)
+void uniform_with_gmp(mpz_t result, const mpz_t n) {
+    size_t num_bits_presample = mpz_sizeinbase(n, 2); // num_bits_presample = 32 - __builtin_clz(n - 1);
+    
+    mpz_t bound, x;
+    mpz_inits(bound, x, NULL);
+
+    mpz_ui_pow_ui(bound, 2, num_bits_presample);   // bound = 1 << num_bits_presample
+    mpz_set_ui(x, get_random_bits_spsc(num_bits_presample));     // x = flip_n(num_bits_presample)
+
+    for (;;) {
+        if (mpz_cmp(bound, n) >= 0) {
+            if (mpz_cmp(x, n) < 0) { 
+                mpz_set(result, x);
+                break;
+            }
+            mpz_sub(bound, bound, n);
+            mpz_sub(x, x, n);
+        }
+        mpz_mul_2exp(bound, bound, 1);  // bound <<= 1
+        mpz_mul_2exp(x, x, 1);          
+        mpz_add_ui(x, x, get_random_bits_spsc(1));       // x = (x << 1) | flip();
+    }
+    mpz_clears(x, bound, NULL);
+}
+
+//Bernoulli with GMP, translated from flip.c (Saad)
+int bernoulli_with_gmp(const mpz_t numer, const mpz_t denom) {
+    if (mpz_cmp_ui(numer, 0) == 0) return 0;
+    if (mpz_cmp(numer, denom) == 0) return 1;
+
+    mpz_t tmp;
+    mpz_init_set(tmp, numer);
+
+    int y;
+    for (;;) {
+        mpz_mul_2exp(tmp, tmp, 1);
+        if (mpz_cmp(tmp, denom) == 0) {
+            y = get_random_bits_spsc(1);
+            break;
+        }
+        y = (mpz_cmp(tmp, denom) > 0);
+        if (y) {
+            mpz_sub(tmp, tmp, denom);
+        }
+        if (get_random_bits_spsc(1)) {
+            break;
+        }
+    }
+
+    mpz_clear(tmp);
+    return y;
+}
+
+// *********************************************************************************
+//                                      UTILS
+// *********************************************************************************
+
+// Calcule le nombre de bits nécessaires pour représenter un entier non nul
+unsigned int bit_length(unsigned int x) {
+    unsigned int length = 0;
+    while (x > 0) {
+        length++;
+        x >>= 1;
+    }
+    return length;
 }

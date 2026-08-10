@@ -24,7 +24,9 @@ cmd=${2}
 
 # rej.enc == fldr
 #SAMPLERS='alias.exact rej.enc alias.integers aldr alias.rust alias.fractions'
-SAMPLERS='alias.rust alias.rust alias.integers_old alias.integers_old aldr aldr alias.exact alias.exact rej.enc rej.enc' #alias.exact alias.exact rej.enc rej.enc
+#SAMPLERS='alias.rust alias.rust alias.integers_old alias.integers_old aldr aldr alias.exact alias.exact rej.enc rej.enc' #alias.exact alias.exact rej.enc rej.enc
+SAMPLERS='alias.integers_old alias.integers_old alias.integers_gmp alias.integers_gmp'
+
 
 if [ "${cmd}" = 'initialize' ]; then
   if [[ "${stamp}" =~ ^dists\.([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
@@ -35,7 +37,7 @@ if [ "${cmd}" = 'initialize' ]; then
   else
     # support des appels direct : ./pipeline.sh alias.integers initialize
     case "${stamp}" in
-      interval|alias.exact|ky.enc|rej.binary|rej.enc|rej.matc|rej.table|rej.uniform|alias.integers|alias.integers_old|aldr|alias.rust|alias.fractions)
+      interval|alias.exact|ky.enc|rej.binary|rej.enc|rej.matc|rej.table|rej.uniform|alias.integers|alias.integers_old|aldr|alias.rust|alias.fractions|alias.integers_gmp)
         N=5; Z=10; seed=1; target_samplers="${stamp}";
         ;;
       *)

@@ -9,6 +9,7 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <gmp.h>
 
 #include "flip.h"
 #include "sample.h"
@@ -175,6 +176,35 @@ uint32_t sample_alias_integers_old(struct sample_alias_integers_s *x) {
 }
 
 // x->virtual_obj != -1 &&
+
+
+// *********************************************************************************
+//              ALIAS INTEGERS - GMP (entiers taille arbitraire)
+// *********************************************************************************
+
+uint32_t sample_gmp_alias_integers(struct sample_gmp_alias_integers_s* x) {
+    mpz_t q;
+    mpz_init(q);
+    mpz_t n;
+    mpz_init_set_ui(n, x->Threshold.size);
+    uint32_t result;
+
+    REJET -= 1;
+
+    do{
+        uniform_with_gmp(q, n);
+        unsigned int q_index = mpz_get_ui(q);
+        int b = bernoulli_with_gmp(x->Threshold.data[q_index], x->cs);
+        unsigned int final_index = 2 * q_index + 1 - b;  
+        result = x->T.data[final_index];
+
+        REJET += 1; 
+    } while (result == (uint32_t)x->virtual_obj);
+    
+    mpz_clears(q, n, NULL);
+    return result;
+}
+
 
 // *********************************************************************************
 //              ALDR

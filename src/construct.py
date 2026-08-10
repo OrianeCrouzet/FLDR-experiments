@@ -145,6 +145,10 @@ def construct_sample_alias_integers_old(p_target):
     return construct_sample_alias_integers(p_target)
 
 
+def construct_sample_alias_integers_gmp(p_target):
+    return construct_sample_alias_integers(p_target)
+
+
 def construct_sample_alias_rust(p_target):
     """
     Prépare les poids entiers pour l'algo alias.rust.

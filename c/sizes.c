@@ -24,6 +24,25 @@ size_t get_size_sample_alias_integers_s(struct sample_alias_integers_s *s) {
     return sampler_size;
 }
 
+size_t get_size_sample_gmp_alias_integers_s(struct sample_gmp_alias_integers_s *s) {
+    size_t total = sizeof(*s);
+
+    // Taille des entiers de la table T
+    total += s->T.size * sizeof(int);
+
+    // Taille estimée de chaque mpz_t dans Threshold
+    for (unsigned int i = 0; i < s->Threshold.size; i++) {
+        total += sizeof(mpz_t);  // structure elle-même
+        total += mpz_sizeinbase(s->Threshold.data[i], 2) / 8 + 1;  // estimation des bits utilisés
+    }
+
+    // Taille estimée de cs
+    total += sizeof(mpz_t);
+    total += mpz_sizeinbase(s->cs, 2) / 8 + 1;
+
+    return total;
+}
+
 size_t get_size_sample_alias_rust_s(struct sample_alias_rust_s *s) {
     size_t size = sizeof(*s);
     if (s->aliases.data != NULL) {

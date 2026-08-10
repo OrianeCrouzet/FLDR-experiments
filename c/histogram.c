@@ -13,6 +13,7 @@
 #include "sample.h"
 #include "readio.h"
 #include "sstructs.h"
+#include "construct.h"
 
 void print_vector_int(const char *name, VectorInt *v)
 {
@@ -81,6 +82,12 @@ void run_sampler(char *name, char *path, int steps)
         sample_alias_integers_old,
         free_sample_alias_integers_s_old)
 
+    RUN("alias.integers_gmp",
+        struct sample_gmp_alias_integers_s,
+        read_sample_alias_integers_gmp,
+        sample_gmp_alias_integers,
+        free_sample_gmp_alias_integers)
+
     printf("Unknown sampler %s\n", name);
 }
 
@@ -115,11 +122,12 @@ int main(int argc, char **argv)
         "alias.rust",
         "alias.fractions",
         "alias.integers_old",
+        "alias.integers_gmp"
     };
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 5; i++) {
         // Vérifie si l'échantillonneur actuel utilise la file SPSC
-        if (strcmp(samplers[i], "alias.integers") == 0 || strcmp(samplers[i], "alias.integers_old") == 0 || strcmp(samplers[i], "alias.rust") == 0) {
+        if (strcmp(samplers[i], "alias.integers") == 0 || strcmp(samplers[i], "alias.integers_old") == 0 || strcmp(samplers[i], "alias.rust") == 0 || strcmp(samplers[i], "alias.integers_gmp") == 0) {
             is_spsc_sampler = true;
             init_spsc_queue(); // Initialise la file SPSC
             //printf("[Main] Initialisation de la file SPSC et démarrage du thread producteur.\n");

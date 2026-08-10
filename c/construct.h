@@ -11,13 +11,19 @@
 #define CONSTRUCT_H
 
 #include <stdint.h>
+#include <gmp.h>
 #include "vector_int.h"
+#include"vector_mpz.h"
 #include "sstructs.h"
 #include "fraction.h"
 
 
 void cons_alias5(unsigned int n, VectorInt* D, uint32_t cs, VectorInt* T, VectorInt* Threshold);
 struct sample_alias_integers_s preprocess_alias_integers_old(int* a, int n);
+
+void poids_total(VectorMpz D, unsigned int size, mpz_t result);
+void cons_alias(unsigned int n, VectorMpz D, mpz_t cs, VectorInt* T, VectorMpz* Threshold);
+struct sample_gmp_alias_integers_s preprocess_gmp_alias_integers(int* a, int n);
 
 struct sample_aldr_s preprocess_aldr_flat_k(int* a, int n, int kmul);
 struct sample_aldr_s preprocess_aldr_flat(int* a, int n);

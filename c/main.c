@@ -124,6 +124,13 @@ int main(int argc, char **argv) {
         sample_alias_integers_old,
         free_sample_alias_integers_s_old,
         path, steps, t, x)
+    else READ_SAMPLE_TIME("alias.integers_gmp",
+        sampler,
+        sample_gmp_alias_integers_s,
+        read_sample_alias_integers_gmp,
+        sample_gmp_alias_integers,
+        free_sample_gmp_alias_integers,
+        path, steps, t, x)
     else READ_SAMPLE_TIME("aldr",
         sampler,
         sample_aldr_s,

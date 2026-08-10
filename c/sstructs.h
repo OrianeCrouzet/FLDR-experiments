@@ -19,6 +19,7 @@
 #include <gmp.h>
 
 #include "vector_int.h"
+#include"vector_mpz.h"
 #include "fraction.h"
 
 
@@ -89,6 +90,18 @@ struct sample_alias_integers_s {
     VectorInt T;
     VectorInt Threshold;
     uint32_t cs;
+    int virtual_obj; // index of the virtual object, -1 if absent
+};
+
+
+// *********************************************************************************
+//              ALIAS INTEGERS - GMP (entiers taille arbitraire)
+// *********************************************************************************
+
+struct sample_gmp_alias_integers_s{
+    VectorInt T;
+    VectorMpz Threshold;
+    mpz_t cs;
     int virtual_obj; // index of the virtual object, -1 if absent
 };
 
