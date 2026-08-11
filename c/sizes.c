@@ -105,6 +105,26 @@ size_t get_size_sample_ky_encoding_s(struct sample_ky_encoding_s *s) {
 
 
 // *********************************************************************************
+//              FLDR - GMP (entiers taille arbitraire)
+// *********************************************************************************
+
+size_t get_size_sample_ky_encoding_gmp_s(struct sample_ky_encoding_gmp_s *s) {
+    size_t total = sizeof(*s);
+    total += sizeof(mpz_t) * 2;
+
+    if (s->encoding.data != NULL) {
+        total += (size_t)s->encoding.size * sizeof(mpz_t);
+        for (unsigned int i = 0; i < s->encoding.size; i++) {
+            size_t nbits = mpz_sizeinbase(s->encoding.data[i], 2);
+            total += (nbits + 7) / 8;
+        }
+    }
+
+    return total;
+}
+
+
+// *********************************************************************************
 //              ALIAS WALKER/VOSE
 // *********************************************************************************
 
@@ -162,4 +182,3 @@ size_t get_size_sample_aldr_gmp_s(struct sample_aldr_gmp_s* x) {
 
     return total;
 }
-

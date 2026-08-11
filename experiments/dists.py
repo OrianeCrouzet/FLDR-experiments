@@ -47,6 +47,7 @@ from discrete_sampling.construct import construct_sample_rejection_hash_table
 from discrete_sampling.construct import construct_sample_rejection_matrix
 from discrete_sampling.construct import construct_sample_rejection_matrix_cached
 from discrete_sampling.construct import construct_sample_rejection_uniform
+from discrete_sampling.construct import construct_sample_rejection_encoding_gmp
 
 from discrete_sampling.writeio import write_sample_alias
 from discrete_sampling.writeio import write_sample_alias_integers
@@ -63,6 +64,7 @@ from discrete_sampling.writeio import write_sample_ky_matrix_cached
 from discrete_sampling.writeio import write_sample_rejection_binary_search
 from discrete_sampling.writeio import write_sample_rejection_hash_table
 from discrete_sampling.writeio import write_sample_rejection_uniform
+from discrete_sampling.writeio import write_sample_ky_encoding_gmp
 
 from discrete_sampling.entropy import compute_entropy
 from discrete_sampling.entropy import get_alpha_entropies
@@ -167,6 +169,10 @@ def write_samplers(args):
         ('alias.fractions',
             construct_sample_alias_fractions,
             write_sample_alias_fractions),
+
+        ('rej.enc_gmp',
+            construct_sample_rejection_encoding_gmp,
+            write_sample_ky_encoding_gmp),
     ]
 
     for suffix, f_construct, f_write in structures:

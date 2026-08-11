@@ -129,7 +129,7 @@ int main(int argc, char **argv)
         "alias.fractions",
         "alias.integers_old",
         "alias.integers_gmp",
-        "aldr_gmp"
+        "aldr_gmp",
     };
 
     for (int i = 0; i < 6; i++) {

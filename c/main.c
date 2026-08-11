@@ -103,6 +103,13 @@ int main(int argc, char **argv) {
         sample_rejection_encoding,
         free_sample_ky_encoding_s,
         path, steps, t, x)
+    else READ_SAMPLE_TIME("rej.enc_gmp",    // FLDR with GMP
+        sampler,
+        sample_ky_encoding_gmp_s,
+        read_sample_ky_encoding_gmp,
+        sample_rejection_encoding_gmp,
+        free_sample_ky_encoding_gmp_s,
+        path, steps, t, x)
     else READ_SAMPLE_TIME("alias.exact",
         sampler,
         sample_alias_exact_s,

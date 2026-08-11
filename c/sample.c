@@ -104,6 +104,49 @@ int sample_rejection_encoding(struct sample_ky_encoding_s *x) {
 
 
 // *********************************************************************************
+//              FLDR - GMP (entiers taille arbitraire)
+// *********************************************************************************
+
+int sample_ky_encoding_gmp(struct sample_ky_encoding_gmp_s *x) {
+    if (x->encoding.size == 1) {
+        return 1;
+    }
+
+    mpz_t c, next;
+    mpz_inits(c, next, NULL);
+
+    while (true) {
+        int b = get_random_bits_spsc(1);
+        mpz_add_ui(next, c, b);
+        unsigned long idx = mpz_get_ui(next);
+
+        mpz_t *entry = &x->encoding.data[idx];
+        if (mpz_sgn(*entry) < 0) {
+            mpz_t positive;
+            mpz_init(positive);
+            mpz_neg(positive, *entry);
+            int result = (int) mpz_get_ui(positive);
+            mpz_clears(c, next, positive, NULL);
+            return result;
+        }
+
+        mpz_set(c, *entry);
+    }
+}
+
+int sample_rejection_encoding_gmp(struct sample_ky_encoding_gmp_s *x) {
+    unsigned long n_ui = mpz_get_ui(x->n);
+
+    while (true) {
+        int s = sample_ky_encoding_gmp(x);
+        if ((unsigned long)s < n_ui) {
+            return s;
+        }
+    }
+}
+
+
+// *********************************************************************************
 //              ALIAS WALKER/VOSE
 // *********************************************************************************
 

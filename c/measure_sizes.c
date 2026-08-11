@@ -62,6 +62,11 @@ int main(int argc, char **argv) {
         size = get_size_sample_ky_encoding_s(&s);
         free_sample_ky_encoding_s(s);
 
+    } else if (strcmp(sampler, "rej.enc_gmp") == 0) {
+        struct sample_ky_encoding_gmp_s s = read_sample_ky_encoding_gmp(path);
+        size = get_size_sample_ky_encoding_gmp_s(&s);
+        free_sample_ky_encoding_gmp_s(s);
+
     } else if (strcmp(sampler, "alias.exact") == 0) {
         struct sample_alias_exact_s s = read_sample_alias_exact(path);
         size = get_size_sample_alias_exact_s(&s);

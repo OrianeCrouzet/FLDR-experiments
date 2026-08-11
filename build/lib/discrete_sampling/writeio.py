@@ -19,6 +19,9 @@ def write_sample_ky_encoding(enc, n, k, fname):
         f.write('%d %d\n' % (n, k))
         write_array(enc, f)
 
+def write_sample_ky_encoding_gmp(enc, n, k, fname):
+    write_sample_ky_encoding(enc, n, k, fname)
+
 def write_sample_ky_matrix(P, k, l, fname):
     with open(fname, 'w') as f:
         f.write('%d %d\n' % (k, l))

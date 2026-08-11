@@ -19,6 +19,8 @@ extern unsigned long REJET;
 int sample_fdr(struct sample_fdr_s *x);
 int sample_inversion_bernoulli(struct sample_inversion_bernoulli_s *x);
 int sample_rejection_encoding(struct sample_ky_encoding_s *x);
+int sample_ky_encoding_gmp(struct sample_ky_encoding_gmp_s *x);
+int sample_rejection_encoding_gmp(struct sample_ky_encoding_gmp_s *x);
 
 
 // *************************** EXACT SAMPLERS ***************************

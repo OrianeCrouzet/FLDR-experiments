@@ -101,6 +101,9 @@ def construct_sample_rejection_encoding(p_target):
     n = len(P)
     return encoding, n, k
 
+def construct_sample_rejection_encoding_gmp(p_target):
+    return construct_sample_rejection_encoding(p_target)
+
 def construct_sample_rejection_matrix(p_target):
     Ms, k = get_rejection_Ms_k(p_target)
     P, kp, lp = make_ddg_matrix(Ms, k, k)

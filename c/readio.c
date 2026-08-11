@@ -111,6 +111,70 @@ void free_sample_ky_encoding_s (struct sample_ky_encoding_s x) {
     free_array_s(x.encoding);
 }
 
+// *********************************************************************************
+//              FLDR - GMP (entiers taille arbitraire)
+// *********************************************************************************
+
+struct sample_ky_encoding_gmp_s read_sample_ky_encoding_gmp(char *fname) {
+    FILE *fp = fopen(fname, "r");
+    if (fp == NULL) {
+        perror(fname);
+        exit(EXIT_FAILURE);
+    }
+
+    struct sample_ky_encoding_gmp_s x;
+    mpz_init(x.n);
+    mpz_init(x.k);
+    vector_mpz_init(&x.encoding);
+
+    char buf_n[1024];
+    char buf_k[1024];
+    if (fscanf(fp, "%1023s %1023s", buf_n, buf_k) != 2) {
+        perror("read_sample_ky_encoding_gmp: failed to read n and k");
+        fclose(fp);
+        exit(EXIT_FAILURE);
+    }
+    if (mpz_set_str(x.n, buf_n, 10) != 0 || mpz_set_str(x.k, buf_k, 10) != 0) {
+        fprintf(stderr, "read_sample_ky_encoding_gmp: invalid integer in header\n");
+        fclose(fp);
+        exit(EXIT_FAILURE);
+    }
+
+    int length = 0;
+    if (fscanf(fp, "%d", &length) != 1) {
+        perror("read_sample_ky_encoding_gmp: failed to read encoding length");
+        fclose(fp);
+        exit(EXIT_FAILURE);
+    }
+
+    for (int i = 0; i < length; i++) {
+        char buffer_value[1024];
+        if (fscanf(fp, "%1023s", buffer_value) != 1) {
+            perror("read_sample_ky_encoding_gmp: failed to read encoding value");
+            fclose(fp);
+            exit(EXIT_FAILURE);
+        }
+        mpz_t value;
+        mpz_init(value);
+        if (mpz_set_str(value, buffer_value, 10) != 0) {
+            fprintf(stderr, "read_sample_ky_encoding_gmp: invalid encoding value\n");
+            mpz_clear(value);
+            fclose(fp);
+            exit(EXIT_FAILURE);
+        }
+        vector_mpz_push(&x.encoding, value);
+        mpz_clear(value);
+    }
+
+    fclose(fp);
+    return x;
+}
+
+void free_sample_ky_encoding_gmp_s (struct sample_ky_encoding_gmp_s x) {
+    mpz_clears(x.n, x.k, NULL);
+    vector_mpz_free(&x.encoding);
+}
+
 
 // *********************************************************************************
 //              ALIAS WALKER/VOSE
