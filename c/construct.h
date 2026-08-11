@@ -35,5 +35,6 @@ struct AliasEntry* algo_alias_fractions(struct Fraction* distrib, int N);
 struct sample_alias_fractions_s preprocess_alias_fractions(int* a, int n);
 
 WeightedError weighted_alias_new(alias_rust_s *out, const unsigned int *weights, uint32_t n);
+WeightedError weighted_alias_new_gmp(struct sample_alias_rust_gmp_s *out, const mpz_t *weights, uint32_t n);
 
 #endif

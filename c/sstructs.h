@@ -176,6 +176,15 @@ struct sample_alias_rust_s {
     double weight_sum;
 };
 
+struct sample_alias_rust_gmp_s {
+    VectorInt aliases;
+    VectorMpz prob;
+    VectorInt small;
+    VectorInt large;
+    unsigned int n;
+    mpz_t weight_sum;
+};
+
 
 // *********************************************************************************
 //              ALIAS FRACTIONS

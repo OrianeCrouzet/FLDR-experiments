@@ -162,6 +162,9 @@ def construct_sample_alias_rust(p_target):
     Ms = get_common_numerators(Z, p_target)
     return Z, Ms
 
+def construct_sample_alias_rust_gmp(p_target):
+    return construct_sample_alias_rust(p_target)
+
 
 def construct_sample_aldr(p_target):
     """

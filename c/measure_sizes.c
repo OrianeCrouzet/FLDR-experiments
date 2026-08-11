@@ -42,6 +42,11 @@ int main(int argc, char **argv) {
         size = get_size_sample_alias_rust_s(&s);
         free_sample_alias_rust_s(s);
 
+    } else if (strcmp(sampler, "alias.rust_gmp") == 0) {
+        struct sample_alias_rust_gmp_s s = read_sample_alias_rust_gmp(path);
+        size = get_size_sample_alias_rust_gmp_s(&s);
+        free_sample_alias_rust_gmp_s(s);
+
     } else if (strcmp(sampler, "aldr") == 0) {
         struct sample_aldr_s s = read_sample_aldr(path);
         size = get_size_sample_aldr_s(&s);

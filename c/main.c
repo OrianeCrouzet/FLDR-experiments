@@ -159,6 +159,13 @@ int main(int argc, char **argv) {
         sample_alias_rust,
         free_sample_alias_rust_s,
         path, steps, t, x)
+    else READ_SAMPLE_TIME("alias.rust_gmp",
+        sampler,
+        sample_alias_rust_gmp_s,
+        read_sample_alias_rust_gmp,
+        sample_alias_rust_gmp,
+        free_sample_alias_rust_gmp_s,
+        path, steps, t, x)
     else READ_SAMPLE_TIME("alias.fractions",
         sampler,
         sample_alias_fractions_s,

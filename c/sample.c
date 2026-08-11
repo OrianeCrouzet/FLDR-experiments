@@ -358,6 +358,28 @@ uint32_t sample_alias_rust(struct sample_alias_rust_s *x){
     );
 }
 
+uint32_t sample_alias_rust_gmp(struct sample_alias_rust_gmp_s *x){
+    mpz_t index_mpz, random_weight, threshold;
+    mpz_inits(index_mpz, random_weight, threshold, NULL);
+
+    mpz_set_ui(index_mpz, x->n);
+    uniform_with_gmp(index_mpz, index_mpz);
+    unsigned int index = mpz_get_ui(index_mpz);
+
+    uniform_with_gmp(random_weight, &x->weight_sum);
+    vector_mpz_get(threshold, &x->prob, index);
+
+    uint32_t result;
+    if (mpz_cmp(random_weight, threshold) < 0) {
+        result = index;
+    } else {
+        result = vector_get(&x->aliases, index);
+    }
+
+    mpz_clears(index_mpz, random_weight, threshold, NULL);
+    return result;
+}
+
 
 // *********************************************************************************
 //              ALIAS FRACTIONS

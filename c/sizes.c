@@ -76,6 +76,28 @@ size_t get_size_sample_alias_rust_s(struct sample_alias_rust_s *s) {
     return size;
 }
 
+size_t get_size_sample_alias_rust_gmp_s(struct sample_alias_rust_gmp_s *s) {
+    size_t size = sizeof(*s);
+    if (s->aliases.data != NULL) {
+        size += (size_t)s->aliases.size * sizeof(s->aliases.data[0]);
+    }
+    if (s->small.data != NULL) {
+        size += (size_t)s->small.size * sizeof(s->small.data[0]);
+    }
+    if (s->large.data != NULL) {
+        size += (size_t)s->large.size * sizeof(s->large.data[0]);
+    }
+    if (s->prob.data != NULL) {
+        size += (size_t)s->prob.size * sizeof(mpz_t);
+        for (unsigned int i = 0; i < s->prob.size; i++) {
+            size += (mpz_sizeinbase(s->prob.data[i], 2) + 7) / 8;
+        }
+    }
+    size += sizeof(mpz_t);
+    size += (mpz_sizeinbase(s->weight_sum, 2) + 7) / 8;
+    return size;
+}
+
 
 // *********************************************************************************
 //              ALIAS FRACTIONS

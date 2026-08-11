@@ -677,3 +677,91 @@ WeightedError weighted_alias_new(
 
     return WEIGHTED_OK;
 }
+
+WeightedError weighted_alias_new_gmp(
+    struct sample_alias_rust_gmp_s *out,
+    const mpz_t *weights,
+    unsigned int n
+)
+{
+    if (n == 0) {
+        return WEIGHTED_NO_ITEM;
+    }
+
+    vector_init(&out->aliases);
+    vector_resize_zero(&out->aliases, n);
+    vector_init(&out->small);
+    vector_init(&out->large);
+    vector_mpz_init(&out->prob);
+    mpz_init(out->weight_sum);
+
+    mpz_t sum;
+    mpz_init(sum);
+    mpz_set_ui(sum, 0);
+    for (unsigned int i = 0; i < n; i++) {
+        mpz_add(sum, sum, weights[i]);
+    }
+
+    if (mpz_cmp_ui(sum, 0) == 0) {
+        vector_free(&out->aliases);
+        vector_free(&out->small);
+        vector_free(&out->large);
+        vector_mpz_free(&out->prob);
+        mpz_clear(out->weight_sum);
+        mpz_clear(sum);
+        return WEIGHTED_ALL_ZERO;
+    }
+
+    mpz_t p, tmp;
+    mpz_inits(p, tmp, NULL);
+
+    for (unsigned int i = 0; i < n; i++) {
+        mpz_mul_ui(p, weights[i], n);
+        vector_mpz_push(&out->prob, p);
+
+        if (mpz_cmp(p, sum) < 0) {
+            vector_push(&out->small, i);
+        } else {
+            vector_push(&out->large, i);
+        }
+    }
+
+    mpz_set(out->weight_sum, sum);
+
+    while (out->small.size > 0 && out->large.size > 0) {
+        unsigned int s = vector_get(&out->small, out->small.size - 1);
+        out->small.size--;
+
+        unsigned int l = vector_get(&out->large, out->large.size - 1);
+        out->large.size--;
+
+        vector_set(&out->aliases, s, l);
+
+        mpz_set(tmp, out->prob.data[l]);
+        mpz_add(tmp, tmp, out->prob.data[s]);
+        mpz_sub(tmp, tmp, sum);
+        vector_mpz_set(&out->prob, l, tmp);
+
+        if (mpz_cmp(tmp, sum) < 0) {
+            vector_push(&out->small, l);
+        } else {
+            vector_push(&out->large, l);
+        }
+    }
+
+    while (out->large.size > 0) {
+        unsigned int l = vector_get(&out->large, out->large.size - 1);
+        out->large.size--;
+        vector_mpz_set(&out->prob, l, sum);
+    }
+
+    while (out->small.size > 0) {
+        unsigned int s = vector_get(&out->small, out->small.size - 1);
+        out->small.size--;
+        vector_mpz_set(&out->prob, s, sum);
+    }
+
+    out->n = n;
+    mpz_clears(p, tmp, sum, NULL);
+    return WEIGHTED_OK;
+}

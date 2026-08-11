@@ -76,6 +76,12 @@ void run_sampler(char *name, char *path, int steps)
         sample_alias_rust,
         free_sample_alias_rust_s)
 
+    RUN("alias.rust_gmp",
+        struct sample_alias_rust_gmp_s,
+        read_sample_alias_rust_gmp,
+        sample_alias_rust_gmp,
+        free_sample_alias_rust_gmp_s)
+
     RUN("alias.fractions",
         struct sample_alias_fractions_s,
         read_sample_alias_fractions,
@@ -130,11 +136,12 @@ int main(int argc, char **argv)
         "alias.integers_old",
         "alias.integers_gmp",
         "aldr_gmp",
+        "alias.rust_gmp",
     };
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 7; i++) {
         // Vérifie si l'échantillonneur actuel utilise la file SPSC
-        if (strcmp(samplers[i], "alias.integers") == 0 || strcmp(samplers[i], "alias.integers_old") == 0 || strcmp(samplers[i], "alias.rust") == 0 || strcmp(samplers[i], "alias.integers_gmp") == 0) {
+        if (strcmp(samplers[i], "alias.integers") == 0 || strcmp(samplers[i], "alias.integers_old") == 0 || strcmp(samplers[i], "alias.rust") == 0 || strcmp(samplers[i], "alias.integers_gmp") == 0 || strcmp(samplers[i], "alias.rust_gmp") == 0) {
             is_spsc_sampler = true;
             init_spsc_queue(); // Initialise la file SPSC
             //printf("[Main] Initialisation de la file SPSC et démarrage du thread producteur.\n");

@@ -22,8 +22,7 @@ int sample_rejection_encoding(struct sample_ky_encoding_s *x);
 int sample_ky_encoding_gmp(struct sample_ky_encoding_gmp_s *x);
 int sample_rejection_encoding_gmp(struct sample_ky_encoding_gmp_s *x);
 
-
-// *************************** EXACT SAMPLERS ***************************
+uint32_t sample_alias_rust_gmp(struct sample_alias_rust_gmp_s *x);
 
 int sample_alias_gsl(struct sample_alias_gsl_s *x);
 int sample_alias_exact(struct sample_alias_exact_s *x);

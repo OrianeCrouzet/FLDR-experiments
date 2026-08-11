@@ -402,11 +402,88 @@ struct sample_alias_rust_s read_sample_alias_rust(char *fname){
     return sampler;
 }
 
+// Load sample_alias_rust_gmp data structure from file path.
+struct sample_alias_rust_gmp_s read_sample_alias_rust_gmp(char *fname) {
+    FILE *fp = fopen(fname, "r");
+    if (fp == NULL) {
+        perror(fname);
+        exit(EXIT_FAILURE);
+    }
+
+    int Z;
+    if (fscanf(fp, "%d", &Z) != 1) {
+        perror("read_sample_alias_rust_gmp: failed to read Z");
+        fclose(fp);
+        exit(EXIT_FAILURE);
+    }
+
+    int n;
+    if (fscanf(fp, "%d", &n) != 1) {
+        perror("read_sample_alias_rust_gmp: failed to read n");
+        fclose(fp);
+        exit(EXIT_FAILURE);
+    }
+
+    mpz_t *weights = malloc(n * sizeof(mpz_t));
+    if (weights == NULL) {
+        perror("malloc");
+        fclose(fp);
+        exit(EXIT_FAILURE);
+    }
+
+    for (int i = 0; i < n; ++i) {
+        char buffer[1024];
+        if (fscanf(fp, "%1023s", buffer) != 1) {
+            perror("read_sample_alias_rust_gmp: failed to read weight");
+            for (int j = 0; j < i; ++j) {
+                mpz_clear(weights[j]);
+            }
+            free(weights);
+            fclose(fp);
+            exit(EXIT_FAILURE);
+        }
+        mpz_init(weights[i]);
+        if (mpz_set_str(weights[i], buffer, 10) != 0) {
+            fprintf(stderr, "read_sample_alias_rust_gmp: invalid weight '%s'\n", buffer);
+            for (int j = 0; j <= i; ++j) {
+                mpz_clear(weights[j]);
+            }
+            free(weights);
+            fclose(fp);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    struct sample_alias_rust_gmp_s sampler;
+    WeightedError err = weighted_alias_new_gmp(&sampler, weights, (unsigned int)n);
+
+    for (int i = 0; i < n; ++i) {
+        mpz_clear(weights[i]);
+    }
+    free(weights);
+    fclose(fp);
+
+    if (err != WEIGHTED_OK) {
+        fprintf(stderr, "weighted_alias_new_gmp failed for %s (error %d)\n", fname, err);
+        exit(EXIT_FAILURE);
+    }
+
+    return sampler;
+}
+
 void free_sample_alias_rust_s(struct sample_alias_rust_s x){
     vector_free(&x.aliases);
     vector_free(&x.small);
     vector_free(&x.large);
     free(x.prob);
+}
+
+void free_sample_alias_rust_gmp_s(struct sample_alias_rust_gmp_s x) {
+    vector_free(&x.aliases);
+    vector_free(&x.small);
+    vector_free(&x.large);
+    vector_mpz_free(&x.prob);
+    mpz_clear(x.weight_sum);
 }
 
 
