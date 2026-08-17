@@ -49,7 +49,8 @@ def compute_entropy(weights):
 
 # Normalize real weights to integer weights summing exactly to Z
 # Ensure every element is at least 1.
-def normalize_to_Z(weights, Z):
+def normalize_to_Z2(weights, Z):
+    # Version originale
     weights = np.maximum(weights, 0)
     if np.sum(weights) == 0:
         weights = np.ones(len(weights))
@@ -68,6 +69,47 @@ def normalize_to_Z(weights, Z):
         frac = scaled - np.floor(scaled)
         idx = np.argsort(-frac)
         integers[idx[:diff]] += 1
+
+    return integers
+
+
+def normalize_to_Z(weights, Z):
+    # En test pour les grands entiers
+    weights = np.maximum(weights, 0)
+    w_sum = np.sum(weights)
+    if w_sum == 0:
+        weights = np.ones(len(weights))
+        w_sum = len(weights)
+
+    n = len(weights)
+    if Z < n:
+        raise ValueError(
+            "Z must be at least n to assign at least 1 to each element"
+        )
+
+    # 1. Normalisation des poids en flottants
+    probs = weights / w_sum
+
+    # 2. On calcule les parts à distribuer en plus de la valeur minimale (1)
+    # Z est un très grand entier Python, la multiplication produit des floats 64 bits
+    scaled = probs * float(Z - n)
+
+    # 3. Floor et conversion en liste d'entiers Python natifs (taille arbitraire)
+    floored = np.floor(scaled)
+    # On évite .astype(int) de NumPy pour ne pas dépasser la limite C 64-bit
+    integers = [int(x) + 1 for x in floored]
+
+    # 4. Calcul de la différence en utilisant sum() Python (pas np.sum !)
+    diff = int(Z - sum(integers))
+
+    # 5. Distribution déterministe du reliquat selon les plus grandes parties fractionnaires
+    if diff > 0:
+        frac = scaled - floored
+        # Tri des indices par partie fractionnaire décroissante
+        idx = np.argsort(-frac)
+
+        for i in range(diff):
+            integers[idx[i]] += 1
 
     return integers
 

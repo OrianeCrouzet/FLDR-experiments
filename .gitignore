@@ -146,6 +146,7 @@ Thumbs.db
 
 # Experimental data
 dists.*
+distributions_*
 experiments/dists.*
 experiments/*.runtimes
 experiments/*.sizes

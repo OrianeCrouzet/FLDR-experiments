@@ -14,7 +14,7 @@ void vector_mpz_init(VectorMpz* v) {
     }
 }
 
-void vector_mpz_push(VectorMpz* vec, mpz_t val) {
+void vector_mpz_push(VectorMpz* vec, const mpz_t val) {
     if (vec->size >= vec->capacity) {
         vec->capacity = vec->capacity ? 2 * vec->capacity : 4;
         vec->data = realloc(vec->data, vec->capacity * sizeof(mpz_t));
@@ -34,7 +34,7 @@ void vector_mpz_get(mpz_t dest, VectorMpz* v, unsigned int index) {
     mpz_set(dest, v->data[index]);
 }
 
-void vector_mpz_set(VectorMpz* v, unsigned int index, mpz_t val) {
+void vector_mpz_set(VectorMpz* v, unsigned int index, const mpz_t val) {
     mpz_set(v->data[index], val);
 }
 

@@ -678,6 +678,11 @@ WeightedError weighted_alias_new(
     return WEIGHTED_OK;
 }
 
+
+// *********************************************************************************
+//              ALIAS FROM RUST - GMP (entiers taille arbitraire)
+// *********************************************************************************
+
 WeightedError weighted_alias_new_gmp(
     struct sample_alias_rust_gmp_s *out,
     const mpz_t *weights,

@@ -85,7 +85,8 @@ def get_distribution_least_entropy(n, Z):
     assert sum(numerators) == Z
     return [Fraction(a, Z) for a in numerators]
 
-def get_distribution_most_entropy(n, Z):
+def get_distribution_most_entropy2(n, Z):
+    # Version originale
     assert n <= Z
     numerators = np.ones(n, dtype=int)
     S = Z - n
@@ -93,6 +94,27 @@ def get_distribution_most_entropy(n, Z):
     numerators[:(S%n)] += 1
     assert sum(numerators) == Z
     return [Fraction(int(a), Z) for a in numerators]
+
+def get_distribution_most_entropy(n, Z):
+    # En test pour les grands entiers
+    assert n <= Z
+
+    S = Z - n
+    q = S // n
+    r = S % n
+
+    # Base : chaque élément vaut 1 + q
+    val = 1 + q
+    numerators = [val] * n
+
+    # On distribue le reste r (+1 sur les r premiers éléments)
+    for i in range(r):
+        numerators[i] += 1
+
+    # Vérification avec sum() Python natif
+    assert sum(numerators) == Z
+
+    return [Fraction(a, Z) for a in numerators]
 
 def get_distribution_entropy_bounds(n, Z):
     l = get_distribution_least_entropy(n, Z)
@@ -221,7 +243,8 @@ def generate_distributions(N=10, Z=-1, seed=1, samplers='', thin=1,
         force=None, offset=0):
     """Generate distributions and save to disk."""
     Z =  2*N**2 + 1 if Z == - 1 else int(Z)
-    dirname = 'dists.%d.%d.%d' % (N, Z, seed,)
+    #dirname = 'dists.%d.%d.%d' % (N, Z, seed,)
+    dirname = 'distributions_entropy'
     samplers = samplers.replace('\'', '').split(' ') if samplers != '' else []
     if force and os.path.exists(dirname):
         shutil.rmtree(dirname)
@@ -332,7 +355,8 @@ def generate_distribution_diverse(
     if out_dir:
         dirname = out_dir
     else:
-        dirname = 'dists.%d.%d.%d' % (first_n, first_Z, seed)
+        dirname = 'distributions_n'
+        #dirname = 'dists.%d.%d.%d' % (first_n, first_Z, seed)
     if force and os.path.exists(dirname):
         shutil.rmtree(dirname)
     if not os.path.exists(dirname):

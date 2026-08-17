@@ -3,6 +3,7 @@
 import itertools
 import os
 import subprocess
+import math
 
 from fractions import Fraction
 from math import isinf
@@ -35,6 +36,77 @@ def get_enumeration_tuples(Z, n):
     sequences = itertools.product(*[range(Z+1) for _i in range(n)])
     return filter(lambda s: sum(s)==Z, sequences)
 
+
+# *********************************************************************************
+#              Multinomial with big integers
+# *********************************************************************************
+
+def sample_large_binomial(n, p, rng):
+    """Échantillonne une loi Binomiale(n, p) pour n de taille arbitraire."""
+    if n <= 0 or p <= 0:
+        return 0
+    if p >= 1:
+        return n
+
+    # Si n rentre dans un entier 64 bits C, on utilise le sampler natif de NumPy
+    if n <= 9223372036854775807:
+        return int(rng.binomial(n, p))
+
+    # Pour les très grands entiers : Approximation gaussienne (TCL)
+    mu = float(n) * p
+    sigma = math.sqrt(float(n) * p * (1.0 - p))
+
+    # Tirage suivant une loi normale centrée réduite
+    z = rng.standard_normal()
+    val = round(mu + sigma * z)
+
+    # Borner la valeur obtenue entre 0 et n
+    return max(0, min(int(val), n))
+
+
+def sample_large_multinomial(total, probabilities, rng):
+    """Échantillonne une loi Multinomiale(total, probabilities) pour un 'total' grand."""
+    remaining_total = total
+    remaining_p_sum = float(sum(probabilities))
+    counts = []
+
+    for p in probabilities[:-1]:
+        if remaining_total <= 0:
+            counts.append(0)
+            continue
+
+        # Probabilité conditionnelle
+        q = min(1.0, max(0.0, float(p) / remaining_p_sum))
+        count = sample_large_binomial(remaining_total, q, rng)
+
+        counts.append(count)
+        remaining_total -= count
+        remaining_p_sum -= float(p)
+
+    # Le dernier compartiment reçoit le reste exact
+    counts.append(max(0, remaining_total))
+    return counts
+
+
+def sample_dirichlet_multinomial_positive(alpha, N, Z, rng):
+    # En test pour les grands entiers
+    """Sampler pour Dirichlet-Multinomiale positive avec entiers arbitraires."""
+    assert N <= Z
+    probabilities = sample_dirichlet(alpha, N, rng)
+
+    # Remplacement de rng.multinomial(Z - N, probabilities)
+    numerators = sample_large_multinomial(Z - N, probabilities, rng)
+
+    # Ajout du +1 à chaque numérateur (loi positive)
+    numerators = [n + 1 for n in numerators]
+
+    return [Fraction(n, Z) for n in numerators]
+
+
+# *********************************************************************************
+#              Dirichlet distributions
+# *********************************************************************************
+
 def sample_dirichlet(alpha, N, rng):
     """Hacky (but table) sampler for Dirichlet."""
     MAXITER = 1000
@@ -56,13 +128,20 @@ def sample_dirichlet_multinomial(alpha, N, Z, rng):
     numerators = rng.multinomial(Z, probabilities)
     return [Fraction(int(n), Z) for n in numerators]
 
-def sample_dirichlet_multinomial_positive(alpha, N, Z, rng):
+def sample_dirichlet_multinomial_positive2(alpha, N, Z, rng):
+    # Version originale 
     """Hack (but stable) sampler for positive Dirichlet-Multinomial."""
     assert N <= Z
     probabilities = sample_dirichlet(alpha, N, rng)
     numerators = rng.multinomial(Z-N, probabilities)
     numerators += [1] * N
     return [Fraction(int(n), Z) for n in numerators]
+
+
+
+# *********************************************************************************
+#              Utils
+# *********************************************************************************
 
 def sample_simplex(Z, n, alpha, rng, strict=None):
     """Get a random length-n Z-type probability vector"""
@@ -267,7 +346,8 @@ def frac_to_bits_dyadic(M, k):
         bits[j] = int((M & mask) > 0)
     return bits
 
-def reduce_fractions(Ms, k, l):
+def reduce_fractions2(Ms, k, l):
+    # Version originale
     """Simplify (M/Zkl | M in Ms) to lowest terms."""
     Zkl = get_Zkl(k, l)
     assert sum(Ms) == get_Zkl(k, l)
@@ -280,7 +360,7 @@ def reduce_fractions(Ms, k, l):
         return (Ms, k, l)
     if all(M%2 == 0 for M in Ms):
         Ms_prime = [M//2 for M in Ms]
-        return reduce_fractions(Ms_prime, k-1, l-1)
+        return reduce_fractions2(Ms_prime, k-1, l-1)
     if all(M == Ms[0] for M in Ms):
         remainder = Zkl / Ms[0]
         base = log2(remainder)
@@ -290,6 +370,42 @@ def reduce_fractions(Ms, k, l):
         l_prime = k_prime
         Ms_prime = [1] * len(Ms)
         return Ms_prime, k_prime, l_prime
+    return Ms, k, l
+
+def reduce_fractions(Ms, k, l):
+    # En test pour les grands entiers
+    """Simplify (M/Zkl | M in Ms) to lowest terms."""
+    # Conversion explicite en entiers Python natifs
+    Ms = [int(M) for M in Ms]
+    Zkl = int(get_Zkl(k, l))
+
+    # Somme native Python (ne déborde jamais)
+    assert sum(Ms) == Zkl
+
+    if any(M == Zkl for M in Ms):
+        Ms_prime = [M // Zkl for M in Ms]
+        k_prime = 1
+        l_prime = 0
+        return (Ms_prime, k_prime, l_prime)
+
+    if l == 0:
+        return (Ms, k, l)
+
+    if all(M % 2 == 0 for M in Ms):
+        Ms_prime = [M // 2 for M in Ms]
+        return reduce_fractions(Ms_prime, k - 1, l - 1)
+
+    if all(M == Ms[0] for M in Ms):
+        # Division entière exacte sans conversion float
+        if Zkl % Ms[0] == 0:
+            remainder = Zkl // Ms[0]
+            # Calcul du log2 exact sur grand entier via bit_length()
+            if (remainder & (remainder - 1)) == 0:  # Vérifie si c'est une puissance de 2
+                k_prime = remainder.bit_length() - 1
+                l_prime = k_prime
+                Ms_prime = [1] * len(Ms)
+                return Ms_prime, k_prime, l_prime
+
     return Ms, k, l
 
 def bits_to_frac(bits, k, l):

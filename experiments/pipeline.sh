@@ -23,24 +23,27 @@ stamp=${1}
 cmd=${2}
 
 # rej.enc == fldr
-#SAMPLERS='alias.rust alias.rust alias.integers_old alias.integers_old aldr aldr alias.exact alias.exact rej.enc rej.enc' #alias.exact alias.exact rej.enc rej.enc
+#SAMPLERS='alias.rust alias.rust alias.integers_old alias.integers_old aldr aldr rej.enc rej.enc' #alias.exact alias.exact
 SAMPLERS='alias.integers_gmp alias.integers_gmp aldr_gmp aldr_gmp rej.enc_gmp rej.enc_gmp alias.rust_gmp alias.rust_gmp'
 
 
 if [ "${cmd}" = 'initialize' ]; then
-  if [[ "${stamp}" =~ ^dists\.([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
-    N=${BASH_REMATCH[1]}
-    Z=${BASH_REMATCH[2]}
-    seed=${BASH_REMATCH[3]}
+  if [ "${stamp}" = 'distributions_entropy' ]; then
+    N=${3}
+    Z=${4}
+    seed=${5}
     target_samplers="${SAMPLERS}"
   else
-    # support des appels direct : ./pipeline.sh alias.integers initialize
     case "${stamp}" in
       interval|alias.exact|ky.enc|rej.binary|rej.enc|rej.matc|rej.table|rej.uniform|alias.integers|alias.integers_old|aldr|alias.rust|alias.fractions|alias.integers_gmp|rej.enc_gmp|alias.rust_gmp)
-        N=5; Z=10; seed=1; target_samplers="${stamp}";
+        N=5
+        Z=10
+        seed=1
+        target_samplers="${stamp}"
         ;;
+
       *)
-        echo "Unknown sampler init key: ${stamp}" >&2;
+        echo "Unknown init key: ${stamp}" >&2
         exit 2
         ;;
     esac
@@ -51,7 +54,14 @@ if [ "${cmd}" = 'initialize' ]; then
 
   for sampler in ${target_samplers}; do
       echo "--- Generating distributions for sampler: ${sampler} ---"
-      ./dists.py generate-distributions N=${N} Z=${Z} seed=${seed} samplers="${sampler}" thin=5
+
+      ./dists.py generate-distributions \
+          N="${N}" \
+          Z="${Z}" \
+          seed="${seed}" \
+          samplers="${sampler}" \
+          thin=5 
+          
       echo "Finished sampler: ${sampler}"
   done
 
@@ -433,23 +443,27 @@ if [ ${cmd} = 'aggregate-runtimes' ]; then
   exit 0
 fi
 
-if [ ${cmd} = 'run-all-memory-runtime' ]; then
+if [ "${cmd}" = 'run-all-memory-runtime' ]; then
   Z=${3}
   Ns="${4}"
+  seed=2
+
   for n in ${Ns}; do
-      stamp=dists.${n}.${Z}.2
-      echo ${stamp}
-      ./pipeline.sh ${stamp} initialize;
-      ./pipeline.sh ${stamp} measure-runtimes 1000000;
-      ./pipeline.sh ${stamp} measure-structure-sizes;
-      ./pipeline.sh ${stamp} aggregate-runtimes 1000000;
-      ./pipeline.sh ${stamp} aggregate-sizes;
+      stamp=distributions_entropy
+      echo "${stamp}"
+
+      ./pipeline.sh "${stamp}" initialize "${n}" "${Z}" "${seed}"
+      ./pipeline.sh "${stamp}" measure-runtimes 1000000
+      ./pipeline.sh "${stamp}" measure-structure-sizes
+      ./pipeline.sh "${stamp}" aggregate-runtimes 1000000
+      ./pipeline.sh "${stamp}" aggregate-sizes
   done
   exit 0
 fi
 
 if [ ${cmd} = 'run-all-memory-runtime-diverse' ]; then
-  out_stamp=dists.${3}.${4}.2
+  #out_stamp=dists.${3}.${4}.2
+  out_stamp='distributions_n'
   steps=${5:-1000000}
 
   echo "=== Run all: diverse distributions in ${out_stamp} ==="
