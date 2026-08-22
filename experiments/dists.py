@@ -33,6 +33,7 @@ from discrete_sampling.construct import construct_sample_alias_integers_gmp
 from discrete_sampling.construct import construct_sample_alias_rust
 from discrete_sampling.construct import construct_sample_alias_rust_gmp
 from discrete_sampling.construct import construct_sample_alias_fractions
+from discrete_sampling.construct import construct_sample_alias_fractions_gmp
 from discrete_sampling.construct import construct_sample_aldr
 from discrete_sampling.construct import construct_sample_aldr_gmp
 from discrete_sampling.construct import construct_sample_interval
@@ -57,6 +58,7 @@ from discrete_sampling.writeio import write_sample_alias_integers_gmp
 from discrete_sampling.writeio import write_sample_alias_rust
 from discrete_sampling.writeio import write_sample_alias_rust_gmp
 from discrete_sampling.writeio import write_sample_alias_fractions
+from discrete_sampling.writeio import write_sample_alias_fractions_gmp
 from discrete_sampling.writeio import write_sample_aldr
 from discrete_sampling.writeio import write_sample_aldr_gmp
 from discrete_sampling.writeio import write_sample_interval
@@ -196,7 +198,9 @@ def write_samplers(args):
         ('alias.fractions',
             construct_sample_alias_fractions,
             write_sample_alias_fractions),
-
+        ('alias.fractions_gmp',
+            construct_sample_alias_fractions_gmp,
+            write_sample_alias_fractions_gmp),
         ('rej.enc_gmp',
             construct_sample_rejection_encoding_gmp,
             write_sample_ky_encoding_gmp),
@@ -207,7 +211,7 @@ def write_samplers(args):
             continue
         fpath = os.path.join(dirname, 'd.%05d.%s' % (idx, suffix))
         struc = f_construct(p_target)
-        if suffix in {'alias.integers', 'alias.integers_old', 'alias.rust', 'alias.fractions', 'aldr', 'alias.integers_gmp', 'aldr_gmp', 'alias.rust_gmp'}:
+        if suffix in {'alias.integers', 'alias.integers_old', 'alias.rust', 'alias.fractions', 'aldr', 'alias.integers_gmp', 'aldr_gmp', 'alias.rust_gmp', 'alias.fractions_gmp'}:
             f_write(*struc, entropy, fpath)
         else:
             f_write(*struc, fpath)
@@ -283,8 +287,8 @@ def generate_distributions(N=10, Z=-1, seed=1, samplers='', thin=1,
 
 @parsable
 def generate_distribution_diverse(
-    n_stop=1000000,
-    n_step=10000,
+    n_stop=100000,
+    n_step=1000,
     Z_mean_factor=20.0,
     seed=1,
     samplers='',
@@ -328,7 +332,7 @@ def generate_distribution_diverse(
         high_entropy_sigma = 10**np.random.uniform(np.log10(1.0), np.log10(n/4))
         
         # *** CHANGE THIS TO SELECT ENTROPY LEVEL ***
-        selected_entropy_sigma = small_entropy_sigma
+        selected_entropy_sigma = medium_entropy_sigma
         # Options: small_entropy_sigma, medium_entropy_sigma, high_entropy_sigma
         
         weights = gaussian_family(n, sigma=selected_entropy_sigma)

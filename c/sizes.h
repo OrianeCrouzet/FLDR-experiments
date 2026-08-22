@@ -22,6 +22,7 @@ size_t get_size_sample_alias_exact_s(struct sample_alias_exact_s *s);
 size_t get_size_sample_gmp_alias_integers_s(struct sample_gmp_alias_integers_s *s);
 size_t get_size_sample_aldr_gmp_s(struct sample_aldr_gmp_s* x);
 size_t get_size_sample_ky_encoding_gmp_s(struct sample_ky_encoding_gmp_s *s);
+size_t get_size_sample_alias_fractions_gmp_s(struct sample_alias_fractions_gmp_s *s);
 
 #endif
 

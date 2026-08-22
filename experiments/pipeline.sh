@@ -23,9 +23,8 @@ stamp=${1}
 cmd=${2}
 
 # rej.enc == fldr
-#SAMPLERS='alias.rust alias.rust alias.integers_old alias.integers_old aldr aldr rej.enc rej.enc' #alias.exact alias.exact
-SAMPLERS='alias.integers_gmp alias.integers_gmp aldr_gmp aldr_gmp rej.enc_gmp rej.enc_gmp alias.rust_gmp alias.rust_gmp'
-
+#SAMPLERS='alias.rust alias.rust alias.integers_old alias.integers_old aldr aldr rej.enc rej.enc alias.exact alias.exact'
+SAMPLERS='alias.integers_gmp alias.integers_gmp aldr_gmp aldr_gmp rej.enc_gmp rej.enc_gmp alias.rust_gmp alias.rust_gmp alias.fractions_gmp alias.fractions_gmp'
 
 if [ "${cmd}" = 'initialize' ]; then
   if [ "${stamp}" = 'distributions_entropy' ]; then
@@ -35,7 +34,7 @@ if [ "${cmd}" = 'initialize' ]; then
     target_samplers="${SAMPLERS}"
   else
     case "${stamp}" in
-      interval|alias.exact|ky.enc|rej.binary|rej.enc|rej.matc|rej.table|rej.uniform|alias.integers|alias.integers_old|aldr|alias.rust|alias.fractions|alias.integers_gmp|rej.enc_gmp|alias.rust_gmp)
+      interval|alias.exact|ky.enc|rej.binary|rej.enc|rej.matc|rej.table|rej.uniform|alias.integers_old|aldr|alias.rust|alias.fractions|alias.integers_gmp|rej.enc_gmp|alias.rust_gmp|aldr_gmp|alias.fractions_gmp)
         N=5
         Z=10
         seed=1
@@ -87,6 +86,10 @@ if [ "${cmd}" = 'initialize-diverse' ]; then
     fi
   fi
 
+  # Optional: allow passing n and Z as positional args (like initialize)
+  N_ARG=${3:-}
+  Z_ARG=${4:-}
+
   echo "=== Initialize: Generating n/Z varying distributions ==="
   echo "Seed = ${seed}, samplers = ${SAMPLERS}, out_dir = ${out_dir}"
 
@@ -102,9 +105,9 @@ if [ "${cmd}" = 'initialize-diverse' ]; then
   for sampler in ${SAMPLERS}; do
     echo "--- Generating distributions for sampler: ${sampler} ---"
     if [ -n "${out_dir}" ]; then
-      ./dists.py generate-distribution-diverse seed=${seed} samplers="${sampler}" ${force_arg} out_dir="${out_dir}"
+      ./dists.py generate-distribution-diverse seed=${seed} samplers="${sampler}" ${force_arg} ${N_ARG:+n_stop=${N_ARG}} ${Z_ARG:+Z_mean_factor=${Z_ARG}} out_dir="${out_dir}"
     else
-      ./dists.py generate-distribution-diverse seed=${seed} samplers="${sampler}" ${force_arg}
+      ./dists.py generate-distribution-diverse seed=${seed} samplers="${sampler}" ${force_arg} ${N_ARG:+n_stop=${N_ARG}} ${Z_ARG:+Z_mean_factor=${Z_ARG}}
     fi
     force_arg=""
     echo "Finished sampler: ${sampler}"
@@ -240,10 +243,14 @@ from pathlib import Path
 from fractions import Fraction
 from discrete_sampling.construct import (
     construct_sample_alias,
-    construct_sample_alias_integers,
+    construct_sample_alias_integers_old,
+    construct_sample_alias_integers_gmp,
     construct_sample_alias_rust,
+    construct_sample_alias_rust_gmp,
     construct_sample_aldr,
+    construct_sample_aldr_gmp,
     construct_sample_alias_fractions,
+    construct_sample_alias_fractions_gmp,
     construct_sample_interval,
     construct_sample_ky_encoding,
     construct_sample_ky_matrix,
@@ -255,17 +262,23 @@ from discrete_sampling.construct import (
     construct_sample_rejection_hash_table,
     construct_sample_rejection_binary_search,
     construct_sample_rejection_encoding,
+    construct_sample_rejection_encoding_gmp,
     construct_sample_rejection_matrix,
     construct_sample_rejection_matrix_cached,
 )
 from discrete_sampling.writeio import (
     write_sample_alias,
-    write_sample_alias_integers,
+    write_sample_alias_integers_old,
+    write_sample_alias_integers_gmp,
     write_sample_alias_rust,
-    write_sample_aldr,
+    write_sample_alias_rust_gmp,
     write_sample_alias_fractions,
+    write_sample_alias_fractions_gmp,
+    write_sample_aldr,
+    write_sample_aldr_gmp,
     write_sample_interval,
     write_sample_ky_encoding,
+    write_sample_ky_encoding_gmp,
     write_sample_ky_matrix,
     write_sample_ky_matrix_cached,
     write_sample_rejection_uniform,
@@ -289,11 +302,15 @@ structures = {
     'rej.matc': (construct_sample_rejection_matrix_cached, write_sample_ky_matrix_cached),
     'interval': (construct_sample_interval, write_sample_interval),
     'alias.exact': (construct_sample_alias, write_sample_alias),
-    'alias.integers': (construct_sample_alias_integers, write_sample_alias_integers),
+    'alias.integers_old': (construct_sample_alias_integers_old, write_sample_alias_integers_old),
+    'alias.integers_gmp': (construct_sample_alias_integers_gmp, write_sample_alias_integers_gmp),
     'alias.rust': (construct_sample_alias_rust, write_sample_alias_rust),
+    'alias.rust_gmp': (construct_sample_alias_rust_gmp, write_sample_alias_rust_gmp),
     'aldr': (construct_sample_aldr, write_sample_aldr),
+    'aldr_gmp': (construct_sample_aldr_gmp, write_sample_aldr_gmp),
     'alias.fractions': (construct_sample_alias_fractions, write_sample_alias_fractions),
-}
+    'alias.fractions_gmp': (construct_sample_alias_fractions_gmp, write_sample_alias_fractions_gmp),
+    'rej.enc_gmp': (construct_sample_rejection_encoding_gmp, write_sample_ky_encoding_gmp),}
 
 for dist_path in sorted(stamp.glob('*.dist')):
     with dist_path.open() as f:
@@ -310,10 +327,10 @@ for dist_path in sorted(stamp.glob('*.dist')):
         f_construct, f_write = structures[sampler]
         out_path = dist_path.with_name(dist_path.stem + '.' + sampler)
         struc = f_construct(p_target)
-        if sampler in {'alias.integers', 'alias.rust'}:
-            f_write(*struc, Z, entropy, str(out_path))
-        else:
+        if sampler in {'alias.integers', 'alias.integers_old', 'alias.rust', 'alias.fractions', 'aldr', 'alias.integers_gmp', 'aldr_gmp', 'alias.rust_gmp', 'alias.fractions_gmp'}:
             f_write(*struc, entropy, str(out_path))
+        else:
+            f_write(*struc, str(out_path))
 PY
   fi
 
@@ -464,12 +481,15 @@ fi
 if [ ${cmd} = 'run-all-memory-runtime-diverse' ]; then
   #out_stamp=dists.${3}.${4}.2
   out_stamp='distributions_n'
+  n=${3:-}
+  Z=${4:-}
+  seed=2
   steps=${5:-1000000}
 
   echo "=== Run all: diverse distributions in ${out_stamp} ==="
 
   # initialize-diverse will detect the stamp and write into that directory
-  ./pipeline.sh ${out_stamp} initialize-diverse;
+  ./pipeline.sh ${out_stamp} initialize-diverse "${n}" "${Z}" "${seed}";
 
   ./pipeline.sh ${out_stamp} measure-runtimes ${steps};
   ./pipeline.sh ${out_stamp} measure-structure-sizes;

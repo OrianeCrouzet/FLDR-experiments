@@ -147,7 +147,7 @@ void poids_total(VectorMpz D, unsigned int size, mpz_t result) {
     }
 }
 
-void cons_alias(unsigned int n, VectorMpz D, mpz_t cs, VectorInt* T, VectorMpz* Threshold) {
+void cons_alias_gmp(unsigned int n, VectorMpz D, mpz_t cs, VectorInt* T, VectorMpz* Threshold) {
     int* small = malloc(n * sizeof(int));
     int* large = malloc(n * sizeof(int));
     // VectorInt H, L;
@@ -229,7 +229,7 @@ void cons_alias(unsigned int n, VectorMpz D, mpz_t cs, VectorInt* T, VectorMpz* 
     free(large);
 }
 
-struct sample_gmp_alias_integers_s preprocess_gmp_alias_integers(int* a, int n) {
+struct sample_gmp_alias_integers_s preprocess_gmp_alias_integers(mpz_t* a, int n) {
     struct sample_gmp_alias_integers_s sampler;
 
     // Init des vecteurs et de cs
@@ -240,25 +240,27 @@ struct sample_gmp_alias_integers_s preprocess_gmp_alias_integers(int* a, int n) 
     VectorMpz D;
     vector_mpz_init(&D);
 
-    mpz_t val, w;
-    mpz_inits(w, val, NULL);
-    // Copie a[] dans un VectorMpz D
+    mpz_t w;
+    mpz_init_set_ui(w, 0);
+
+    // Copie des poids GMP et calcul du poids total w
     for (int i = 0; i < n; ++i) {
-        mpz_init_set_ui(val, a[i]);
-        vector_mpz_push(&D, val);
-        mpz_add(w, w, val);
+        vector_mpz_push(&D, a[i]); // pousse le mpz_t directement
+        mpz_add(w, w, a[i]);
     }
-    mpz_clear(val);
 
     mpz_t q, r;
-    //mpz_t w2;
-    mpz_inits(q, r, NULL);
-    //mpz_inits(w2, NULL);
-
-    poids_total(D, D.size, w);                 // w = somme des poids
-    //mpz_set(w2, w);
+    mpz_inits(q, r, NULL);   
+    
     mpz_fdiv_q_ui(sampler.cs, w, D.size);      // cs = w / n
-    mpz_fdiv_qr(q, r, w, sampler.cs);          // q = w // cs ; r = w % cs
+
+    if (mpz_cmp_ui(sampler.cs, 0) == 0) {
+        fprintf(stderr, "[Erreur Fatal] cs vaut 0 (Poids total w < n). Division par zéro évitée.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // q = w // cs ; r = w % cs
+    mpz_fdiv_qr(q, r, w, sampler.cs);          // Sécurisé   
 
     vector_reserve(&sampler.T, mpz_get_ui(q));
     vector_mpz_reserve(&sampler.Threshold, q);
@@ -270,24 +272,19 @@ struct sample_gmp_alias_integers_s preprocess_gmp_alias_integers(int* a, int n) 
         mpz_t delta;
         mpz_init(delta);
         mpz_sub(delta, sampler.cs, r);         // delta = cs - r
-        //mpz_add(w2, w, delta);                 // w2 = w + delta
-        //mpz_add_ui(q, q, 1);                   // q++
 
-        vector_mpz_push(&D, delta);            // ajout de l’objet virtuel
+        vector_mpz_push(&D, delta);            // ajout de l'objet virtuel
         mpz_clear(delta);
 
-        //n = D.size;
         n++;
     }
 
     sampler.virtual_obj = virtual_obj;
 
-    //cons_alias(D.size, D, sampler.cs, virtual_obj, &sampler.T, &sampler.Threshold);
-    cons_alias(n, D, sampler.cs, &sampler.T, &sampler.Threshold);
+    // Construction de la table Alias
+    cons_alias_gmp(n, D, sampler.cs, &sampler.T, &sampler.Threshold);
 
-    
     mpz_clears(w, q, r, NULL);
-    //mpz_clears(w2, NULL);
     vector_mpz_free(&D);
 
     return sampler;
@@ -354,61 +351,69 @@ struct sample_aldr_s preprocess_aldr_flat(int* a, int n) {
 //              ALDR - GMP (entiers taille arbitraire)
 // *********************************************************************************
 
-struct sample_aldr_gmp_s preprocess_aldr_flat_k_gmp(int* a, int n, int kmul) {
+struct sample_aldr_gmp_s preprocess_aldr_flat_k_gmp(mpz_t* a, int n, int kmul) {
     mpz_t m, k, K, c, r, tmp, pow2K, Qi, bit, num_leaves, location, val_ui;
     mpz_inits(m, k, K, c, r, tmp, pow2K, Qi, bit, num_leaves, location, val_ui, NULL);
 
+    // 1. Calcul de m (somme globale des poids GMP)
     mpz_set_ui(m, 0);
     for (int i = 0; i < n; ++i) {
-        mpz_add_ui(m, m, a[i]);
+        mpz_add(m, m, a[i]);
     }
 
-    unsigned long m_ui = mpz_get_ui(m);
-    int pop = __builtin_popcount(m_ui);
-    int clz = __builtin_clz(m_ui);
-    int k_int = 32 - clz - (pop == 1);
-    mpz_set_ui(k, k_int);
+    // 2. Calcul du nombre de bits k = log2_ceil(m)
+    // mpz_sizeinbase(m, 2) donne la taille exacte en bits
+    size_t bits_m = mpz_sizeinbase(m, 2);
+    
+    // Si m est une puissance exacte de 2, la taille est bits_m - 1
+    mpz_t m_minus_1;
+    mpz_init_set(m_minus_1, m);
+    mpz_sub_ui(m_minus_1, m_minus_1, 1);
+    if (mpz_sizeinbase(m_minus_1, 2) < bits_m) {
+        bits_m--;
+    }
+    mpz_clear(m_minus_1);
 
-    mpz_mul_ui(K, k, kmul);
+    mpz_set_ui(k, bits_m);
+    mpz_mul_ui(K, k, kmul); // K = k * kmul
 
-    mpz_ui_pow_ui(pow2K, 2, mpz_get_ui(K));
+    // 3. pow2K = 2^K
+    unsigned long K_ui = mpz_get_ui(K); // K (l'exposant) tient dans un unsigned long
+    mpz_ui_pow_ui(pow2K, 2, K_ui);
 
-    mpz_fdiv_q(c, pow2K, m);
+    // 4. c = pow2K / m  et  r = pow2K % m
+    mpz_fdiv_qr(c, r, pow2K, m);
 
-    mpz_fdiv_r(r, pow2K, m);
-
-    mpz_set_ui(num_leaves, __builtin_popcountll(mpz_get_ui(r)));
+    // 5. Calcul de num_leaves avec mpz_popcount (support de taille arbitraire)
+    mpz_set_ui(num_leaves, mpz_popcount(r));
 
     for (int i = 0; i < n; ++i) {
-        mpz_mul_ui(Qi, c, a[i]);
-        mpz_add_ui(num_leaves, num_leaves, __builtin_popcountll(mpz_get_ui(Qi)));
+        mpz_mul(Qi, c, a[i]);
+        mpz_add_ui(num_leaves, num_leaves, mpz_popcount(Qi));
     }
 
-    // Result
+    // 6. Initialisation de la structure résultat
     struct sample_aldr_gmp_s result;
     mpz_init(result.length_breadths);
     mpz_init(result.length_leaves_flat);
     vector_mpz_init(&result.breadths);
     vector_mpz_init(&result.leaves_flat);
+    
     mpz_set(result.length_breadths, K);
     mpz_add_ui(result.length_breadths, result.length_breadths, 1);
     mpz_set(result.length_leaves_flat, num_leaves);
 
     mpz_set_ui(location, 0);
 
-    for (unsigned long j = 0; j <= mpz_get_ui(K); ++j) {
-        // bit = 1 << (K - j)
-        mpz_set_ui(tmp, j);
-        mpz_sub(tmp, K, tmp);  // tmp = K - j
+    // 7. Boucle de construction des feuilles
+    for (unsigned long j = 0; j <= K_ui; ++j) {
+        unsigned long bit_index = K_ui - j;
 
-        mpz_ui_pow_ui(bit, 2, mpz_get_ui(tmp));      // bit = 2^(K - j)
-
-        // if (r & bit)
-        if (mpz_tstbit(r, mpz_get_ui(tmp))) {
+        // Test du bit_index dans r
+        if (mpz_tstbit(r, bit_index)) {
             mpz_set_ui(val_ui, 0);
             vector_mpz_push(&result.leaves_flat, val_ui);
 
-            // breadths[j]++
             while (result.breadths.size <= j) {
                 mpz_set_ui(val_ui, 0);
                 vector_mpz_push(&result.breadths, val_ui);
@@ -418,8 +423,8 @@ struct sample_aldr_gmp_s preprocess_aldr_flat_k_gmp(int* a, int n, int kmul) {
         }
 
         for (int i = 0; i < n; ++i) {
-            mpz_mul_ui(Qi, c, a[i]);
-            if (mpz_tstbit(Qi, mpz_get_ui(tmp))) {
+            mpz_mul(Qi, c, a[i]);
+            if (mpz_tstbit(Qi, bit_index)) {
                 mpz_set_ui(val_ui, i + 1);
                 vector_mpz_push(&result.leaves_flat, val_ui);
 
@@ -433,13 +438,13 @@ struct sample_aldr_gmp_s preprocess_aldr_flat_k_gmp(int* a, int n, int kmul) {
         }
     }
 
-    // Cleaning
+    // Nettoyage
     mpz_clears(m, k, K, c, r, tmp, pow2K, Qi, bit, num_leaves, location, val_ui, NULL);
 
     return result;
 }
 
-struct sample_aldr_gmp_s preprocess_aldr_flat_gmp(int* a, int n) {
+struct sample_aldr_gmp_s preprocess_aldr_flat_gmp(mpz_t* a, int n) {
     return preprocess_aldr_flat_k_gmp(a, n, 2);
 }
 
@@ -684,54 +689,62 @@ WeightedError weighted_alias_new(
 // *********************************************************************************
 
 WeightedError weighted_alias_new_gmp(
-    struct sample_alias_rust_gmp_s *out,
+    alias_rust_gmp_s *out,
     const mpz_t *weights,
     unsigned int n
 )
 {
-    if (n == 0) {
-        return WEIGHTED_NO_ITEM;
-    }
+    if (n == 0) return WEIGHTED_NO_ITEM;
 
     vector_init(&out->aliases);
     vector_resize_zero(&out->aliases, n);
     vector_init(&out->small);
     vector_init(&out->large);
+    
     vector_mpz_init(&out->prob);
+    out->prob.data = malloc(n * sizeof(mpz_t));
+    out->prob.size = n;
+    out->prob.capacity = n;
+
+    for (unsigned int i = 0; i < n; i++) {
+        mpz_init(out->prob.data[i]);
+    }
+
     mpz_init(out->weight_sum);
 
     mpz_t sum;
-    mpz_init(sum);
-    mpz_set_ui(sum, 0);
+    mpz_init_set_ui(sum, 0);
     for (unsigned int i = 0; i < n; i++) {
         mpz_add(sum, sum, weights[i]);
     }
 
     if (mpz_cmp_ui(sum, 0) == 0) {
+        for (unsigned int i = 0; i < n; i++) {
+            mpz_clear(out->prob.data[i]);
+        }
+        free(out->prob.data);
         vector_free(&out->aliases);
         vector_free(&out->small);
         vector_free(&out->large);
-        vector_mpz_free(&out->prob);
         mpz_clear(out->weight_sum);
         mpz_clear(sum);
         return WEIGHTED_ALL_ZERO;
     }
+
+    mpz_set(out->weight_sum, sum);
 
     mpz_t p, tmp;
     mpz_inits(p, tmp, NULL);
 
     for (unsigned int i = 0; i < n; i++) {
         mpz_mul_ui(p, weights[i], n);
-        vector_mpz_push(&out->prob, p);
+        mpz_set(out->prob.data[i], p);
 
-        if (mpz_cmp(p, sum) < 0) {
+        if (mpz_cmp(p, sum) < 0)
             vector_push(&out->small, i);
-        } else {
+        else
             vector_push(&out->large, i);
-        }
     }
-
-    mpz_set(out->weight_sum, sum);
 
     while (out->small.size > 0 && out->large.size > 0) {
         unsigned int s = vector_get(&out->small, out->small.size - 1);
@@ -745,28 +758,229 @@ WeightedError weighted_alias_new_gmp(
         mpz_set(tmp, out->prob.data[l]);
         mpz_add(tmp, tmp, out->prob.data[s]);
         mpz_sub(tmp, tmp, sum);
-        vector_mpz_set(&out->prob, l, tmp);
+        mpz_set(out->prob.data[l], tmp);
 
-        if (mpz_cmp(tmp, sum) < 0) {
+        if (mpz_cmp(tmp, sum) < 0)
             vector_push(&out->small, l);
-        } else {
+        else
             vector_push(&out->large, l);
-        }
     }
 
     while (out->large.size > 0) {
         unsigned int l = vector_get(&out->large, out->large.size - 1);
         out->large.size--;
-        vector_mpz_set(&out->prob, l, sum);
+        mpz_set(out->prob.data[l], sum);
     }
 
     while (out->small.size > 0) {
         unsigned int s = vector_get(&out->small, out->small.size - 1);
         out->small.size--;
-        vector_mpz_set(&out->prob, s, sum);
+        mpz_set(out->prob.data[s], sum);
     }
 
     out->n = n;
+
     mpz_clears(p, tmp, sum, NULL);
     return WEIGHTED_OK;
+}
+
+
+// *********************************************************************************
+//              ALIAS FRACTIONS - GMP (entiers taille arbitraire)
+// *********************************************************************************
+
+PileResult piles(mpq_t* distrib, int N, int affiche) {
+    PileResult res;
+
+    // pdsCase = 1 / N
+    mpq_init(res.pdsCase);
+    mpq_set_ui(res.pdsCase, 1, N);
+
+    res.S0 = malloc(N * sizeof(int));
+    res.S1 = malloc(N * sizeof(int));
+    for (int i = 0; i < N; i++) {
+        res.S0[i] = -1;
+        res.S1[i] = -1;
+    }
+
+    res.lenS0 = 0;
+    res.lenS1 = 0;
+
+    for (int n = 0; n < N; n++) {
+        if (mpq_cmp(distrib[n], res.pdsCase) > 0) {
+            res.S0[res.lenS0++] = n;
+        } else {
+            res.S1[res.lenS1++] = n;
+        }
+    }
+
+    if (affiche) {
+        printf("S0 (lourds) :\n");
+        for (int i = 0; i < res.lenS0; i++) {
+            int idx = res.S0[i];
+            gmp_printf("(%d, %Qd)\n", idx, distrib[idx]);
+        }
+    }
+
+    return res;
+}
+
+struct AliasEntryGMP* algo_alias_fractions_gmp(mpq_t* distrib, int N, int affiche) {
+    // piles(distrib) -> pdsCase, S0, S1
+    PileResult res = piles(distrib, N, 0);
+    mpq_t pdsCase;
+    mpq_init(pdsCase);
+    mpq_set(pdsCase, res.pdsCase);  // pdsCase = 1/N
+
+    int* S0 = res.S0;
+    int lenS0 = res.lenS0;
+    int* S1 = res.S1;
+    int lenS1 = res.lenS1;
+
+    if (affiche) {
+        gmp_printf("pdsCase = %Qd\n", pdsCase);
+        printf("lourds (S0): ");
+        for (int i = 0; i < lenS0; i++) printf("%d ", S0[i]);
+        printf("\nlégers (S1): ");
+        for (int i = 0; i < lenS1; i++) printf("%d ", S1[i]);
+        printf("\n");
+    }
+
+    struct AliasEntryGMP* T = malloc(N * sizeof(struct AliasEntryGMP));
+
+    int idx0 = 0;  // for S0
+    int idx1 = 0;  // for S1
+
+    for (int t = 0; t < N; t++) {
+         if ((lenS0 - idx0 == 0) && (lenS1 - idx1 == 0)) {
+            fprintf(stderr, "ERREUR2 : plus de lourds et de légers à l'étape %d !\n", t);
+            exit(EXIT_FAILURE);
+        }
+
+        if (lenS1 - idx1 > 0) {
+            int moins = S1[idx1];
+
+            if (mpq_cmp(distrib[moins], pdsCase) == 0) {
+                // T[t] = (moins, None, pdsCase)
+                T[t].i = moins;
+                T[t].j = -1;
+                mpq_init(T[t].prob);
+                mpq_set(T[t].prob, pdsCase);
+                idx1++;
+            } else {
+                if (idx0 >= lenS0) {
+                    fprintf(stderr, "[ERREUR] idx0=%d dépasse lenS0=%d à l'étape %d !\n", idx0, lenS0, t);
+                    exit(EXIT_FAILURE);
+                }
+                int plus = S0[idx0];
+
+                T[t].i = moins;
+                T[t].j = plus;
+                mpq_init(T[t].prob);
+                mpq_set(T[t].prob, distrib[moins]);
+
+                idx1++;  // S1 = S1[1:]
+
+                // distrib[plus] -= (pdsCase - distrib[moins])
+                mpq_t diff;
+                mpq_init(diff);
+                mpq_sub(diff, pdsCase, distrib[moins]);
+                mpq_sub(distrib[plus], distrib[plus], diff);
+                mpq_clear(diff);
+
+                // distrib[moins] = 0
+                mpq_set_ui(distrib[moins], 0, 1);
+
+                if (mpq_cmp(distrib[plus], pdsCase) <= 0) {
+                    if (idx1 <= 0) {
+                        fprintf(stderr, "[ERREUR] idx1=%d ne peut pas être décrémenté à l'étape %d !\n", idx1, t);
+                        exit(EXIT_FAILURE);
+                    }
+                    S1[--idx1] = plus;  // S1 = [plus] + S1
+                    idx0++; // S0 = S0[1:]
+                }
+            }
+        }else {
+            // Case : no more light ones, but still heavy ones
+            if (idx0 >= lenS0) {
+                fprintf(stderr, "[ERREUR] idx0=%d dépasse lenS0=%d : plus de 'lourds' disponibles !\n", idx0, lenS0);
+                exit(1);
+            }
+
+            int only_heavy = S0[idx0];
+            T[t].i = only_heavy;
+            T[t].j = -1;
+            mpq_init(T[t].prob);
+            mpq_set(T[t].prob, pdsCase);
+
+            mpq_sub(distrib[only_heavy], distrib[only_heavy], pdsCase);
+
+            if (mpq_cmp(distrib[only_heavy], pdsCase) <= 0) {
+                if (idx1 <= 0) {
+                    fprintf(stderr, "[ERREUR] idx1=%d ne peut pas être décrémenté dans le cas only_heavy à l'étape %d !\n", idx1, t);
+                    exit(EXIT_FAILURE);
+                }
+                S1[--idx1] = only_heavy;  // S1 = [only_heavy] + S1
+                idx0++;
+            }
+
+        }
+    }
+
+    // prob = k / pdsCase
+    for (int t = 0; t < N; t++) {
+        mpq_div(T[t].prob, T[t].prob, pdsCase);
+    }
+
+    // Cleaning
+    mpq_clear(pdsCase);
+    mpq_clear(res.pdsCase);
+    free(res.S0);
+    free(res.S1);
+
+    if (affiche) {
+        printf("T:\n");
+        for (int t = 0; t < N; t++) {
+            gmp_printf("(%d, %d, %Qd)\n", T[t].i, T[t].j, T[t].prob);
+        }
+    }
+
+    return T;
+}
+
+struct sample_alias_fractions_gmp_s preprocess_alias_fractions_gmp(mpz_t* a, int n) {
+    // Allouer et remplir une distribution rationnelle à partir de `a`
+    mpq_t* distrib = malloc(n * sizeof(mpq_t));
+    mpq_t total;
+    mpq_init(total);
+    mpq_set_ui(total, 0, 1);
+
+    for (int i = 0; i < n; i++) {
+        mpq_init(distrib[i]);
+        mpq_set_z(distrib[i], a[i]);  // distrib[i] = a[i] / 1
+        mpq_add(total, total, distrib[i]);
+    }
+
+    // Normaliser : distrib[i] = distrib[i] / total
+    for (int i = 0; i < n; i++) {
+        mpq_div(distrib[i], distrib[i], total);
+    }
+
+    mpq_clear(total);
+
+    // Appel de l'algo principal
+    struct AliasEntryGMP* T = algo_alias_fractions_gmp(distrib, n, 0);    // affichage = False
+
+    // Libérer la distribution
+    for (int i = 0; i < n; i++) {
+        mpq_clear(distrib[i]);
+    }
+    free(distrib);
+
+    // Construire et retourner la structure
+    struct sample_alias_fractions_gmp_s result;
+    result.taille = n;
+    result.table = T;
+
+    return result;
 }

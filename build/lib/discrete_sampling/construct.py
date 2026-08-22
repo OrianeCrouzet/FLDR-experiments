@@ -203,3 +203,6 @@ def construct_sample_alias_fractions(p_target):
     Ms = get_common_numerators(Z, p_target)
 
     return Z, Ms
+
+def construct_sample_alias_fractions_gmp(p_target):
+    return construct_sample_alias_fractions(p_target)

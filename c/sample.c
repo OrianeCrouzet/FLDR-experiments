@@ -358,26 +358,65 @@ uint32_t sample_alias_rust(struct sample_alias_rust_s *x){
     );
 }
 
-uint32_t sample_alias_rust_gmp(struct sample_alias_rust_gmp_s *x){
-    mpz_t index_mpz, random_weight, threshold;
-    mpz_inits(index_mpz, random_weight, threshold, NULL);
+// *********************************************************************************
+//              ALIAS FROM RUST - GMP (entiers taille arbitraire)
+// *********************************************************************************
 
-    mpz_set_ui(index_mpz, x->n);
-    uniform_with_gmp(index_mpz, index_mpz);
-    unsigned int index = mpz_get_ui(index_mpz);
+static uint32_t weighted_alias_sample_gmp(
+    const alias_rust_gmp_s *dist,
+    rng_gmp_fn rng_index,
+    rng_gmp_fn rng_weight
+)
+{
+    mpz_t i_mpz, r, prob_i;
+    mpz_inits(i_mpz, r, prob_i, NULL);
 
-    uniform_with_gmp(random_weight, &x->weight_sum);
-    vector_mpz_get(threshold, &x->prob, index);
+    mpz_t n_mpz;
+    mpz_init_set_ui(n_mpz, dist->n);
+    rng_index(i_mpz, n_mpz);
+    mpz_clear(n_mpz);
+
+    unsigned long idx = mpz_get_ui(i_mpz);
+    rng_weight(r, dist->weight_sum);
+
+    vector_mpz_get(prob_i, &dist->prob, idx);
 
     uint32_t result;
-    if (mpz_cmp(random_weight, threshold) < 0) {
-        result = index;
+    if (mpz_cmp(r, prob_i) < 0) {
+        result = (uint32_t) idx;
     } else {
-        result = vector_get(&x->aliases, index);
+        int alias_idx = dist->aliases.data[idx];
+        result = (uint32_t) alias_idx;
     }
 
-    mpz_clears(index_mpz, random_weight, threshold, NULL);
+    mpz_clears(i_mpz, r, prob_i, NULL);
     return result;
+}
+
+// Callbacks RNG
+static void alias_rust_rng_index_gmp(mpz_t rop, const mpz_t n) {
+    if (mpz_cmp_ui(n, 1) <= 0) {
+        mpz_set_ui(rop, 0);
+        return;
+    }
+    uniform_with_gmp(rop, n);
+}
+
+static void alias_rust_rng_weight_gmp(mpz_t rop, const mpz_t max) {
+    if (mpz_cmp_ui(max, 1) <= 0) {
+        mpz_set_ui(rop, 0);
+        return;
+    }
+    uniform_with_gmp(rop, max);
+}
+
+// Point d'entrée principal : SIGNATURE STRICTEMENT INCHANGÉE
+uint32_t sample_alias_rust_gmp(struct sample_alias_rust_gmp_s *x) {
+    return weighted_alias_sample_gmp(
+        (const alias_rust_gmp_s *)x,
+        alias_rust_rng_index_gmp,
+        alias_rust_rng_weight_gmp
+    );
 }
 
 
@@ -397,4 +436,32 @@ uint32_t sample_alias_fractions(struct sample_alias_fractions_s *x) {
     uint32_t b = bernoulli(numer, denom);
 
     return b ? x->table[index].i : x->table[index].j;
+}
+
+
+// *********************************************************************************
+//              ALIAS FRACTIONS - GMP (entiers taille arbitraire)
+// *********************************************************************************
+
+uint32_t sample_alias_fractions_gmp_s(struct sample_alias_fractions_gmp_s *x) {
+    mpz_t index_mpz, numer, denom;
+    mpz_inits(index_mpz, numer, denom, NULL);
+
+    mpz_t taille_mpz;
+    mpz_init_set_ui(taille_mpz, x->taille);
+
+    // 1. Tirage uniforme entier dans [0, taille)
+    uniform_with_gmp(index_mpz, taille_mpz);
+    unsigned long index = mpz_get_ui(index_mpz);
+
+    // 2. Récupération probabilité (num / den)
+    mpq_get_num(numer, x->table[index].prob);
+    mpq_get_den(denom, x->table[index].prob);
+
+    // 3. Bernoulli
+    int result = bernoulli_with_gmp(numer, denom) ? x->table[index].i : x->table[index].j;
+
+    mpz_clears(index_mpz, numer, denom, taille_mpz, NULL);
+
+    return (uint32_t) result;
 }

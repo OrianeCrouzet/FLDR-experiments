@@ -62,6 +62,11 @@ int main(int argc, char **argv) {
         size = get_size_sample_alias_fractions_s(&s);
         free_sample_alias_fractions_s(s);
 
+    } else if (strcmp(sampler, "alias.fractions_gmp") == 0) {
+        struct sample_alias_fractions_gmp_s s = read_sample_alias_fractions_gmp(path);
+        size = get_size_sample_alias_fractions_gmp_s(&s);
+        free_sample_alias_fractions_gmp_s(s);
+
     } else if (strcmp(sampler, "rej.enc") == 0) {
         struct sample_ky_encoding_s s = read_sample_ky_encoding(path);
         size = get_size_sample_ky_encoding_s(&s);

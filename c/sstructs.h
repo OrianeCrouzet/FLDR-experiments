@@ -176,6 +176,19 @@ struct sample_alias_rust_s {
     double weight_sum;
 };
 
+// *********************************************************************************
+//              ALIAS FROM RUST - GMP (entiers taille arbitraire)
+// *********************************************************************************
+
+typedef struct {
+    VectorInt aliases;
+    VectorMpz prob;
+    VectorInt small;
+    VectorInt large;
+    unsigned int n;
+    mpz_t weight_sum;
+} alias_rust_gmp_s;
+
 struct sample_alias_rust_gmp_s {
     VectorInt aliases;
     VectorMpz prob;
@@ -200,6 +213,31 @@ struct AliasEntry{
 struct sample_alias_fractions_s{
     int taille;           // Number of elements
     struct AliasEntry* table;    // AliasEntry table
+};
+
+
+// *********************************************************************************
+//              ALIAS FRACTIONS - GMP (entiers taille arbitraire)
+// *********************************************************************************
+
+typedef struct {
+    mpq_t pdsCase;
+    int* S0;        // index where distrib[n] > pdsCase  (heavy)
+    int* S1;        // index where distrib[n] <= pdsCase (light)
+    int lenS0;
+    int lenS1;
+} PileResult;
+
+struct AliasEntryGMP{
+    int i;          
+    int j;          // -1 if NULL
+    mpq_t prob;     // = k / pdsCase
+};
+
+// Structure de l'Alias
+struct sample_alias_fractions_gmp_s{
+    int taille;           // Nombre d'éléments
+    struct AliasEntryGMP* table;    // Tableau de AliasEntryGMP
 };
 
 #endif

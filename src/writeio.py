@@ -140,3 +140,6 @@ def write_sample_alias_fractions(Z, T, entropy, fname):
         f.write('%d\n' % Z)
         write_array(T, f)
         f.write('%.5f\n' % entropy)
+
+def write_sample_alias_fractions_gmp(Z, T, entropy, fname):
+    write_sample_alias_fractions(Z, T, entropy, fname)

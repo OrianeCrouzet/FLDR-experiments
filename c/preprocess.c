@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
     fscanf(fp, "%d", &kmul);
     int n;
     fscanf(fp, "%d", &n);
-    int* array = calloc(n, sizeof(int));
+    int* array = calloc(n, sizeof(unsigned int));
     for (int i = 0; i < n; ++i) {
         fscanf(fp, "%d", &array[i]);
     }
@@ -146,10 +146,10 @@ int main(int argc, char **argv) {
     // Measure time of Alias Rust
     // Echauffement
     alias_rust_s temp30;
-    weighted_alias_new(&temp30, array, n);
+    weighted_alias_new(&temp30, (const unsigned int *)array, n);
     t = clock();
     alias_rust_s temp3;
-    weighted_alias_new(&temp3, array, n);
+    weighted_alias_new(&temp3, (const unsigned int *)array, n);
     t = clock() - t;
     double t_alias_rust = ((double) t) / CLOCKS_PER_SEC;
 

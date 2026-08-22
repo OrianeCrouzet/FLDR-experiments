@@ -151,6 +151,7 @@ experiments/dists.*
 experiments/*.runtimes
 experiments/*.sizes
 experiments/*.calls
+experiments/measures/*
 
 # Build artifacts
 c/main.out

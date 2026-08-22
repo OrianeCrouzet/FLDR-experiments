@@ -112,7 +112,7 @@ uint32_t get_random_bits_spsc(size_t nbbits) {
 // *********************************************************************************
 
 
-uint32_t uniform(uint32_t n) {
+uint32_t uniform(uint32_t n) {    
     uint32_t num_bits_presample = 32 - __builtin_clz(n - 1);
     uint32_t bound = 1 << num_bits_presample;
     uint32_t x = get_random_bits_spsc(num_bits_presample);
@@ -151,14 +151,35 @@ uint32_t bernoulli(uint32_t numer, uint32_t denom) {
 
 // FDR with GMP, translated from flip.c (Saad)
 void uniform_with_gmp(mpz_t result, const mpz_t n) {
-    size_t num_bits_presample = mpz_sizeinbase(n, 2); // num_bits_presample = 32 - __builtin_clz(n - 1);
-    
+    if (mpz_cmp_ui(n, 1) <= 0) {
+        mpz_set_ui(result, 0);
+        return;
+    }
+
+    // 1. Calcul exact de num_bits = bits(n - 1)
+    mpz_t n_minus_1;
+    mpz_init_set(n_minus_1, n);
+    mpz_sub_ui(n_minus_1, n_minus_1, 1);
+    size_t num_bits_presample = mpz_sizeinbase(n_minus_1, 2);
+    mpz_clear(n_minus_1);
+
     mpz_t bound, x;
     mpz_inits(bound, x, NULL);
 
-    mpz_ui_pow_ui(bound, 2, num_bits_presample);   // bound = 1 << num_bits_presample
-    mpz_set_ui(x, get_random_bits_spsc(num_bits_presample));     // x = flip_n(num_bits_presample)
+    // bound = 2^num_bits_presample
+    mpz_ui_pow_ui(bound, 2, num_bits_presample);
 
+    // 2. REMPLISSAGE SÉCURISÉ PAR BLOCS DE 32 BITS (Anti-Overflow)
+    mpz_set_ui(x, 0);
+    size_t bits_left = num_bits_presample;
+    while (bits_left > 0) {
+        size_t chunk = (bits_left > 32) ? 32 : bits_left;
+        mpz_mul_2exp(x, x, chunk);
+        mpz_add_ui(x, x, get_random_bits_spsc(chunk));
+        bits_left -= chunk;
+    }
+
+    // 3. Boucle Fast Dice Roller (FDR)
     for (;;) {
         if (mpz_cmp(bound, n) >= 0) {
             if (mpz_cmp(x, n) < 0) { 
@@ -168,10 +189,11 @@ void uniform_with_gmp(mpz_t result, const mpz_t n) {
             mpz_sub(bound, bound, n);
             mpz_sub(x, x, n);
         }
-        mpz_mul_2exp(bound, bound, 1);  // bound <<= 1
+        mpz_mul_2exp(bound, bound, 1);
         mpz_mul_2exp(x, x, 1);          
-        mpz_add_ui(x, x, get_random_bits_spsc(1));       // x = (x << 1) | flip();
+        mpz_add_ui(x, x, get_random_bits_spsc(1));
     }
+    
     mpz_clears(x, bound, NULL);
 }
 

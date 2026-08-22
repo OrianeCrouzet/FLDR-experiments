@@ -40,7 +40,7 @@ struct sample_alias_fractions_s read_sample_alias_fractions(char *fname);
 struct sample_gmp_alias_integers_s read_sample_alias_integers_gmp(char *fname);
 struct sample_aldr_gmp_s read_sample_aldr_gmp(char *fname);
 struct sample_ky_encoding_gmp_s read_sample_ky_encoding_gmp(char *fname);
-
+struct sample_alias_fractions_gmp_s read_sample_alias_fractions_gmp(char *fname);
 
 // ***************************** SAMPLERS - FREE *****************************
 
@@ -56,5 +56,6 @@ void free_sample_alias_fractions_s(struct sample_alias_fractions_s x);
 void free_sample_ky_encoding_gmp_s(struct sample_ky_encoding_gmp_s x);
 void free_sample_gmp_alias_integers(struct sample_gmp_alias_integers_s x);
 void free_sample_aldr_gmp_s (struct sample_aldr_gmp_s x);
+void free_sample_alias_fractions_gmp_s(struct sample_alias_fractions_gmp_s x);
 
 #endif

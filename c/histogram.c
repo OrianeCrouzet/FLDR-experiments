@@ -70,6 +70,12 @@ void run_sampler(char *name, char *path, int steps)
         sample_rejection_encoding,
         free_sample_ky_encoding_s)
 
+    RUN("rej.enc.gmp",
+        struct sample_ky_encoding_gmp_s,
+        read_sample_ky_encoding_gmp,
+        sample_rejection_encoding_gmp,
+        free_sample_ky_encoding_gmp_s)
+
     RUN("alias.rust",
         struct sample_alias_rust_s,
         read_sample_alias_rust,
@@ -87,6 +93,12 @@ void run_sampler(char *name, char *path, int steps)
         read_sample_alias_fractions,
         sample_alias_fractions,
         free_sample_alias_fractions_s)
+
+    RUN("alias.fractions_gmp",
+        struct sample_alias_fractions_gmp_s,
+        read_sample_alias_fractions_gmp,
+        sample_alias_fractions_gmp_s,
+        free_sample_alias_fractions_gmp_s)
 
     RUN("alias.integers_old",
         struct sample_alias_integers_s,
@@ -116,53 +128,56 @@ void run_sampler_with_debug(char *name, char *path, int steps)
 }
 
 int main(int argc, char **argv)
-//      Lancer : ./histogram.out histogram/*.dist 1000000
 {
     if (argc != 3) {
         printf("usage: %s file.dist steps\n", argv[0]);
         return 1;
     }
 
-    pthread_t prod_thread;
-    bool is_spsc_sampler = false;
-
     char *dist = argv[1];
     int steps = atoi(argv[2]);
 
     char samplers[][32] = {
-        "aldr",
-        "alias.rust",
-        "alias.fractions",
-        "alias.integers_old",
         "alias.integers_gmp",
         "aldr_gmp",
         "alias.rust_gmp",
+        "alias.fractions_gmp",
+        //"rej.enc"
     };
 
-    for (int i = 0; i < 7; i++) {
-        // Vérifie si l'échantillonneur actuel utilise la file SPSC
-        if (strcmp(samplers[i], "alias.integers") == 0 || strcmp(samplers[i], "alias.integers_old") == 0 || strcmp(samplers[i], "alias.rust") == 0 || strcmp(samplers[i], "alias.integers_gmp") == 0 || strcmp(samplers[i], "alias.rust_gmp") == 0) {
-            is_spsc_sampler = true;
-            init_spsc_queue(); // Initialise la file SPSC
-            //printf("[Main] Initialisation de la file SPSC et démarrage du thread producteur.\n");
+    for (int i = 0; i < sizeof(samplers) / sizeof(samplers[0]); i++) {
+        pthread_t prod_thread;
+        bool uses_spsc = (strcmp(samplers[i], "alias.integers") == 0 || 
+                          strcmp(samplers[i], "alias.integers_old") == 0 || 
+                          strcmp(samplers[i], "alias.rust") == 0 || 
+                          strcmp(samplers[i], "alias.integers_gmp") == 0 || 
+                          strcmp(samplers[i], "alias.rust_gmp") == 0 ||
+                          strcmp(samplers[i], "aldr_gmp") == 0) ||
+                          strcmp(samplers[i], "rej.enc.gmp") == 0 ||
+                          strcmp(samplers[i], "rej.enc") == 0 ||
+                          strcmp(samplers[i], "alias.fractions") == 0 ||
+                          strcmp(samplers[i], "alias.fractions_gmp") == 0;
+
+        // 1. Démarrer le producteur SPSC uniquement pour l'échantillonneur courant
+        if (uses_spsc) {
+            init_spsc_queue();
             if (pthread_create(&prod_thread, NULL, spsc_producer, NULL) != 0) {
-                perror("Erreur lors de la création du thread producteur SPSC");
+                perror("Erreur création thread SPSC");
                 return EXIT_FAILURE;
             }
         }
 
         printf("=== %s ===\n", samplers[i]);
-        run_sampler_with_debug(samplers[i], dist, steps);
-    }
+        run_sampler(samplers[i], dist, steps);
 
-    if (is_spsc_sampler) {
-        //printf("[Main] Signalement au producteur SPSC de s'arrêter et attente de la fin du thread.\n");
-        q.running = false; // Signale au thread producteur de s'arrêter
-        if (pthread_join(prod_thread, NULL) != 0) {
-            perror("Erreur lors de l'attente de la fin du thread producteur SPSC");
-            return EXIT_FAILURE;
+        // 2. Nettoyer et stopper le thread SPSC AVANT de passer à l'échantillonneur suivant !
+        if (uses_spsc) {
+            q.running = false;
+            if (pthread_join(prod_thread, NULL) != 0) {
+                perror("Erreur join thread SPSC");
+                return EXIT_FAILURE;
+            }
         }
-        //printf("[Main] Thread producteur SPSC arrêté.\n");
     }
 
     return 0;

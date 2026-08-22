@@ -1,48 +1,49 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-N = 50
-
-# Commande : python3 histogram.py
-
-# --- lecture distribution ---
-# Changer ici pour tester d'autres distributions
-with open("histogram/test3.dist") as f:
+# --- 1. Lecture distribution (Poids GMP) ---
+with open("histogram/test6.dist") as f:
     Z = int(f.readline())
     line = f.readline().split()
     n = int(line[0])
-    weights = np.array(list(map(int, line[1:])))
+    weights_raw = [int(x) for x in line[1:]]
 
-# --- lecture tirages ---
-# Changer ici pour tester d'autres algorithmes
+# --- 2. Lecture tirages ---
 with open("histogram/alias.rust_gmp.histo") as f:
-    draws = np.array(list(map(int, f.read().split())))
-draws = np.array(draws)
-# on ignore l'objet virtuel
-#draws = draws[draws < n]
+    # On force la conversion en C-int64 standard pour np.bincount (très rapide)
+    draws_raw = list(map(int, f.read().split()))
 
-# Alias exact
-#draws = draws[(draws >= 1) & (draws <= n)]
-#counts = np.bincount(draws, minlength=n+1)[1:]
+# Convertit en uint32/int64 NumPy
+draws = np.array(draws_raw, dtype=np.int64)
 
-# --- histogramme empirique ---
-counts = np.bincount(draws, minlength=n)
-counts = counts[:n]
+# Décalage si vos tirages sont indexés de 1 à n (ici min=1, max=20474)
+if draws.min() == 1:
+    draws = draws - 1
 
-# --- normalisation pour comparaison ---
-weights_norm = weights / weights.sum()
+# --- 3. Comptage empirique ---
+counts = np.bincount(draws, minlength=n)[:n]
+
+# --- 4. Normalisation ---
+total_weights = sum(weights_raw)
+weights_norm = np.array([w / total_weights for w in weights_raw], dtype=float)
 counts_norm = counts / counts.sum()
 
-# --- plot ---
-x = np.arange(n)    # les objets de 0 à n-1
-# Alias Exact
-#x = np.arange(1, n+1)   # les objets de 1 à n
+# --- 5. Visualisation ---
+fig, axes = plt.subplots(2, 1, figsize=(12, 8))
 
-plt.figure(figsize=(12,5))
+# A. Vue globale agrégée (100 bins pour rendre les variations lisibles)
+num_bins = 100
+counts_binned, bin_edges = np.histogram(draws, bins=num_bins, range=(0, n))
+weights_binned = np.histogram(np.arange(n), bins=num_bins, weights=weights_norm, range=(0, n))[0]
 
-plt.bar(x, weights_norm, alpha=0.5, color="pink", label="distribution théorique")
-plt.bar(x, counts_norm, alpha=0.5, color="blue", label="tirages (empirique)")
+bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
 
-plt.legend()
-plt.title("Validation sampler : Rust GMP")
+axes[0].bar(bin_centers, weights_binned, width=n/num_bins, alpha=0.4, color="pink", label="Théorique (agrégé)")
+axes[0].step(bin_centers, counts_binned / counts_binned.sum(), where='mid', color="blue", label="Empirique (1M tirages)")
+axes[0].set_title(f"Vue globale agrégée sur {num_bins} paquets (n = {n})")
+axes[0].set_ylabel("Densité de probabilité")
+axes[0].legend()
+axes[0].grid(True, alpha=0.3)
+
+plt.tight_layout()
 plt.show()

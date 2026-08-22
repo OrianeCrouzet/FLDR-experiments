@@ -276,24 +276,61 @@ void free_sample_alias_integers_s_old(struct sample_alias_integers_s x){
 // *********************************************************************************
 
 struct sample_gmp_alias_integers_s read_sample_alias_integers_gmp(char *fname){
-    // Load the distribution.
     FILE *fp = fopen(fname, "r");
     if (fp == NULL) {
         perror(fname);
         exit(EXIT_FAILURE);
     }
-    int Z;
-    fscanf(fp, "%d", &Z);
-    int n;
-    fscanf(fp, "%d", &n);
-    int* array = calloc(n, sizeof(int));
-    for (int i = 0; i < n; ++i) {
-        fscanf(fp, "%d", &array[i]);
+    mpz_t Z;
+    mpz_init(Z);
+
+    char *line = NULL;
+    size_t len = 0;
+
+    if (getline(&line, &len, fp) == -1) {
+        fprintf(stderr, "[Erreur] Fichier vide ou impossible de lire Z dans %s\n", fname);
+        exit(EXIT_FAILURE);
     }
+
+    // Convertit la première ligne (base 10) dans Z
+    if (mpz_set_str(Z, line, 10) != 0) {
+        fprintf(stderr, "[Erreur] Conversion de Z échouée dans %s\n", fname);
+        exit(EXIT_FAILURE);
+    }
+
+    int n = 0;
+    if (fscanf(fp, "%d", &n) != 1 || n <= 0) {
+        fprintf(stderr, "[Erreur] Lecture de n invalide dans %s\n", fname);
+        exit(EXIT_FAILURE);
+    }
+
+    mpz_t* array = malloc(n * sizeof(mpz_t));
+    char str_buf[1024]; // Buffer pour lire chaque grand entier
+
+    for (int i = 0; i < n; ++i) {
+        mpz_init(array[i]);
+        // %1023s lit le mot suivant en ignorant les espaces/sauts de ligne
+        if (fscanf(fp, "%1023s", str_buf) != 1) {
+            fprintf(stderr, "[Erreur] Lecture du poids %d/n échouée\n", i);
+            exit(EXIT_FAILURE);
+        }
+        if (mpz_set_str(array[i], str_buf, 10) != 0) {
+            fprintf(stderr, "[Erreur] Conversion du poids %d en mpz_t échouée\n", i);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    free(line);
     fclose(fp);
 
     struct sample_gmp_alias_integers_s sampler = preprocess_gmp_alias_integers(array, n);
+
+    mpz_clear(Z);
+    for (int i = 0; i < n; ++i) {
+        mpz_clear(array[i]);
+    }
     free(array);
+
     return sampler;
 }
 
@@ -338,21 +375,50 @@ void free_sample_aldr_s(struct sample_aldr_s x){
 // *********************************************************************************
 
 // Load sample_aldr_gmp data structure from file path.
-struct sample_aldr_gmp_s read_sample_aldr_gmp(char *fname){
-    // Load the distribution
+struct sample_aldr_gmp_s read_sample_aldr_gmp(char *fname) {
     FILE *fp = fopen(fname, "r");
-    int kmul;
-    fscanf(fp, "%d", &kmul);
-    int n;
-    fscanf(fp, "%d", &n);
-    int* array = calloc(n, sizeof(int));
+    if (fp == NULL) {
+        perror(fname);
+        exit(EXIT_FAILURE);
+    }
+
+    char *line = NULL;
+    size_t len = 0;
+    if (getline(&line, &len, fp) == -1) {
+        fprintf(stderr, "read_sample_aldr_gmp: échec de lecture de Z dans %s\n", fname);
+        exit(EXIT_FAILURE);
+    }
+    free(line);
+
+    int n = 0;
+    if (fscanf(fp, "%d", &n) != 1 || n <= 0) {
+        fprintf(stderr, "read_sample_aldr_gmp: échec de lecture de n dans %s\n", fname);
+        fclose(fp);
+        exit(EXIT_FAILURE);
+    }
+
+    mpz_t *array = malloc(n * sizeof(mpz_t));
+    char str_buf[2048]; // Buffer élargi pour très grands entiers GMP
+
     for (int i = 0; i < n; ++i) {
-        fscanf(fp, "%d", &array[i]);
+        mpz_init(array[i]);
+        if (fscanf(fp, "%2047s", str_buf) != 1 || mpz_set_str(array[i], str_buf, 10) != 0) {
+            fprintf(stderr, "read_sample_aldr_gmp: poids invalide à l'index %d\n", i);
+            for (int j = 0; j <= i; ++j) mpz_clear(array[j]);
+            free(array);
+            fclose(fp);
+            exit(EXIT_FAILURE);
+        }
     }
     fclose(fp);
 
     struct sample_aldr_gmp_s sampler = preprocess_aldr_flat_gmp(array, n);
+
+    for (int i = 0; i < n; ++i) {
+        mpz_clear(array[i]);
+    }
     free(array);
+
     return sampler;
 }
 
@@ -402,6 +468,10 @@ struct sample_alias_rust_s read_sample_alias_rust(char *fname){
     return sampler;
 }
 
+// *********************************************************************************
+//              ALIAS FROM RUST - GMP (entiers taille arbitraire)
+// *********************************************************************************
+
 // Load sample_alias_rust_gmp data structure from file path.
 struct sample_alias_rust_gmp_s read_sample_alias_rust_gmp(char *fname) {
     FILE *fp = fopen(fname, "r");
@@ -410,16 +480,18 @@ struct sample_alias_rust_gmp_s read_sample_alias_rust_gmp(char *fname) {
         exit(EXIT_FAILURE);
     }
 
-    int Z;
-    if (fscanf(fp, "%d", &Z) != 1) {
-        perror("read_sample_alias_rust_gmp: failed to read Z");
+    char *line = NULL;
+    size_t len = 0;
+    if (getline(&line, &len, fp) == -1) {
+        fprintf(stderr, "read_sample_alias_rust_gmp: échec de lecture de Z dans %s\n", fname);
         fclose(fp);
         exit(EXIT_FAILURE);
     }
+    free(line);
 
-    int n;
-    if (fscanf(fp, "%d", &n) != 1) {
-        perror("read_sample_alias_rust_gmp: failed to read n");
+    int n = 0;
+    if (fscanf(fp, "%d", &n) != 1 || n <= 0) {
+        fprintf(stderr, "read_sample_alias_rust_gmp: échec de lecture de n dans %s\n", fname);
         fclose(fp);
         exit(EXIT_FAILURE);
     }
@@ -431,37 +503,27 @@ struct sample_alias_rust_gmp_s read_sample_alias_rust_gmp(char *fname) {
         exit(EXIT_FAILURE);
     }
 
+    char buffer[2048];
     for (int i = 0; i < n; ++i) {
-        char buffer[1024];
-        if (fscanf(fp, "%1023s", buffer) != 1) {
-            perror("read_sample_alias_rust_gmp: failed to read weight");
-            for (int j = 0; j < i; ++j) {
-                mpz_clear(weights[j]);
-            }
-            free(weights);
-            fclose(fp);
-            exit(EXIT_FAILURE);
-        }
         mpz_init(weights[i]);
-        if (mpz_set_str(weights[i], buffer, 10) != 0) {
-            fprintf(stderr, "read_sample_alias_rust_gmp: invalid weight '%s'\n", buffer);
-            for (int j = 0; j <= i; ++j) {
-                mpz_clear(weights[j]);
-            }
+        if (fscanf(fp, "%2047s", buffer) != 1 || mpz_set_str(weights[i], buffer, 10) != 0) {
+            fprintf(stderr, "read_sample_alias_rust_gmp: poids invalide '%s' à l'index %d\n", buffer, i);
+            for (int j = 0; j <= i; ++j) mpz_clear(weights[j]);
             free(weights);
             fclose(fp);
             exit(EXIT_FAILURE);
         }
     }
+    fclose(fp);
 
     struct sample_alias_rust_gmp_s sampler;
-    WeightedError err = weighted_alias_new_gmp(&sampler, weights, (unsigned int)n);
+    WeightedError err = weighted_alias_new_gmp(
+        (alias_rust_gmp_s *)&sampler, weights, (unsigned int)n);
 
     for (int i = 0; i < n; ++i) {
         mpz_clear(weights[i]);
     }
     free(weights);
-    fclose(fp);
 
     if (err != WEIGHTED_OK) {
         fprintf(stderr, "weighted_alias_new_gmp failed for %s (error %d)\n", fname, err);
@@ -516,4 +578,75 @@ struct sample_alias_fractions_s read_sample_alias_fractions(char *fname) {
 
 void free_sample_alias_fractions_s(struct sample_alias_fractions_s x) {
     free(x.table);
+}
+
+
+// *********************************************************************************
+//              ALIAS FRACTIONS - GMP (entiers taille arbitraire)
+// *********************************************************************************
+
+struct sample_alias_fractions_gmp_s read_sample_alias_fractions_gmp(char *fname){
+    FILE *fp = fopen(fname, "r");
+    if (fp == NULL) {
+        perror(fname);
+        exit(EXIT_FAILURE);
+    }
+    mpz_t Z;
+    mpz_init(Z);
+
+    char *line = NULL;
+    size_t len = 0;
+
+    if (getline(&line, &len, fp) == -1) {
+        fprintf(stderr, "[Erreur] Fichier vide ou impossible de lire Z dans %s\n", fname);
+        exit(EXIT_FAILURE);
+    }
+
+    // Convertit la première ligne (base 10) dans Z
+    if (mpz_set_str(Z, line, 10) != 0) {
+        fprintf(stderr, "[Erreur] Conversion de Z échouée dans %s\n", fname);
+        exit(EXIT_FAILURE);
+    }
+
+    int n = 0;
+    if (fscanf(fp, "%d", &n) != 1 || n <= 0) {
+        fprintf(stderr, "[Erreur] Lecture de n invalide dans %s\n", fname);
+        exit(EXIT_FAILURE);
+    }
+
+    mpz_t* array = malloc(n * sizeof(mpz_t));
+    char str_buf[1024]; // Buffer pour lire chaque grand entier
+
+    for (int i = 0; i < n; ++i) {
+        mpz_init(array[i]);
+        // %1023s lit le mot suivant en ignorant les espaces/sauts de ligne
+        if (fscanf(fp, "%1023s", str_buf) != 1) {
+            fprintf(stderr, "[Erreur] Lecture du poids %d/n échouée\n", i);
+            exit(EXIT_FAILURE);
+        }
+        if (mpz_set_str(array[i], str_buf, 10) != 0) {
+            fprintf(stderr, "[Erreur] Conversion du poids %d en mpz_t échouée\n", i);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    free(line);
+    fclose(fp);
+
+    struct sample_alias_fractions_gmp_s sampler = preprocess_alias_fractions_gmp(array, n);
+
+    mpz_clear(Z);
+    for (int i = 0; i < n; ++i) {
+        mpz_clear(array[i]);
+    }
+    free(array);
+
+    return sampler;
+}
+
+void free_sample_alias_fractions_gmp_s(struct sample_alias_fractions_gmp_s x) {
+   for (int i = 0; i < x.taille; i++) {
+        mpq_clear(x.table[i].prob);  // Libère le mpq_t
+    }
+    free(x.table);  // Libère le tableau
 }
