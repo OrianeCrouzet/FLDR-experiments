@@ -24,7 +24,7 @@ cmd=${2}
 
 # rej.enc == fldr
 #SAMPLERS='alias.rust alias.rust alias.integers_old alias.integers_old aldr aldr rej.enc rej.enc alias.exact alias.exact'
-SAMPLERS='alias.integers_gmp alias.integers_gmp aldr_gmp aldr_gmp rej.enc_gmp rej.enc_gmp alias.rust_gmp alias.rust_gmp alias.fractions_gmp alias.fractions_gmp'
+SAMPLERS='alias.integers_gmp alias.integers_gmp aldr_gmp aldr_gmp rej.enc_gmp rej.enc_gmp alias.rust_gmp alias.rust_gmp alias.fractions_gmp alias.fractions_gmp alias.integers_opt alias.integers_opt rej.enc_opt rej.enc_opt aldr_opt aldr_opt alias.rust_opt alias.rust_opt alias.fractions_opt alias.fractions_opt alias.integers_v2 alias.integers_v2'
 
 if [ "${cmd}" = 'initialize' ]; then
   if [ "${stamp}" = 'distributions_entropy' ]; then
@@ -34,7 +34,7 @@ if [ "${cmd}" = 'initialize' ]; then
     target_samplers="${SAMPLERS}"
   else
     case "${stamp}" in
-      interval|alias.exact|ky.enc|rej.binary|rej.enc|rej.matc|rej.table|rej.uniform|alias.integers_old|aldr|alias.rust|alias.fractions|alias.integers_gmp|rej.enc_gmp|alias.rust_gmp|aldr_gmp|alias.fractions_gmp)
+      interval|alias.exact|ky.enc|rej.binary|rej.enc|rej.matc|rej.table|rej.uniform|alias.integers_old|aldr|alias.rust|alias.fractions|alias.integers_gmp|rej.enc_gmp|alias.rust_gmp|aldr_gmp|alias.fractions_gmp|alias.integers_opt|rej.enc_opt|aldr_opt|alias.rust_opt|alias.fractions_opt|alias.integers_v2)
         N=5
         Z=10
         seed=1
@@ -304,6 +304,12 @@ structures = {
     'alias.exact': (construct_sample_alias, write_sample_alias),
     'alias.integers_old': (construct_sample_alias_integers_old, write_sample_alias_integers_old),
     'alias.integers_gmp': (construct_sample_alias_integers_gmp, write_sample_alias_integers_gmp),
+    'alias.integers_opt': (construct_sample_alias_integers_gmp, write_sample_alias_integers_gmp),
+    'alias.integers_v2': (construct_sample_alias_integers_gmp, write_sample_alias_integers_gmp),
+    'rej.enc_opt': (construct_sample_rejection_encoding_gmp, write_sample_ky_encoding_gmp),
+    'aldr_opt': (construct_sample_aldr_gmp, write_sample_aldr_gmp),
+    'alias.rust_opt': (construct_sample_alias_rust_gmp, write_sample_alias_rust_gmp),
+    'alias.fractions_opt': (construct_sample_alias_fractions_gmp, write_sample_alias_fractions_gmp),
     'alias.rust': (construct_sample_alias_rust, write_sample_alias_rust),
     'alias.rust_gmp': (construct_sample_alias_rust_gmp, write_sample_alias_rust_gmp),
     'aldr': (construct_sample_aldr, write_sample_aldr),
@@ -327,7 +333,7 @@ for dist_path in sorted(stamp.glob('*.dist')):
         f_construct, f_write = structures[sampler]
         out_path = dist_path.with_name(dist_path.stem + '.' + sampler)
         struc = f_construct(p_target)
-        if sampler in {'alias.integers', 'alias.integers_old', 'alias.rust', 'alias.fractions', 'aldr', 'alias.integers_gmp', 'aldr_gmp', 'alias.rust_gmp', 'alias.fractions_gmp'}:
+        if sampler in {'alias.integers', 'alias.integers_old', 'alias.rust', 'alias.fractions', 'aldr', 'alias.integers_gmp', 'aldr_gmp', 'alias.rust_gmp', 'alias.fractions_gmp', 'alias.integers_opt', 'aldr_opt', 'alias.rust_opt', 'alias.fractions_opt', 'alias.integers_v2'}:
             f_write(*struc, entropy, str(out_path))
         else:
             f_write(*struc, str(out_path))
@@ -470,9 +476,9 @@ if [ "${cmd}" = 'run-all-memory-runtime' ]; then
       echo "${stamp}"
 
       ./pipeline.sh "${stamp}" initialize "${n}" "${Z}" "${seed}"
-      ./pipeline.sh "${stamp}" measure-runtimes 1000000
+      ./pipeline.sh "${stamp}" measure-runtimes 10000000
       ./pipeline.sh "${stamp}" measure-structure-sizes
-      ./pipeline.sh "${stamp}" aggregate-runtimes 1000000
+      ./pipeline.sh "${stamp}" aggregate-runtimes 10000000
       ./pipeline.sh "${stamp}" aggregate-sizes
   done
   exit 0
@@ -484,7 +490,7 @@ if [ ${cmd} = 'run-all-memory-runtime-diverse' ]; then
   n=${3:-}
   Z=${4:-}
   seed=2
-  steps=${5:-1000000}
+  steps=${5:-10000000}
 
   echo "=== Run all: diverse distributions in ${out_stamp} ==="
 

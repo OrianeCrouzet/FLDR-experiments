@@ -24,6 +24,13 @@
 #include "sample.h"
 #include "sstructs.h"
 #include "construct.h"
+#include "alias_integers_opt.h"
+#include "alias_integers_v2.h"
+#include "fldr_opt.h"
+#include "aldr_opt.h"
+#include "alias_rust_opt.h"
+#include "alias_fractions_opt.h"
+#include "flip_opt.h"
 #include "macros.c"
 
 
@@ -62,6 +69,13 @@ int main(int argc, char **argv) {
     pthread_t prod_thread;
     bool is_spsc_sampler = false;
 
+    // Les échantillonneurs *_opt et alias.integers_v2 utilisent le flux de bits optimisé (flip_opt.c).
+    size_t len_sampler = strlen(sampler);
+    bool is_opt_sampler = (len_sampler > 4 && strcmp(sampler + len_sampler - 4, "_opt") == 0)
+        || strcmp(sampler, "alias.integers_v2") == 0;
+    if (is_opt_sampler) {
+        fo_start();
+    } else {
     // Vérifie si l'échantillonneur actuel est 'alias.integers_old'
    // if (strcmp(sampler, "alias.integers_old") == 0 || strcmp(sampler, "alias.rust") == 0) {
         is_spsc_sampler = true;
@@ -72,6 +86,7 @@ int main(int argc, char **argv) {
             return EXIT_FAILURE;
         }
     //}
+    }
 
     int x = 0;
     clock_t t;
@@ -138,6 +153,48 @@ int main(int argc, char **argv) {
         sample_gmp_alias_integers,
         free_sample_gmp_alias_integers,
         path, steps, t, x)
+    else READ_SAMPLE_TIME("alias.integers_opt",
+        sampler,
+        sample_alias_integers_opt_s,
+        read_sample_alias_integers_opt,
+        sample_alias_integers_opt,
+        free_sample_alias_integers_opt,
+        path, steps, t, x)
+    else READ_SAMPLE_TIME("alias.integers_v2",
+        sampler,
+        sample_alias_integers_v2_s,
+        read_sample_alias_integers_v2,
+        sample_alias_integers_v2,
+        free_sample_alias_integers_v2,
+        path, steps, t, x)
+    else READ_SAMPLE_TIME("rej.enc_opt",
+        sampler,
+        sample_fldr_opt_s,
+        read_sample_fldr_opt,
+        sample_fldr_opt,
+        free_sample_fldr_opt,
+        path, steps, t, x)
+    else READ_SAMPLE_TIME("aldr_opt",
+        sampler,
+        sample_aldr_opt_s,
+        read_sample_aldr_opt,
+        sample_aldr_opt,
+        free_sample_aldr_opt,
+        path, steps, t, x)
+    else READ_SAMPLE_TIME("alias.rust_opt",
+        sampler,
+        sample_alias_rust_opt_s,
+        read_sample_alias_rust_opt,
+        sample_alias_rust_opt,
+        free_sample_alias_rust_opt,
+        path, steps, t, x)
+    else READ_SAMPLE_TIME("alias.fractions_opt",
+        sampler,
+        sample_alias_fractions_opt_s,
+        read_sample_alias_fractions_opt,
+        sample_alias_fractions_opt,
+        free_sample_alias_fractions_opt,
+        path, steps, t, x)
     else READ_SAMPLE_TIME("aldr",
         sampler,
         sample_aldr_s,
@@ -188,6 +245,9 @@ int main(int argc, char **argv) {
     double e = ((double)t) / CLOCKS_PER_SEC;
     printf("%s %1.5f %ld %ld\n", sampler, e, NUM_RNG_CALLS, REJET);
     
+    if (is_opt_sampler) {
+        fo_stop();
+    }
      if (is_spsc_sampler) {
         //printf("[Main] Signalement au producteur SPSC de s'arrêter et attente de la fin du thread.\n");
         q.running = false; // Signale au thread producteur de s'arrêter

@@ -11,6 +11,12 @@
 
 #include "readio.h"
 #include "sizes.h"
+#include "alias_integers_opt.h"
+#include "alias_integers_v2.h"
+#include "fldr_opt.h"
+#include "aldr_opt.h"
+#include "alias_rust_opt.h"
+#include "alias_fractions_opt.h"
 
 static void usage(char *prog) {
     fprintf(stderr, "usage: %s sampler path out_file\n", prog);
@@ -36,6 +42,36 @@ int main(int argc, char **argv) {
         struct sample_gmp_alias_integers_s s = read_sample_alias_integers_gmp(path);
         size = get_size_sample_gmp_alias_integers_s(&s);
         free_sample_gmp_alias_integers(s);
+
+    } else if (strcmp(sampler, "alias.integers_opt") == 0) {
+        struct sample_alias_integers_opt_s s = read_sample_alias_integers_opt(path);
+        size = get_size_sample_alias_integers_opt_s(&s);
+        free_sample_alias_integers_opt(s);
+
+    } else if (strcmp(sampler, "alias.integers_v2") == 0) {
+        struct sample_alias_integers_v2_s s = read_sample_alias_integers_v2(path);
+        size = get_size_sample_alias_integers_v2_s(&s);
+        free_sample_alias_integers_v2(s);
+
+    } else if (strcmp(sampler, "rej.enc_opt") == 0) {
+        struct sample_fldr_opt_s s = read_sample_fldr_opt(path);
+        size = get_size_sample_fldr_opt_s(&s);
+        free_sample_fldr_opt(s);
+
+    } else if (strcmp(sampler, "aldr_opt") == 0) {
+        struct sample_aldr_opt_s s = read_sample_aldr_opt(path);
+        size = get_size_sample_aldr_opt_s(&s);
+        free_sample_aldr_opt(s);
+
+    } else if (strcmp(sampler, "alias.rust_opt") == 0) {
+        struct sample_alias_rust_opt_s s = read_sample_alias_rust_opt(path);
+        size = get_size_sample_alias_rust_opt_s(&s);
+        free_sample_alias_rust_opt(s);
+
+    } else if (strcmp(sampler, "alias.fractions_opt") == 0) {
+        struct sample_alias_fractions_opt_s s = read_sample_alias_fractions_opt(path);
+        size = get_size_sample_alias_fractions_opt_s(&s);
+        free_sample_alias_fractions_opt(s);
         
     } else if (strcmp(sampler, "alias.rust") == 0) {
         struct sample_alias_rust_s s = read_sample_alias_rust(path);

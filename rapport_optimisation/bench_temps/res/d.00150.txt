@@ -1,0 +1,24 @@
+== d.00150 H=10.74360
+opt (FDR + Bernoulli ctz)        10.54 ns    11.30 ns(cpu)    17.60 bits
+Lemire + Bernoulli ctz            7.28 ns     9.20 ns(cpu)    66.00 bits
+Lemire32 + Bernoulli ctz          6.80 ns     7.81 ns(cpu)    34.00 bits
+Lemire32 + Bernoulli cmp31        7.59 ns     9.42 ns(cpu)    63.00 bits
+recyclage + Bernoulli ctz         7.56 ns     8.18 ns(cpu)    16.32 bits
+FDR + Bernoulli recyclage         9.39 ns    10.08 ns(cpu)    15.78 bits
+recyclage + recyclage (1 etat)   14.24 ns    15.06 ns(cpu)    14.50 bits
+recyclage + recyclage (2 etats)    6.90 ns     7.45 ns(cpu)    14.50 bits
+recyc. mult. + Bernoulli ctz      7.79 ns     8.43 ns(cpu)    16.32 bits
+recyc. mult. + recyc. (2 etats)    6.86 ns     7.43 ns(cpu)    14.50 bits
+FDR + Bernoulli cmp31            12.43 ns    14.07 ns(cpu)    46.60 bits
+mot 64 bits exact                 4.54 ns     6.24 ns(cpu)    64.00 bits
+plancher inexact (64 bits)        4.23 ns     5.94 ns(cpu)    64.00 bits
+uniforme FDR seule                6.57 ns     7.13 ns(cpu)    15.60 bits
+uniforme Lemire seule             3.02 ns     4.67 ns(cpu)    64.00 bits
+uniforme Lemire32 seule           2.57 ns     3.41 ns(cpu)    32.00 bits
+uniforme recyclage seule          5.36 ns     5.84 ns(cpu)    14.32 bits
+uniforme recyc. mult. seule       5.37 ns     5.87 ns(cpu)    14.32 bits
+Bernoulli ctz seul                2.84 ns     2.98 ns(cpu)     2.00 bits
+Bernoulli recyclage seul          3.72 ns     3.83 ns(cpu)     0.18 bits
+Bernoulli cmp31 seul              3.56 ns     4.43 ns(cpu)    31.00 bits
+lecture de 18 bits                2.64 ns     3.14 ns(cpu)    18.00 bits
+lecture d'une cellule             1.51 ns     1.55 ns(cpu)     0.00 bits

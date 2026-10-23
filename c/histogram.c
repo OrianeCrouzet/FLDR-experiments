@@ -14,6 +14,13 @@
 #include "readio.h"
 #include "sstructs.h"
 #include "construct.h"
+#include "alias_integers_opt.h"
+#include "alias_integers_v2.h"
+#include "fldr_opt.h"
+#include "aldr_opt.h"
+#include "alias_rust_opt.h"
+#include "alias_fractions_opt.h"
+#include "flip_opt.h"
 
 void print_vector_int(const char *name, VectorInt *v)
 {
@@ -112,6 +119,42 @@ void run_sampler(char *name, char *path, int steps)
         sample_gmp_alias_integers,
         free_sample_gmp_alias_integers)
 
+    RUN("alias.integers_opt",
+        struct sample_alias_integers_opt_s,
+        read_sample_alias_integers_opt,
+        sample_alias_integers_opt,
+        free_sample_alias_integers_opt)
+
+    RUN("alias.integers_v2",
+        struct sample_alias_integers_v2_s,
+        read_sample_alias_integers_v2,
+        sample_alias_integers_v2,
+        free_sample_alias_integers_v2)
+
+    RUN("rej.enc_opt",
+        struct sample_fldr_opt_s,
+        read_sample_fldr_opt,
+        sample_fldr_opt,
+        free_sample_fldr_opt)
+
+    RUN("aldr_opt",
+        struct sample_aldr_opt_s,
+        read_sample_aldr_opt,
+        sample_aldr_opt,
+        free_sample_aldr_opt)
+
+    RUN("alias.rust_opt",
+        struct sample_alias_rust_opt_s,
+        read_sample_alias_rust_opt,
+        sample_alias_rust_opt,
+        free_sample_alias_rust_opt)
+
+    RUN("alias.fractions_opt",
+        struct sample_alias_fractions_opt_s,
+        read_sample_alias_fractions_opt,
+        sample_alias_fractions_opt,
+        free_sample_alias_fractions_opt)
+
     printf("Unknown sampler %s\n", name);
 }
 
@@ -139,6 +182,12 @@ int main(int argc, char **argv)
 
     char samplers[][32] = {
         "alias.integers_gmp",
+        "alias.integers_opt",
+        "alias.integers_v2",
+        "rej.enc_opt",
+        "aldr_opt",
+        "alias.rust_opt",
+        "alias.fractions_opt",
         "aldr_gmp",
         "alias.rust_gmp",
         "alias.fractions_gmp",
@@ -151,12 +200,20 @@ int main(int argc, char **argv)
                           strcmp(samplers[i], "alias.integers_old") == 0 || 
                           strcmp(samplers[i], "alias.rust") == 0 || 
                           strcmp(samplers[i], "alias.integers_gmp") == 0 || 
+
                           strcmp(samplers[i], "alias.rust_gmp") == 0 ||
                           strcmp(samplers[i], "aldr_gmp") == 0) ||
                           strcmp(samplers[i], "rej.enc.gmp") == 0 ||
                           strcmp(samplers[i], "rej.enc") == 0 ||
                           strcmp(samplers[i], "alias.fractions") == 0 ||
                           strcmp(samplers[i], "alias.fractions_gmp") == 0;
+
+        size_t len_name = strlen(samplers[i]);
+        bool uses_opt = (len_name > 4 && strcmp(samplers[i] + len_name - 4, "_opt") == 0)
+            || strcmp(samplers[i], "alias.integers_v2") == 0;
+        if (uses_opt) {
+            fo_start();
+        }
 
         // 1. Démarrer le producteur SPSC uniquement pour l'échantillonneur courant
         if (uses_spsc) {
@@ -169,6 +226,10 @@ int main(int argc, char **argv)
 
         printf("=== %s ===\n", samplers[i]);
         run_sampler(samplers[i], dist, steps);
+
+        if (uses_opt) {
+            fo_stop();
+        }
 
         // 2. Nettoyer et stopper le thread SPSC AVANT de passer à l'échantillonneur suivant !
         if (uses_spsc) {

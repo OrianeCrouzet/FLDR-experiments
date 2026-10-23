@@ -183,6 +183,25 @@ def write_samplers(args):
         ('alias.integers_gmp',
             construct_sample_alias_integers_gmp,
             write_sample_alias_integers_gmp),
+        # Same input files as the *_gmp samplers; the optimized structures are built in C.
+        ('alias.integers_opt',
+            construct_sample_alias_integers_gmp,
+            write_sample_alias_integers_gmp),
+        ('alias.integers_v2',
+            construct_sample_alias_integers_gmp,
+            write_sample_alias_integers_gmp),
+        ('rej.enc_opt',
+            construct_sample_rejection_encoding_gmp,
+            write_sample_ky_encoding_gmp),
+        ('aldr_opt',
+            construct_sample_aldr_gmp,
+            write_sample_aldr_gmp),
+        ('alias.rust_opt',
+            construct_sample_alias_rust_gmp,
+            write_sample_alias_rust_gmp),
+        ('alias.fractions_opt',
+            construct_sample_alias_fractions_gmp,
+            write_sample_alias_fractions_gmp),
         ('alias.rust',
             construct_sample_alias_rust,
             write_sample_alias_rust),
@@ -211,7 +230,7 @@ def write_samplers(args):
             continue
         fpath = os.path.join(dirname, 'd.%05d.%s' % (idx, suffix))
         struc = f_construct(p_target)
-        if suffix in {'alias.integers', 'alias.integers_old', 'alias.rust', 'alias.fractions', 'aldr', 'alias.integers_gmp', 'aldr_gmp', 'alias.rust_gmp', 'alias.fractions_gmp'}:
+        if suffix in {'alias.integers', 'alias.integers_old', 'alias.rust', 'alias.fractions', 'aldr', 'alias.integers_gmp', 'aldr_gmp', 'alias.rust_gmp', 'alias.fractions_gmp', 'alias.integers_opt', 'aldr_opt', 'alias.rust_opt', 'alias.fractions_opt', 'alias.integers_v2'}:
             f_write(*struc, entropy, fpath)
         else:
             f_write(*struc, fpath)

@@ -1,7 +1,7 @@
 all: main.out main.out.opt preprocess.out preprocess.out.opt test histogram.out measure_sizes.out measure_sizes.out.opt
 
-SRC_C = flip.c main.c macros.c vector_int.c vector_mpz.c readio.c sample.c construct.c
-MEASURE_SIZES_SRCS = measure_sizes.c readio.c sizes.c flip.c vector_int.c vector_mpz.c construct.c
+SRC_C = flip.c main.c macros.c vector_int.c vector_mpz.c readio.c sample.c construct.c alias_integers_opt.c alias_integers_opt_sample.c alias_integers_v2.c alias_integers_v2_sample.c flip_opt.c fldr_opt.c aldr_opt.c alias_rust_opt.c alias_fractions_opt.c
+MEASURE_SIZES_SRCS = measure_sizes.c readio.c sizes.c flip.c vector_int.c vector_mpz.c construct.c alias_integers_opt.c alias_integers_v2.c flip_opt.c fldr_opt.c aldr_opt.c alias_rust_opt.c alias_fractions_opt.c
 SRC_CPP = main.cpp macros.c readio.c readio.cpp sample.cpp
 
 GSL_FLAGS = $(shell pkg-config --cflags --libs gsl)  # --cflags
@@ -28,10 +28,10 @@ preprocess.out: flip.c vector_int.c vector_mpz.c readio.c preprocess.c construct
 preprocess.out.opt: flip.c vector_int.c vector_mpz.c readio.c preprocess.c construct.c
 	gcc -O2 -Wno-unused-result -o preprocess.out.opt $^ $(GSL_FLAGS) -lgmp
 
-histogram.out: histogram.c flip.c vector_int.c vector_mpz.c readio.c sample.c construct.c
+histogram.out: histogram.c flip.c vector_int.c vector_mpz.c readio.c sample.c construct.c alias_integers_opt.c alias_integers_opt_sample.c alias_integers_v2.c alias_integers_v2_sample.c flip_opt.c fldr_opt.c aldr_opt.c alias_rust_opt.c alias_fractions_opt.c
 	gcc -O2 -o histogram.out $^ $(GSL_FLAGS) -lgmp
 
-SAMPLERS = alias.exact rej.enc alias.integers_old aldr aldr_gmp alias.rust alias.fractions alias.integers_gmp rej.enc_gmp alias.rust_gmp alias.fractions_gmp
+SAMPLERS = alias.exact rej.enc alias.integers_old aldr aldr_gmp alias.rust alias.fractions alias.integers_gmp rej.enc_gmp alias.rust_gmp alias.fractions_gmp alias.integers_opt rej.enc_opt aldr_opt alias.rust_opt alias.fractions_opt alias.integers_v2
 
 test: main.out.opt
 	for sampler in $(SAMPLERS); do \

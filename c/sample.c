@@ -120,7 +120,10 @@ int sample_ky_encoding_gmp(struct sample_ky_encoding_gmp_s *x) {
         mpz_add_ui(next, c, b);
         unsigned long idx = mpz_get_ui(next);
 
-        mpz_t *entry = &x->encoding.data[idx];
+        // c = enc[c + b] : position de l'enfant (encodage pack_tree de Saad),
+        // puis feuille si enc[c] < 0, comme dans sample_ky_encoding.
+        mpz_set(c, x->encoding.data[idx]);
+        mpz_t *entry = &x->encoding.data[mpz_get_ui(c)];
         if (mpz_sgn(*entry) < 0) {
             mpz_t positive;
             mpz_init(positive);
@@ -129,8 +132,6 @@ int sample_ky_encoding_gmp(struct sample_ky_encoding_gmp_s *x) {
             mpz_clears(c, next, positive, NULL);
             return result;
         }
-
-        mpz_set(c, *entry);
     }
 }
 
