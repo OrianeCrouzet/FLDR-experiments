@@ -1,7 +1,8 @@
-all: main.out main.out.opt preprocess.out preprocess.out.opt test histogram.out measure_sizes.out measure_sizes.out.opt
+all: main.out main.out.opt preprocess.out preprocess.out.opt test histogram.out measure_sizes.out measure_sizes.out.opt measure_preprocess.out.opt
 
 SRC_C = flip.c main.c macros.c vector_int.c vector_mpz.c readio.c sample.c construct.c alias_integers_opt.c alias_integers_opt_sample.c alias_integers_v2.c alias_integers_v2_sample.c flip_opt.c fldr_opt.c aldr_opt.c alias_rust_opt.c alias_fractions_opt.c
 MEASURE_SIZES_SRCS = measure_sizes.c readio.c sizes.c flip.c vector_int.c vector_mpz.c construct.c alias_integers_opt.c alias_integers_v2.c flip_opt.c fldr_opt.c aldr_opt.c alias_rust_opt.c alias_fractions_opt.c
+MEASURE_PREPROCESS_SRCS = measure_preprocess.c readio.c flip.c vector_int.c vector_mpz.c construct.c alias_integers_opt.c alias_integers_v2.c flip_opt.c fldr_opt.c aldr_opt.c alias_rust_opt.c alias_fractions_opt.c
 SRC_CPP = main.cpp macros.c readio.c readio.cpp sample.cpp
 
 GSL_FLAGS = $(shell pkg-config --cflags --libs gsl)  # --cflags
@@ -23,6 +24,9 @@ measure_sizes.out: $(MEASURE_SIZES_SRCS)
 
 measure_sizes.out.opt: $(MEASURE_SIZES_SRCS)
 	gcc -O3 -Wno-unused-result -o measure_sizes.out.opt $^ $(GSL_FLAGS) $(GMP_FLAGS)
+
+measure_preprocess.out.opt: $(MEASURE_PREPROCESS_SRCS)
+	gcc -O3 -Wno-unused-result -o measure_preprocess.out.opt $^ $(GSL_FLAGS) $(GMP_FLAGS)
 
 preprocess.out: flip.c vector_int.c vector_mpz.c readio.c preprocess.c construct.c
 	gcc -o preprocess.out $^ $(GSL_FLAGS) $(GMP_FLAGS)

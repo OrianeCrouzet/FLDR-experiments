@@ -11,9 +11,9 @@
 #include "alias_integers_v2.h"
 
 
-struct sample_alias_integers_v2_s read_sample_alias_integers_v2(char *fname) {
+static struct sample_alias_integers_v2_s from_opt(struct sample_alias_integers_opt_s base) {
     struct sample_alias_integers_v2_s s;
-    s.base = read_sample_alias_integers_opt(fname);
+    s.base = base;
     s.q = s.base.q;
     s.q_reject = (uint32_t)(-s.q) % s.q;
     s.virtual_obj = s.base.virtual_obj;
@@ -44,6 +44,14 @@ struct sample_alias_integers_v2_s read_sample_alias_integers_v2(char *fname) {
     free(s.base.cells);
     s.base.cells = NULL;
     return s;
+}
+
+struct sample_alias_integers_v2_s read_sample_alias_integers_v2(char *fname) {
+    return from_opt(read_sample_alias_integers_opt(fname));
+}
+
+struct sample_alias_integers_v2_s preprocess_alias_integers_v2(mpz_t *D, uint32_t n) {
+    return from_opt(preprocess_alias_integers_opt(D, n));
 }
 
 void free_sample_alias_integers_v2(struct sample_alias_integers_v2_s x) {

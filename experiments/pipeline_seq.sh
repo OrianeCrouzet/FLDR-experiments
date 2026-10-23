@@ -26,8 +26,10 @@
 #   ./pipeline_seq.sh <dir> measure-runtimes <steps>
 #   ./pipeline_seq.sh <dir> measure-structure-sizes
 #   ./pipeline_seq.sh <dir> aggregate-runtimes <steps>
-#   ./pipeline_seq.sh <dir> run-all <steps>   (mesures + tailles + agrégation,
-#                                               sur les distributions existantes)
+#   ./pipeline_seq.sh <dir> measure-preprocess   (temps de construction, <sampler>.preprocess)
+#   ./pipeline_seq.sh <dir> run-all <steps>   (mesures + tailles + agrégation +
+#                                               preprocessing, sur les distributions
+#                                               existantes)
 #
 # Exemple (figure 4, distributions déjà présentes) :
 #   caffeinate -i ./pipeline_seq.sh distributions_entropy run-all 10000000
@@ -101,6 +103,30 @@ if [ "${cmd}" = 'measure-structure-sizes' ]; then
   exit 0
 fi
 
+if [ "${cmd}" = 'measure-preprocess' ]; then
+  # Temps de construction de la structure à partir des poids (lecture du fichier exclue),
+  # meilleur de plusieurs répétitions : une ligne par distribution, dans l'ordre des .dist.
+  for sampler in ${SAMPLERS}; do
+      rm -f "${stamp}/${sampler}.preprocess"
+  done
+  dists=$(ls ${stamp}/*.dist)
+  n_dists=$(echo "${dists}" | wc -l | tr -d ' ')
+  echo "=== PREPROCESSING (séquentiel) : ${n_dists} distributions ==="
+  k=0
+  for d in ${dists}; do
+      k=$((k + 1))
+      base=${d%.dist}
+      weights=${base}.alias.integers_gmp
+      [ -f "${weights}" ] || weights=${base}.alias.integers_opt
+      for sampler in ${SAMPLERS}; do
+          ../c/measure_preprocess.out.opt ${sampler} ${weights} >> "${stamp}/${sampler}.preprocess"
+      done
+      printf '[%d/%d] %s\n' ${k} ${n_dists} "$(basename ${base})"
+  done
+  echo "=== Finished preprocessing ==="
+  exit 0
+fi
+
 if [ "${cmd}" = 'aggregate-runtimes' ]; then
   steps=${3}
   rm -f ${stamp}/avg_bits
@@ -132,6 +158,7 @@ if [ "${cmd}" = 'run-all' ]; then
   ./pipeline_seq.sh "${stamp}" measure-runtimes "${steps}"
   ./pipeline_seq.sh "${stamp}" measure-structure-sizes
   ./pipeline_seq.sh "${stamp}" aggregate-runtimes "${steps}"
+  ./pipeline_seq.sh "${stamp}" measure-preprocess
   exit 0
 fi
 

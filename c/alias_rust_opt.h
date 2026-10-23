@@ -30,6 +30,8 @@ struct sample_alias_rust_opt_s {
 };
 
 struct sample_alias_rust_opt_s read_sample_alias_rust_opt(char *fname);
+// Construction from the weights w_1..w_n (w is not modified).
+struct sample_alias_rust_opt_s preprocess_alias_rust_opt(mpz_t *w, uint32_t n);
 void free_sample_alias_rust_opt(struct sample_alias_rust_opt_s x);
 size_t get_size_sample_alias_rust_opt_s(struct sample_alias_rust_opt_s *s);
 uint32_t sample_alias_rust_opt(struct sample_alias_rust_opt_s *x);

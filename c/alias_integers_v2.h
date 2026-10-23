@@ -42,6 +42,9 @@ struct sample_alias_integers_v2_s {
 };
 
 struct sample_alias_integers_v2_s read_sample_alias_integers_v2(char *fname);
+// D: n weights, with room for one more (virtual object). D is modified, as in
+// preprocess_alias_integers_opt.
+struct sample_alias_integers_v2_s preprocess_alias_integers_v2(mpz_t *D, uint32_t n);
 void free_sample_alias_integers_v2(struct sample_alias_integers_v2_s x);
 size_t get_size_sample_alias_integers_v2_s(struct sample_alias_integers_v2_s *s);
 

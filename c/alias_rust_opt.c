@@ -8,12 +8,12 @@
 #include <string.h>
 
 #include "alias_rust_opt.h"
+#include "construct.h"
 #include "flip_opt.h"
 #include "readio.h"
 
 // The table is built by the original constructor, then stored compactly.
-struct sample_alias_rust_opt_s read_sample_alias_rust_opt(char *fname) {
-    struct sample_alias_rust_gmp_s g = read_sample_alias_rust_gmp(fname);
+static struct sample_alias_rust_opt_s from_gmp(struct sample_alias_rust_gmp_s g) {
     struct sample_alias_rust_opt_s s;
     s.n = g.n;
     s.n_nbits = fo_nbits(g.n);
@@ -39,6 +39,19 @@ struct sample_alias_rust_opt_s read_sample_alias_rust_opt(char *fname) {
     mpz_init2(s.bound, s.W_nbits + 2 * GMP_NUMB_BITS);
     free_sample_alias_rust_gmp_s(g);
     return s;
+}
+
+struct sample_alias_rust_opt_s read_sample_alias_rust_opt(char *fname) {
+    return from_gmp(read_sample_alias_rust_gmp(fname));
+}
+
+struct sample_alias_rust_opt_s preprocess_alias_rust_opt(mpz_t *w, uint32_t n) {
+    struct sample_alias_rust_gmp_s g;
+    if (weighted_alias_new_gmp((alias_rust_gmp_s *)&g, w, n) != WEIGHTED_OK) {
+        fprintf(stderr, "[Erreur] weighted_alias_new_gmp a échoué.\n");
+        exit(EXIT_FAILURE);
+    }
+    return from_gmp(g);
 }
 
 void free_sample_alias_rust_opt(struct sample_alias_rust_opt_s x) {

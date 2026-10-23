@@ -566,6 +566,94 @@ consomment le même nombre de bits et leurs points se recouvrent ; Rust-Alias
 \label{fig:sequentiel-bits}
 \end{figure}
 
+\subsection{Temps de preprocessing}
+\label{sec:preprocessing}
+
+\paragraph{Mesure.} Le programme \code{c/measure\_preprocess.c} lit d'abord les poids,
+sans chronométrer cette lecture, puis mesure la seule construction de la structure de
+tirage à partir des poids. Il la répète au moins 5 fois et pendant au moins 50~ms, et
+garde le meilleur temps (horloge \code{CLOCK\_MONOTONIC\_RAW}). La construction est celle
+qu'utilise chaque échantillonneur :
+\code{preprocess\_alias\_integers\_opt}, \code{preprocess\_alias\_integers\_v2} (la même,
+plus le calcul des 32 chiffres $D_i$), \code{preprocess\_aldr\_opt}, et pour Rust-Alias
+et Fraction-Alias la construction d'origine suivie de la conversion vers la table
+optimisée. La commande \code{./pipeline\_seq.sh distributions\_entropy
+measure-preprocess} (aussi lancée par \code{run-all}) écrit un fichier
+\code{<sampler>.preprocess} par échantillonneur ; elle prend environ 2 minutes.
+
+\paragraph{FLDR porté en C.} L'arbre DDG de FLDR était construit en Python
+(\code{src/rejection.py}, \code{matrix.py}, \code{tree.py}, \code{packing.py}), et le C
+ne faisait que relire l'encodage. Pour comparer des temps C entre eux, nous avons écrit
+\code{preprocess\_fldr\_opt} (\code{c/fldr\_opt.c}). Comme la matrice de FLDR est
+dyadique ($\sum_i M_i = 2^k$), l'arbre n'a pas d'arête de retour, et il se décrit
+profondeur par profondeur. À la profondeur $d$, les enfants des nœuds internes de la
+profondeur $d-1$ sont, de gauche à droite, les nœuds internes, puis les feuilles des
+lignes dont le bit $k-d$ vaut 1, par ligne décroissante. L'encodage est ensuite écrit
+en préordre, comme \code{pack\_tree}. On évite ainsi les indices de nœuds de
+$k \approx 170$ bits de la version Python. Sur les 201 distributions, l'encodage produit
+est \emph{identique} à celui des fichiers \code{.rej.enc\_opt} écrits par Python
+(\code{measure\_preprocess.out.opt check-fldr}).
+
+\paragraph{Une particularité des données.} Pour la distribution uniforme
+(\code{d.00200}), la somme des poids dépasse de $1{,}25\cdot 10^{34}$ (soit
+$2{,}7\cdot 10^{-17}$ en relatif) le $Z$ écrit en première ligne du fichier, à cause de
+l'arrondi de \code{normalize\_to\_Z}. Les méthodes Alias et ALDR normalisent par la
+somme des poids, et tirent bien l'uniforme. FLDR utilise les probabilités $w_i/Z$ :
+il tire aussi l'uniforme, grâce au rejet, mais avec $k = 169$ au lieu de 15 et un arbre
+plus grand. Le portage en C reprend cette convention, pour rester identique à Python.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/seq-opt-entropy-preprocess.pdf}
+\caption{Temps de construction de la structure à partir des poids, en fonction de
+l'entropie (201 distributions, $n = 20\,484$). Integer-Alias v1 est
+\code{alias.integers\_opt}.}
+\label{fig:preprocessing}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{lrrr}
+\toprule
+Construction (ms) & Médiane & Min & Max \\
+\midrule
+Integer-Alias (\code{opt})   & 0,68  & 0,10 & 1,62 \\
+Integer-Alias v2             & 1,03  & 0,12 & 2,49 \\
+Rust-Alias                   & 0,93  & 0,70 & 1,35 \\
+FLDR                         & 12,85 & 9,15 & 17,72 \\
+ALDR                         & 17,04 & 10,22 & 25,58 \\
+Fraction-Alias               & 18,34 & 4,88 & 24,84 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{itemize}
+\item \textbf{Integer-Alias est la construction la plus rapide} : de 0,1 à 1,6~ms, soit
+  en médiane 19 à 27 fois moins que FLDR, ALDR et Fraction-Alias. Sur les mêmes distributions, la
+  construction d'origine (\code{preprocess\_gmp\_alias\_integers}) prend environ 1~ms.
+  La version optimisée est donc du même ordre : elle ajoute une division GMP par cellule
+  pour les 31 chiffres du seuil, mais range les seuils en octets.
+\item \textbf{Elle croît avec l'entropie}, entre $H \approx 6$ et $H \approx 10$, pour
+  la même raison que sa mémoire (section~\ref{sec:sequentiel}) : les seuils $T_i$ des
+  petits objets passent d'environ 1 octet à environ 20, et la division GMP qui calcule
+  leurs chiffres coûte plus cher. La distribution uniforme n'a aucune cellule avec alias :
+  0,1~ms.
+\item \textbf{v2 coûte environ 50\,\% de plus qu'\code{opt}} : il construit la table
+  d'\code{opt}, puis fait une seconde division GMP par cellule pour les 32 chiffres $D_i$.
+  On pourrait calculer $D_i$ directement, avec une seule division ; nous ne l'avons pas
+  fait, car le preprocessing reste sous 2,5~ms.
+\item \textbf{Rust-Alias} est presque constant (environ 1~ms) : sa construction ne
+  multiplie les poids que par $n$, sans division par cellule.
+\item \textbf{FLDR et ALDR} parcourent les bits de chaque ligne à chaque profondeur :
+  $k \approx 170$ niveaux pour FLDR et $K = 2k \approx 340$ pour ALDR, sur
+  $n \approx 20\,000$ lignes. Leur coût suit le nombre de feuilles, qui croît avec
+  l'entropie.
+\item \textbf{Fraction-Alias} manipule des rationnels GMP (\code{mpq\_t}), qui sont
+  normalisés par un calcul de pgcd après chaque opération : c'est la construction la
+  plus lente.
+\end{itemize}
+
 \section{Peut-on faire mieux pour l'uniforme et le Bernoulli ?}
 \label{sec:optimalite}
 
@@ -967,8 +1055,11 @@ même variabilité que les deux paliers ci-dessus.
 
 \begin{itemize}
 \item \textbf{Prétraitement.} Le précalcul des chiffres binaires coûte une division GMP
-  par cellule. Pour Integer-Alias, le prétraitement passe d'environ 3,9~ms à 13~ms sur
-  les distributions de forte entropie. Les versions optimisées de Rust-Alias et
+  par cellule. Mesuré seul, sans la lecture du fichier
+  (section~\ref{sec:preprocessing}), le prétraitement d'Integer-Alias reste du même
+  ordre que l'original : de 0,1 à 1,6~ms, contre environ 1~ms. Une estimation
+  antérieure de ce rapport (3,9 puis 13~ms) ne séparait pas la construction du reste de
+  l'exécution, et était trop élevée. Les versions optimisées de Rust-Alias et
   Fraction-Alias réutilisent la construction d'origine puis convertissent la table :
   leur prétraitement est un peu plus long que l'original. À l'inverse, celui d'ALDR
   est plus rapide (une multiplication par objet au lieu d'une par objet et par niveau).
@@ -998,6 +1089,12 @@ gcc -O3 -I../../c -o bench.out bench.c ../../c/alias_integers_opt.c \
     $(pkg-config --cflags --libs gmp gsl)
 ./bench.out ../../experiments/distributions_entropy/d.00100.alias.integers_opt 20000000
 \end{lstlisting}
+
+\paragraph{Preprocessing.} \code{c/measure\_preprocess.c} (cible
+\code{measure\_preprocess.out.opt} des Makefiles) ; fonctions
+\code{preprocess\_fldr\_opt}, \code{preprocess\_alias\_integers\_v2},
+\code{preprocess\_alias\_rust\_opt} et \code{preprocess\_alias\_fractions\_opt}
+ajoutées aux fichiers \code{\_opt} et v2.
 
 \paragraph{Pipeline séquentiel.} \code{experiments/pipeline\_seq.sh} produit les mêmes
 fichiers que \code{pipeline.sh}, pour les cinq versions \code{\_opt} et \code{alias.integers\_v2} seulement ; il lance

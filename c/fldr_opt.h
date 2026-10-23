@@ -13,6 +13,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <gmp.h>
 
 struct sample_fldr_opt_s {
     uint32_t n;          // labels >= n are rejected (same header as rej.enc_gmp)
@@ -21,6 +22,11 @@ struct sample_fldr_opt_s {
 };
 
 struct sample_fldr_opt_s read_sample_fldr_opt(char *fname);
+// Construction from the probabilities w_i / Z (w is not modified): same encoding as
+// construct_sample_rejection_encoding_gmp + pack_tree (src/), written in C. Z is the
+// first line of the input files; it equals sum(w) except for the uniform distribution
+// of distributions_entropy, where sum(w) exceeds it slightly.
+struct sample_fldr_opt_s preprocess_fldr_opt(mpz_t *w, uint32_t n, const mpz_t Z);
 void free_sample_fldr_opt(struct sample_fldr_opt_s x);
 size_t get_size_sample_fldr_opt_s(struct sample_fldr_opt_s *s);
 int sample_fldr_opt(struct sample_fldr_opt_s *x);

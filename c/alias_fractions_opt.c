@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "alias_fractions_opt.h"
+#include "construct.h"
 #include "flip_opt.h"
 #include "readio.h"
 
@@ -33,8 +34,7 @@ static void append_mpz(struct sample_alias_fractions_opt_s *s, size_t *cap, cons
 }
 
 // The table is built by the original constructor, then stored compactly.
-struct sample_alias_fractions_opt_s read_sample_alias_fractions_opt(char *fname) {
-    struct sample_alias_fractions_gmp_s g = read_sample_alias_fractions_gmp(fname);
+static struct sample_alias_fractions_opt_s from_gmp(struct sample_alias_fractions_gmp_s g) {
     struct sample_alias_fractions_opt_s s;
     s.taille = (uint32_t)g.taille;
     s.nbits = fo_nbits(s.taille);
@@ -78,6 +78,14 @@ struct sample_alias_fractions_opt_s read_sample_alias_fractions_opt(char *fname)
     s.Fractions = realloc(s.Fractions, s.frac_size + 1);
     free_sample_alias_fractions_gmp_s(g);
     return s;
+}
+
+struct sample_alias_fractions_opt_s read_sample_alias_fractions_opt(char *fname) {
+    return from_gmp(read_sample_alias_fractions_gmp(fname));
+}
+
+struct sample_alias_fractions_opt_s preprocess_alias_fractions_opt(mpz_t *w, uint32_t n) {
+    return from_gmp(preprocess_alias_fractions_gmp(w, (int)n));
 }
 
 void free_sample_alias_fractions_opt(struct sample_alias_fractions_opt_s x) {
