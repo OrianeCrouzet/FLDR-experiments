@@ -1,0 +1,54 @@
+\begin{algorithm}[htb]
+\caption{Generating a random integer} 
+\label{algo:tableXX}
+	\begin{algorithmic}[1]
+        \renewcommand{\algorithmicrequire}{\textbf{Input:}}
+        \renewcommand{\algorithmicensure}{\textbf{Output:}}
+        \Require $n$, the upper limit (excluded)
+        \Ensure  A random number between $0$ and $n-1$.
+        \Function{rand\_int}{$n$}
+            \While{True}
+                \State $res = 0$
+                \State $bits = n.bit\_length()$ \Comment{Return the number of necessary bits to represent the integer in binary}
+                \For{$i=0 \text{ to } bits$}
+                    \State $res = res * 2 + randint(0, 1)$ \Comment{Add the bit generated}
+                \EndFor
+                \If{$res < n$}
+                    \State \Return $res$
+                \EndIf
+            \EndWhile
+        \EndFunction
+	\end{algorithmic}   
+ \end{algorithm}
+
+\begin{algorithm}[htb]
+\caption{Random sampling in $\bar{T}$} 
+\label{algo:tableXY}
+	\begin{algorithmic}[1]
+        \renewcommand{\algorithmicrequire}{\textbf{Input:}}
+        \renewcommand{\algorithmicensure}{\textbf{Output:}}
+        \Require $\bar{T}$, $\cs, \bar{q}$  previously defined.
+        \Ensure A random object from $\bar{T}$
+        \Function{RandomGeneration}{$\bar{T}$, $\cs, \bar{q}$}
+            \State $q1 = \bar{q} - 1$
+            \State $q2 = \bar{q} - 2$
+            \While{True}
+                \State $r = \texttt{rand\_int}(\bar{q})$
+                \State $box = \bar{T}[r]$
+                \If{$0 \leq r \leq q2$} \Comment{First part of the table $\bar{T}$}
+                    \State $r' = \texttt{rand\_int}(cs)$
+                    \If{$r' \leq box[0]$}
+                        \State \Return $box[1]$
+                    \Else
+                        \State \Return $box[2]$
+                    \EndIf
+                \ElsIf{$r == q1$} \Comment{Last box of the table $\bar{T}$ : there is potentially a virtual object}
+                    \State $r' = \texttt{rand\_int}(cs)$
+                    \If{$r' \leq box[0]$}
+                        \State \Return $box[1]$
+                    \EndIf
+                \EndIf
+            \EndWhile
+        \EndFunction
+    \end{algorithmic}
+\end{algorithm}

@@ -1,0 +1,135 @@
+
+\section{Appendix dedicated to the optimal algorithms for $\textsc{Uniform}$ and $\textsc{Bernoulli}$ functions}
+\label{app:lumbroso}
+
+\noteAnt{mettre un peu de blabla}
+
+\input{parties/optimal.tex}
+
+
+
+\section{Appendix dedicated to the Combinatorial Chemistry case study}
+\label{app:chemistry}
+\noteAnt{A nettoyer, des choses ont déjà été dites dans corps du papier}
+
+\paragraph{Introduction and Problem Statement}
+Weighted random sampling is a fundamental operation in scientific computing. It consists in selecting an item $x_i$ from a set of $n$ candidates $X = \{x_0, x_1, \dots, x_{n-1}\}$ with probability strictly proportional to its integer weight $w_i$:
+\begin{equation}
+\mathbb{P}(X = x_i) = \frac{w_i}{\text{total}}
+\end{equation}
+
+\noteAnt{il y a qq chose de commenter qui ne compile pas, mais est iportant à mettre en place}
+% counter = ncs.ApproximateCounter(show_progress=False)\\
+% space = ncs.SearchSpace("C:4 H:1 O:2 N:3 F:1") ## ce sont les valences correctes présentes dans la nature -- vallence == nb de liaisons // dans l'exemple précédent on autorisait des valences + importantes\\
+% mols = ncs.random_sample(
+%     counter, space, natoms=32, nmols=1, selection=ncs.Q("C + H + O + N + F = 32")
+% )}
+% $N = 20\,484$; $Z = 467734548828719531605240429605504136894484614517198 \sim 1.25 \cdot 2^{168} \sim 4.7 \cdot 10^{50}$.
+
+
+\paragraph{Floating-Point Arithmetic Bias: Why \texttt{random.uniform} is Not Uniform}
+In Python, the standard implementation for cumulative weighted sampling draws a continuous random variable $r \sim \mathcal{U}[0, \text{total})$ and searches for the corresponding cumulative range. Within Python's standard library (\texttt{random.choices}), sampling relies on calling \texttt{random.uniform(0, total)} or \texttt{random() * total}. The weighted sampling step (5) is implemented in \texttt{nablachem/space/algos.py} as shown in Figure~4:
+
+% [FIGURE 4: Chemistry sampling code snippet (_weighted_choose)]
+
+Although \texttt{total} is accumulated using Python's arbitrary-precision integers (\texttt{int}), evaluating \texttt{random.uniform(0, total)} implicitly converts this integer mass into an IEEE 754 double-precision float (\texttt{float64}). An IEEE 754 \texttt{float64} value allocates 52 explicit mantissa bits plus 1 implicit bit, granting $M = 2^{53}$ distinct representable values in $[0, 1)$.
+
+As long as $\text{total} \le 2^{53}$, every integer index possesses an exact floating-point representation. However, as soon as $\text{total} > 2^{53}$, the step size between consecutive representable floating-point values becomes strictly greater than $1$:
+\begin{itemize}
+    \item Between $2^{53}$ and $2^{54}$, the step size is $2^1 = 2$: only even integers can be reached.
+    \item Between $2^{54}$ and $2^{55}$, the step size is $2^2 = 4$: only multiples of 4 are reachable.
+    \item For $\text{total} \sim 2^{100}$, the step size between consecutive draws leaps to $2^{47} \approx 1.4 \times 10^{14}$.
+\end{itemize}
+
+Let $M = 2^{\text{bits}}$ be the number of representable values for a uniform floating-point number $f \in [0, 1)$, and $\text{total}$ be the total weight of the distribution:
+\begin{itemize}
+    \item \textbf{Regime $M \gg \text{total}$ (sufficient precision):} Discretization error is limited to minor rounding noise.
+    \item \textbf{Regime $M \ll \text{total}$ (large-scale real-world case, e.g., $M = 2^{53}, \text{total} \sim 2^{100}$):} The resolution step $\text{total}/M$ exceeds the individual weights of many candidate items. An item whose weight is smaller than this grid resolution incurs a selection probability that becomes \emph{structurally zero}, regardless of its non-zero theoretical probability.
+\end{itemize}
+
+To quantify this deviation exactly without resorting to expensive Monte Carlo simulations, an $O(n)$ exact arithmetic algorithm calculates the effective probability distribution reachable for a target bit precision. By evaluating how many grid points $f = k/M$ (projected as $f \times \text{total}$) land within each item's cumulative interval, the algorithm computes effective sampling weights using integer division with ceiling, completely independent of the magnitude of $\text{total}$.
+
+% [FIGURE 5: Stretching and shrinking of a finite-precision random source (M=16)]
+
+Figure~5 illustrates these discretization mechanics using 4-bit precision ($M = 16$, center axis):
+\begin{itemize}
+    \item \textbf{Stretched regime ($M < \text{total}$, top axis, blue):} The 16 available values are stretched over 22 target integer slots. Because the resolution step ($22/16 = 1.375$) is strictly greater than 1, covering every target integer is impossible. Gaps remain: items falling entirely into these gaps have a zero probability of being chosen.
+    \item \textbf{Shrunk regime ($M > \text{total}$, bottom axis, orange):} The 16 values are compressed over 10 target integer slots. The average step ($16/10 = 1.6$) allows every target to be reached. However, since 10 does not divide 16, grid points stack unevenly, assigning two points to certain targets and one to others, inducing a modulo bias.
+\end{itemize}
+
+\paragraph{Advantages of the Integer ALIAS Method in Arbitrary Precision}
+The ALIAS method using arbitrary-precision integers provides an optimal solution to address both precision errors during sampling and execution time bottlenecks.
+
+First, this method guarantees complete mathematical exactness. By operating exclusively with arbitrary-precision integers, it preserves the exact weight of every item regardless of scale. The resulting draws remain strictly unbiased and faithful to the theoretical distribution.
+
+Second, it provides significant speedups. Linear scanning methods iterate through weights sequentially, incurring an $O(n)$ sampling time per draw. Across millions of trials, this becomes prohibitive. Our ALIAS approach resolves this by building a lookup table once during a preprocessing step, after which every subsequent draw executes in $O(1)$ constant time.
+
+In summary, arbitrary-precision integer ALIAS eliminates floating-point conversion errors while enabling instant random sampling, making it ideal for massive combinatorial spaces.
+
+
+
+
+\section{Lumbroso's sampling algorithms}
+
+
+\noteAnt{Algo de Lumbroso \cite{Lumbroso13}}
+\begin{algorithm}[H]
+\caption{Generating a random integer or a Bernoulli variable} 
+\label{algo:RandInt_v_AI}
+    \begin{tabular}{l l}
+        \begin{minipage}{0.5\textwidth}
+	        \begin{algorithmic}[1]
+                \renewcommand{\algorithmicrequire}{\textbf{Input:}}
+                \renewcommand{\algorithmicensure}{\textbf{Output:}}
+                \Require $n$, the upper limit (excluded)
+                \Ensure  A uniform random integer between $0$ and $n-1$.
+                \Function{\textsc{Uniform}}{$n$}
+                    \State $k = \lceil \log_2(n) \rceil$
+                    \State $bound = 2^k$
+                    \State $x = \texttt{Rand\_Bits}(k)$
+                    \While{$bound < n$ \textbf{or} $x \geq n$}
+                        \If{$bound \geq n$}
+                            \State $bound = bound - n$
+                            \State $x = x - n$
+                        \EndIf
+                        \State $bound = 2 \cdot bound$
+                        \State $x = 2 \cdot x + \texttt{Rand\_Bits}(1)$
+                    \EndWhile
+                    \State \Return $x$
+                \EndFunction
+	        \end{algorithmic}
+        \end{minipage}
+        &
+        \begin{minipage}{0.5\textwidth}
+            \begin{algorithmic}[1]
+                \renewcommand{\algorithmicrequire}{\textbf{Input:}}
+                \renewcommand{\algorithmicensure}{\textbf{Output:}}
+                \Require $p, q$ with $0 \leq p \leq q$
+                \Ensure  A Bernoulli variable equal to $1$ with probability $p/q$.
+                \Function{\textsc{Bernoulli}}{$p, q$}
+                    \If{$p = q$}
+                        \State \Return $1$
+                    \EndIf
+                    \State $p = 2 \cdot p$
+                    \While{$p \neq q$}
+                        \If{$p > q$}
+                            \State $y = 1$
+                            \State $p = p - q$
+                        \Else
+                            \State $y = 0$
+                        \EndIf
+                        \If{\texttt{Rand\_Bits}(1) == 1}
+                            \State \Return $y$
+                        \EndIf
+                        \State $p = 2 \cdot p$
+                    \EndWhile
+                    \State \Return \texttt{Rand\_Bits}(1)
+                \EndFunction
+            \end{algorithmic}
+        \end{minipage}
+    \end{tabular}
+    \begin{itemize}
+        \footnotesize 
+        \item $\texttt{Rand\_Bits}(k)$: it returns an integer whose base-2 representation is built with a sequence of $k$ unbiased random bits
+    \end{itemize}
+ \end{algorithm}

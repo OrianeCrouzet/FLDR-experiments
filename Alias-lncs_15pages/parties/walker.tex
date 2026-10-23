@@ -1,0 +1,242 @@
+The \emph{Alias Method}, designed by Walker in consecutive papers~\cite{Walker74,Walker77}, represents a
+fundamental shift in how we sample from discrete probability distributions. Walker's geometric approach
+transforms a set of $n$ unequal probabilities into $n$ uniform buckets of equal capacity, each containing
+at most two outcomes, a primary value and its designated \emph{alias}, by reallocating the surplus from
+high-probability outcomes to fill the deficits of low-probability ones. Sampling then operates in constant
+time, regardless of the number of possible outcomes, requiring only a uniformly drawn bucket and a single
+biased coin flip to pick between its two outcomes.
+
+While Walker's approach is elegant, its efficiency is largely attributed to Vose's 1991
+refinement~\cite{Vose91}, which introduced a linear-time construction of the bucket table (a phase we call \emph{preprocessing} in what follows). Vose achieves this by maintaining two worklists (e.g., stacks)
+classifying outcomes as small or large relative to the mean, and systematically pairing underfilled with
+overfilled buckets, improving on Walker's original super-linear construction. The combination of Walker's
+$O(1)$ sampling and Vose's $O(n)$ preprocessing makes the Alias Method the reference method whenever a fixed
+distribution must be sampled a very large number of times, with a decisive advantage over
+binary-search-based methods as the number of objects grows.
+
+The practical implementation of the Alias Method, however, must contend with finite-precision floating-point
+arithmetic, which introduces subtle vulnerabilities in both phases. During preprocessing, the iterative
+normalization and reallocation of probabilities can lead to precision drift, causing the total probability
+mass to deviate from unity or outcomes to be misclassified between worklists. During sampling, the same
+imprecision can corrupt the coin-flip threshold: even a microscopic deviation, such as a probability
+intended to be exactly $1.0$ stored as an infinitesimally smaller fraction, can erroneously trigger the
+alias outcome, while the discrete granularity of the underlying pseudo-random number generator can further
+distort the intended distribution over the course of massive Monte Carlo trials.
+
+To address rounding errors in both the preprocessing and simulation phases, the most effective approach
+is to replace standard floating-point arithmetic with arbitrary-precision fractions.
+In practice, since the floating number have finite precision, the probabilities can be represented as rational numbers, i.e. as fractions of arbitrary size:
+to that order, the distribution of the objects is based on some non-negative integer weights. This restriction is directly reflected in the probability distribution of the objets, because the probability of any given object is then a rational number. 
+This technique effectively treats the input as a mathematically perfect probability distribution
+(without any consideration on approximations in the inputs), eliminating the precision drift and 
+bit-creep that typically plague massive Monte Carlo trials. By maintaining exact rational representations,
+the software ensures that the statistical integrity of the simulation remains uncompromised, 
+regardless of the number of iterations performed.
+Adapting Vose's preprocessing to exact fractions follows the same two-stack classification scheme as
+the general integer construction we present in~\Cref{algo:table} (there parametrized by an integer cell
+size $\cs$ rather than by fractional probabilities); since no rounding error occurs, the resulting code
+is in fact simpler than Vose's original implementation.
+However, relying on exact rational arithmetic introduces significant computational overhead and
+increased memory usage compared to native floating-point types, which impact
+overall performance in large-scale simulations.
+
+To improve this aspect, developers for the Rust programming language proposed 
+an alternative approach~\cite{Rust25}, also in the case
+if a distribution relying on some integer weights.
+Rust's adaptation consider a sequence $X = [x_0, x_1, \dots, x_{n-1}]$ of $n$ distinct objects and a sequence 
+$W =[w_0, \dots, w_{n-1}]$ of non-negative integers such that object $x_i$ is of weight $w_i$. 
+We denote the total weight by $w = \sum_i w_i$.
+
+We aim at generating at random an object $x_i$
+according to the global distribution $W$, i.e. the probability for generating $x_i$ is given 
+by $w_i / w$, for each $i$. Obviously the later distribution is a probability distribution.
+Say differently, a sequence of objects with rational probabilities can be equivalently represented with non-negative integer weights
+replacing each probability $p_i$ by the integer $w_i = p_i \cdot LCM$ where $LCM$ is the least common multiple of the denominators 
+of the probabilities $(p_i)_i$.
+
+Only the preprocessing phase of the Rust implementation is distinct from the original Alias method, 
+the sampling phase remains identical.
+We put together our approach and Rust's in~\Cref{algo:table} for a better comparison.
+Note that the Rust implementation takes advantage of polymorphism, hence the same implementation should apply either for floating point numbers, but also for integer weights distributions.
+So in the following we simplify a little the pseudo-code for focusing only on necessary parts used for an integer distribution weights for objects.
+
+
+\begin{algorithm}[htb]
+\caption{Building of the Alias Table by Rust language and by our approach}
+\label{algo:table}
+    \begin{tabular}{l l}
+        \begin{minipage}{0.48\textwidth}
+            \begin{algorithmic}[1]
+                \scriptsize
+                \renewcommand{\algorithmicrequire}{\textbf{Input:}}
+                \renewcommand{\algorithmicensure}{\textbf{Output:}}
+                \Require $X$, $W$, $n$ and $w$ previously defined.
+                \Ensure  The table of triplets $T$.
+                \Function{Table\_Rust}{$X, n, W, w$}
+                    \State $T = \texttt{init}(n)$ %\Comment{Initialization of a table indexed from $0$ to $n-1$}
+                    \For{$x \in X$}
+                        \State $W[x] = n \cdot W[x]$ %\Comment{$W[x]$ is the weight of $x$}
+                    \EndFor
+                    \State $L = \{x \in X \quad | \quad W[x] \geq w\}$ %\Comment{$L$ is the stack of the larger objects}
+                    \State $S = \{x \in X \quad | \quad W[x] < w\}$ %\Comment{$S$ is the stack of the smaller objects}
+                    \State $k = 0$
+                    \While{$S$ is not empty}
+                        \State $x = \texttt{pop}(L)$ %\Comment{pop operation extracts one object from the stack}
+                        \State $x' = \texttt{pop}(S)$ 
+                        \State $T[k] = (W[x'], x', x)$
+                        \State $W[x] = W[x] - (w - W[x'])$
+                        \If{$W[x] < w$}
+                            \State $\texttt{push}(S, x)$ %\Comment{push operation adds one object to the stack}
+                        \Else
+                            \State $\texttt{push}(L, x)$
+                        \EndIf
+                        \State $k = k + 1$
+                    \EndWhile
+                    \While{$L$ is not empty}
+                        \State $x = \texttt{pop}(L)$
+                        \State $T[k] = (w, x, \emptyset)$
+                        \State $k = k + 1$
+                    \EndWhile
+                    \State \Return $T$
+                \EndFunction
+            \end{algorithmic}   
+            
+            \begin{itemize}
+                \scriptsize
+                \item $\texttt{init}(n)$: Initialization of a table indexed from $0$ to $n-1$
+                \item $L$ is the stack of the larger objects; $S$ is the stack of the smaller objects
+                \item $\texttt{pop}(\cdot)$: pop operation extracts one object from the stack
+                \item $\texttt{push}(\cdot, \cdot)$: push operation adds one object to the stack
+            \end{itemize}
+            
+        \end{minipage} 
+        &
+                \begin{minipage}{0.5\textwidth}
+            \begin{algorithmic}[1]
+                \scriptsize
+                \renewcommand{\algorithmicrequire}{\textbf{Input:}}
+                \renewcommand{\algorithmicensure}{\textbf{Output:}}
+                \Require $\bar{X}$, $\bar{W}$, $\cs, \bar{q}$ previously defined.
+                \Ensure  The table of triplets $T$.
+                \Function{TableBuilding}{$\bar{X}$, $\bar{W}$, $\cs, \bar{q}$}
+                    \State $T = \texttt{init}(\bar{q})$ %\Comment{Initialization of a table indexed from $0$ to $\bar{q}-1$}
+                    \State $L = \{x \in \bar{X} \quad | \quad \bar{W}[x] > \cs\}$ \Comment{$L$ is the stack of the larger objects}
+                    \State $S = \{x \in \bar{X} \quad | \quad \bar{W}[x] \leq \cs\}$ \Comment{$S$ is the stack of the smaller objects}
+                    \State $k = 0$
+                    \While{$L$ is not empty}
+                        \State $x = \texttt{pop}(L)$ %\Comment{pop operation extracts one object from the stack}
+                        \If{$S$ is not empty}
+                            \State $x' = \texttt{pop}(S)$
+                            \If{$\bar{W}[x'] < \cs$}
+                                \State $T[k] = (\bar{W}[x'], x', x)$
+                                \State $\bar{W}[x] = \bar{W}[x] - (\cs - \bar{W}[x'])$
+                            \Else
+                                \State $T[k] = (\cs, x', \emptyset)$
+                            \EndIf
+                        \Else
+                            \State $T[k] = (\cs, x, \emptyset)$
+                            \State $\bar{W}[x] = \bar{W}[x] - \cs$
+                        \EndIf
+                        \If{$0 < \bar{W}[x] \leq \cs$}
+                            \State $push(S, x)$ %\Comment{push operation adds one object to the stack}
+                        \ElsIf{$\bar{W}[x] > \cs$}
+                            \State $push(L, x)$
+                        \EndIf
+                        \State $k = k + 1$
+                    \EndWhile
+                    \For{$x' \in S$}
+                        \State $T[k] = (\cs, x', \emptyset)$ \Comment{objects still in $S$ have a remaining weight equal to $\cs$}
+                        \State $k = k + 1$
+                    \EndFor
+                    \State \Return $T$
+                \EndFunction
+            \end{algorithmic}
+            
+            \vspace*{2mm}
+            $\;$
+            
+        \end{minipage}
+    \end{tabular}
+ \end{algorithm}
+
+Vose established the correctness of the original algorithm by proving that $S$ cannot be exhausted before $L$; hence the objects remaining once $L$ is empty have a weight of exactly 1 and require no alias.
+Rust's implementation differs: after scaling by $n$, an object whose weight equals the cell capacity $w$ (that is, an object of exactly average weight $w/n$) is classified as large (put in $L$). Intuitively,
+this change should give more possibilities to complete smaller objects, thus the correctness
+should not be affected.
+But to the best of our knowledge, this approach provided by Rust has not been proved correct in the literature.
+Furthermore, in the implementation the loop condition (line 8) is different \texttt{while S and L are not empty}, and also there is third loop, line 22 to empty the stack $S$.
+We can prove it is non necessary in the context of integer weights distribution.
+
+\begin{proposition}
+    Rust algorithm is correct for the building of the Alias Table.
+\end{proposition}
+The proof key-ideas are similar than those we present for our algorithm in~\Cref{theo:correctness}.
+
+Both tables produced by Vose and Rust have the same number of buckets, but the number of buckets without aliases may differ. Let us provide an extreme case to compare Vose's and Rust's approaches.
+Consider a set of $n$ objects where all objects have weight $2$, except for the first two objects which have respectively weights $1$ and $3$. The total weight is $w=2n$, i.e., the average weight is $2$.
+In Vose's approach, the first $n-2$ objects (all with weight $2$) are directly placed into the result table without aliases.
+In Rust's approach, due to the LIFO policy (Last-In, First-Out for stacks), and the classification of objects of average weight as large, the processing order is different. 
+The largest object is processed after other large objects and each object with weight $2$ is used to complete a small object.
+This lead to a situation where only a single object ends up in the return table without an alias.
+
+\begin{proposition}
+    The number of cells without aliases in the table produced by Rust is smaller than or equal to the one 
+    in the table by Vose. Hence, for the sampling step, the approach by Rust is less efficient than the one of Vose sampling.
+\end{proposition}
+Indeed, the more buckets without aliases, the more efficient the sampling step, since an alias-free bucket
+returns its object directly, while an aliased one requires an extra biased coin flip.
+
+Rust's integer-weight approach thus remains an interesting way to avoid floating-point arithmetic, but it
+suffers from two drawbacks: the integer weights may grow very large, and the resulting table has fewer
+alias-free buckets, which impacts both memory and sampling throughput at scale. Note that deciding whether
+a table with the maximum number of alias-free entries can be constructed is itself $NP$-complete; we refer
+the reader to~\cite{SJ05} and references therein for this research direction.
+
+
+For the rest of the paper, we suppose that the weights are positive integers, otherwise we remove all objects
+$x_i$ of weight $0$; furthermore we suppose that $\texttt{GCD}(W) = 1$, replacing $W$ by its normalization
+$[w_0/\texttt{GCD}(W), \dots, w_{n-1}/\texttt{GCD}(W)]$ otherwise, which yields the same probability distribution.
+
+\begin{definition}
+    We define the cell size, denoted by $\cs$, to be the integer $\lfloor \frac{w}{n} \rfloor$.
+\end{definition}
+\begin{remark*}
+    Since $W$ contains $n$ positive integers, we have $\cs \geq 1$; note that $\cs = 1$ exactly recovers
+    Vose's original setting.
+\end{remark*}
+
+We compute the Euclidean division of $w$ by $\cs$, defining the quotient $q$ and remainder $r$ such that
+\begin{equation}
+    \label{eq:division}
+    w = q \cdot \cs + r \qquad\qquad \text{with} \quad 0 \leq r < \cs.
+\end{equation}
+Let us focus on the simple running example where $X$ contains $n=5$ objects from $x_0$ to $x_4$
+with respective weights $W = [2, 9, 1, 6, 1]$. The total weight is $w = 19$ and the cell size is $\cs = 3$;
+thus $q = 6$ and $r=1$.
+
+If $r > 0$, we define a \emph{virtual object} $x_n$ of weight $w_n = \cs - r$, and set
+$\bar{X} = [x_0, \dots, x_{n-1}, x_n]$, $\bar{W} =[w_0, \dots, w_{n-1}, w_n]$, $\bar{w} = w + w_n$;
+if $r=0$, we simply take $\bar{X} = X$, $\bar{W} = W$. In both cases,
+\begin{equation}
+    \label{eq:division2}
+    \bar{w} = \bar{q} \cdot \cs \qquad\qquad \text{with either } \bar{q}=q+1 \text{ or } \bar{q}=q.
+\end{equation}
+In our running example, we append a virtual object $x_5$ of weight $2$, giving $\bar{q} = 7$.
+
+We aim at producing a table $T$ of $\bar{q}$ buckets, each one with the same capacity $\cs$
+(which reduces to Vose's original construction when $\cs=1$), whereas Rust's table has $n$ buckets of
+capacity $w$. Each bucket is a triplet
+$(v', x', x)$, where, for our approach, $v'$ is the weight of $x'$ in the bucket and $\cs - v'$ that of its
+alias $x$ (with $x=\emptyset$ when $v'=\cs$, meaning $x'$ has no alias); for Rust, $v'$ is the weight of $x'$
+and $w - v'$ that of $x$.
+
+Intuitively, we apply Vose's scheme to $\bar{W}$ and $\cs$, with two stacks $L$ (weights $>\cs$) and $S$
+(weights $\leq\cs$): (1) the main loop empties $L$, completing each object of $S$ by a part of an object
+of $L$ (an object of weight $\cs$ fills a cell alone); (2) we prove that the objects then left in $S$ all
+have weight exactly $\cs$, each filling a cell alone.
+
+Taking our running example, our algorithm produces
+\[
+    T = [(2, x_5, x_3),\ (1, x_4, x_3),\ (3, x_3, \emptyset),\ (1, x_2, x_1),\ (2, x_0, x_1),\ (3, x_1, \emptyset),\ (3, x_1, \emptyset)].
+\]
+

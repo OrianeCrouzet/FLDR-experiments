@@ -1,0 +1,158 @@
+\documentclass[runningheads]{llncs}
+
+% \usepackage{draftwatermark}
+% \SetWatermarkColor{gray!40}
+% \SetWatermarkFontSize{3cm}
+% \SetWatermarkText{ Ne pas modifier !}
+
+\bibliographystyle{splncs04}% the mandatory bibstyle
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{microtype}      % microtypography
+\usepackage{enumitem}
+\usepackage{tikz}
+\usetikzlibrary{snakes,arrows,shapes}
+
+\usepackage{amsmath,amssymb}
+\usepackage{stmaryrd}
+%\usepackage{enumitem}
+%\setlist{nosep}
+\usepackage{mathtools}
+
+\usepackage[]{algorithm}
+\usepackage{etoolbox}\AtBeginEnvironment{algorithmic}{\footnotesize}
+\def\NoNumber#1{{\def\alglinenumber##1{}\State #1}\addtocounter{ALG@line}{-1}}
+\usepackage[noEnd]{algpseudocodex}
+\algrenewcommand\alglinenumber[1]{\scriptsize #1}
+\usepackage{caption}
+
+\usepackage{array,multirow,makecell,diagbox}
+\setcellgapes{1pt}
+\makegapedcells
+\newcolumntype{R}[1]{>{\raggedleft\arraybackslash }b{#1}}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash }b{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash }b{#1}}
+
+\usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage{cleveref}
+
+% unnumbered theorem-like environments used in the text
+\spnewtheorem*{remark*}{Remark}{\itshape}{\rmfamily}
+\spnewtheorem*{remarks*}{Remarks}{\itshape}{\rmfamily}
+\spnewtheorem*{fact*}{Fact}{\itshape}{\rmfamily}
+\spnewtheorem*{example*}{Example}{\itshape}{\rmfamily}
+\providecommand{\qedhere}{}% amsthm command not provided by llncs
+
+
+\newcommand{\cs}{\texttt{cs}}
+
+%
+%
+%% A supprimer plus tard
+\newcommand{\noteAnt}[2][]{\textcolor{red}{\textsc{Note de Antoine #1:} \emph{#2}}}
+\newcommand{\noteSi}[2][]{{\footnotesize \textcolor{blue}{\textsc{Note de Simon #1:} \emph{#2}}}}
+\newcommand{\noteMe}[2][]{{\footnotesize \textcolor{violet}{\textsc{Note de Mehdi #1:} \emph{#2}}}}
+\newcommand{\MP}[1]{\marginpar{\textcolor{red}{\footnotesize #1}}}
+%%
+
+
+
+\begin{document}
+
+\title{Exact Integer Alias Method: Robust and Error-Free Large-Scale Sampling}
+
+\titlerunning{Exact Integer Alias Method: Robust and Error-Free Large-Scale Sampling}
+
+\author{Oriane Crouzet\inst{1} \and
+Simon Dreyer\inst{2} \and
+Antoine Genitrini\inst{1} \and
+Mehdi Naima\inst{1}}
+
+\authorrunning{O. Crouzet et al.}
+
+\institute{Sorbonne Université, CNRS, LIP6, F-75005 Paris, France\\
+\email{Oriane.Crouzet@lip6.fr, Antoine.Genitrini@lip6.fr, Mehdi.Naima@lip6.fr} \and
+Université de Montpellier, CNRS, LIRMM, F-34095 Montpellier, France\\
+\email{Simon.Dreyer@lirmm.fr}}
+
+\maketitle
+
+\begin{abstract}
+Walker's Alias Method, made linear by Vose, is the gold standard for sampling from a fixed discrete
+distribution in constant time, but its reliance on floating-point arithmetic makes it unreliable once
+weights exceed double-precision resolution, a regime already reached by applications such as combinatorial
+chemistry. Existing remedies either fall back on costly arbitrary-precision arithmetic, like the Rust
+\texttt{weighted\_rand} crate. We introduce the Integer-Alias Sampler, a construction and sampling scheme that
+operates natively and exclusively on arbitrary-precision integer weights. We prove its correctness, give tight bounds on the resulting table size, and analyze the random-bit
+consumption of the associated generator. Experiments, including a large-scale combinatorial-chemistry case
+study, show our sampler achieves the best available trade-off between sampling time, memory footprint, and
+randomness consumption once weights genuinely require arbitrary precision.
+\keywords{Alias method \and Exact random sampling \and Arbitrary-precision arithmetic \and Discrete random variate generation.}
+\end{abstract}
+
+
+
+\section{Introduction}
+\label{sec:intro}
+
+\input{parties/intro.tex}
+
+\section{Alias algorithm beyond floating numbers rounding errors}
+\label{sec:walker}
+
+\input{parties/walker.tex}
+
+
+\section{Construction of the Alias table}
+\label{sec:algo}
+
+\input{parties/algo.tex}
+
+
+\section{Uniform random generation and its analysis}
+\label{sec:gen}
+
+\input{parties/gen.tex}
+
+
+\section{Experiments and reasons for using alias method for integers}
+\label{sec:exp}
+
+\input{parties/exp.tex}
+
+
+\begin{credits}
+\subsubsection{\ackname} This work
+	was supported by the \textsc{anr-fwf} project \textsc{PAnDAG} ANR-23-CE48-0014.
+
+\subsubsection{\discintname}
+The authors have no competing interests to declare that are relevant to the content of this article.
+\end{credits}
+
+
+%\newpage
+
+%%
+%% Bibliography
+%%
+
+{\raggedright % évite les blancs étirés devant les URL
+\bibliography{parties/biblio}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%% On n'a pas le droit aux annexes 
+% \newpage
+
+% \appendix
+
+% \input{parties/appendix.tex}
+
+
+\end{document}

@@ -1,0 +1,108 @@
+
+The notations $X$, $W$, $n$, $w$, the cell size $\cs$, the virtual object $x_n$, and $\bar{X}$, $\bar{W}$,
+$\bar{q}$ are as introduced in \Cref{sec:walker}, where Algorithm~\ref{algo:table} builds the table $T$ of
+$\bar{q}$ triplets $(v', x', x)$, with $v' \in \llbracket 1, \cs \rrbracket$\footnote{The notation
+$\llbracket a, b \rrbracket$ stands for the subset of all consecutive integers from $a$ to $b$.} and $x, x'$
+two distinct objects of $\bar{X}$ ($x$ possibly $\emptyset$, when $v'=\cs$, meaning $x'$ has no alias). 
+
+Let us present our algorithm approach (see right of  Algortihm~\ref{algo:table}) for the preprocessing step.
+The algorithm proceeds in two phases. 
+First objects are distributed in two stacks $L$ and $S$,
+containing respectively the larger objects (whose individual weights
+are larger than $\cs$)
+and the smaller objects of weights smaller than or equal to $\cs$. Then
+(1) the first step of the algorithm is to empty the stack $L$.
+To that order, each object of $S$ is completed with a part of a larger object from $L$
+if necessary. In the case where the smaller object is of weight $\cs$ it is put alone, without alias, in its cell.
+Once done,  either $S$ is also empty and the algorithm terminates (correctly)
+or from there (2) we will prove that $S$ will contain objects whose remaining weight are exactly $\cs$. Hence each object is put
+without alias in a new cell of $T$.
+
+
+\begin{proposition}
+\label{prop:size_table}
+    The size $\bar{q}$ of the table $T$ satisfies $\displaystyle{n \leq \bar{q} \leq n + \left\lceil \frac{n-1}{\cs} \right\rceil}$.
+\end{proposition}
+\begin{proof}
+    By Equations~\eqref{eq:division} and~\eqref{eq:division2}, we have $\bar{q} = \lceil w/\cs \rceil$:
+    indeed, if $r=0$ then $\bar{q} = q = w/\cs$, and if $r>0$ then $\bar{q} = q+1 = \lceil w/\cs \rceil$.
+    By definition of $\cs = \lfloor w/n \rfloor$, the Euclidean division of $w$ by $n$ gives
+    $n \cdot \cs \leq w \leq n\cdot \cs + n - 1$. Dividing by $\cs \geq 1$, we get
+    \[
+        n \leq \frac{w}{\cs} \leq n + \frac{n-1}{\cs}.
+    \]
+    Since $n$ is an integer, taking the ceiling yields $n \leq \lceil w/\cs \rceil \leq n + \lceil (n-1)/\cs \rceil$.\qed
+\end{proof}
+In particular $\bar{q} < (1+\frac{1}{\cs})\cdot n + 1$, and $\bar{q} \leq n+1$ as soon as $\cs \geq n-1$,
+which is the typical regime of large weights.
+Note that these bounds for $\bar{q}$ are tight. In fact, if all the weights are equal (thus we are faced to the uniform distribution)
+once normalized each weight is 1, then $\cs = 1$ and $q=\bar{q} = n$.
+For the upper bound, fix two positive integers $c$ and $n \geq 2$, and take a set of $n$ objects, such that
+$n-1$ of them have weight $c+1$ and the last one has weight $c$ (so that $\texttt{GCD}(W)=1$).
+The total weight is $w = (c+1)\cdot n - 1$, thus $\cs = c$, and we get
+$\bar{q} = \lceil n + (n-1)/c \rceil = n + \lceil (n-1)/\cs \rceil$.
+Our running example also reaches the upper bound: $n=5$, $\cs=3$ and $\bar{q} = 7 = 5 + \lceil 4/3 \rceil$.
+
+
+\begin{lemma}
+\label{lem:seq_increase}
+    After each loop, starting Line 6 of Algorithm~\ref{algo:table}, the average updated weight of the objects still lying either in $L$
+    or in $S$ is greater than or equal to $\cs$.
+\end{lemma}
+\begin{proof}
+    We proceed by induction on the number of loop iterations. Initially, if $r=0$ in
+    Equation~\eqref{eq:division} then $\bar{w} = w$ over $n$ objects, giving average weight
+    $\bar w/n = w/n \geq \cs$; if $r>0$ then $\bar{w} = (q+1)\cs$ over $n+1$ objects, and $n \nmid w$
+    (otherwise $r=0$), so $\cs < w/n$ and $w/(n+1) < \bar{w}/(n+1) = (q+1)\cs/(n+1) < (q+1)w/(n(n+1))$;
+    hence $q+1 > n$ (refining \Cref{prop:size_table}) and the average weight $\bar{w}/(n+1) \geq \cs$ as
+    well. So the invariant holds when entering the loop at Line 6.
+
+    Assume it holds for $k$ objects of average weight $\omega \geq \cs$ at the start of an iteration; the
+    total weight decreases by exactly $\cs$ during the iteration. Either an object of $S$ is fully consumed
+    and removed, leaving $k-1$ objects of cumulative weight $k\omega - \cs$, hence average weight
+    $\geq (k\cs-\cs)/(k-1) = \cs$ whenever $k>1$ (the algorithm terminates otherwise); or $S$ is empty and
+    an object of $L$, of weight strictly above $\cs$, is only partially consumed, so $k$ objects remain
+    whose total weight, being both at least $k(\cs+1)$ and a multiple of $\cs$, is at least $(k+1)\cs$,
+    giving average weight $\geq ((k+1)\cs - \cs)/k = \cs$. In both cases the invariant is preserved.\qed
+\end{proof}
+\begin{lemma}
+\label{lem:res_without aliases}
+    At Line 23 of Algorithm~\ref{algo:table}, all objects still lying in $S$ have a weight equal to $\cs$.
+\end{lemma}
+\begin{proof}
+    Arriving at Line 23, the loop invariant proved in~\Cref{lem:seq_increase} is still valid, thus the 
+    average weight of the objects still lying in $S$ is greater than or equal to $\cs$.
+    Hence we deduce that these remaining objects have all a weight equal to $\cs$.\qed
+\end{proof}
+
+
+\begin{theorem}
+\label{theo:correctness}
+    Function \textsc{TableBuilding} in Algorithm~\ref{algo:table} is correct.
+\end{theorem}
+The correctness of the approach lies essentially in proving that the algorithm terminates, $T$ being completed. This is a direct corollary of~\Cref{lem:seq_increase,lem:res_without aliases}.
+
+
+
+
+% \noteAnt{voir si on garde la suite, je pense que ce qui est indiqué n'est pas clair}
+
+% In the next proposition, we propose a deeper analysis of the size of the alias table.
+% Beyond Equation~\eqref{eq:division}, let us introduce a second division:
+% \begin{equation}
+%     \label{eq:division3}
+%     w = \cs \cdot n + \tilde{r} \qquad\qquad \text{with} \quad 0 \leq \tilde{r} < n.
+% \end{equation}
+% Note, in the division of $w$ by $n$, the quotient is $\cs$.
+% \begin{proposition}
+%     The number of supplementary cells $q-n$ satisfies $(q-n)\cs = \tilde{r} - r$,
+%     with values $r$ and $\tilde{r}$ respectively given by Equations~\eqref{eq:division} and~\eqref{eq:division3}.
+% \end{proposition}
+% \begin{proof}
+%     Using Equations~\eqref{eq:division} and~\eqref{eq:division3}, we get
+%     two constants $0\leq r < \cs$ and $0 \leq \tilde{r} < n$.
+%     We get the two equalities $w + \cs - r = (q+1)\cdot\cs$ and $w = n \cdot \cs + \tilde{r}$.
+%     We easily deduce $(q-n)\cdot\cs = \tilde{r} - r$.
+% \end{proof}
+% \noteAnt{intuitivement, avec un peu d'arithmétique, je pense qu'on peut trouver toutes les combinaisons
+% satisfaisant cette contrainte de divisibilité.}

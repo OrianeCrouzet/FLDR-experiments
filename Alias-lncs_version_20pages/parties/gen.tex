@@ -1,0 +1,90 @@
+
+In the case where we have a virtual object in the alias table $T$,
+the approach puts it as the third component in the last cell of $T$.
+This behavior is dictated by our stack implementation.
+
+% \noteAnt{Ce n'est pas très joli, mais ça évite de faire un IfThenElse qui est coûteux en temps,
+% et qui entraine l'utilisation du prédicteur de branchement qui dans notre cas ca se tromper très souvent.
+% Si on veut éviter le +1, il suffit de mettre le seuil en 3e position dans le triplet.}
+
+% \noteAnt{dans la méthode random.choices de python, ce n'est pas l'alias qui est codé,
+% pourtant au-delà d'une certain taille de simulation ça pourrait avoir du sens...
+% faire des test}
+
+Let us now introduce our sampling algorithm with virtual object rejection.
+\begin{algorithm}[htb]
+\caption{Random sampling with virtual object rejection} 
+\label{algo:tableXY}
+	\begin{algorithmic}[1]
+        \scriptsize
+        \renewcommand{\algorithmicrequire}{\textbf{Input:}}
+        \renewcommand{\algorithmicensure}{\textbf{Output:}}
+        \Require $T$, $\cs$, and $\texttt{virtual\_object}$.
+        \Ensure A random object from $T \setminus \{\texttt{virtual\_object}\}$.
+        \Function{RandomGenerationOld}{$T$, $\cs$, $\texttt{virtual\_object}$}
+            \State $n = \texttt{len}(T)$
+            \State $result = \texttt{virtual\_object}$
+            \While{$result == \texttt{virtual\_object}$}
+                \State $i = \textsc{Uniform}(n)$
+                \State $b = \textsc{Bernoulli}(T[i][0], \cs)$
+                \If{b}
+                    \State $result = T[i][1]$
+                \Else
+                    \State $result = T[i][2]$
+                \EndIf
+            \EndWhile
+            \State \Return $result$
+        \EndFunction
+    \end{algorithmic}
+\end{algorithm}
+
+Optimal algorithms, for the number of random bits that are needed, are implemented in our repository.
+Their efficiency has been proved by Lumbroso~\cite{Lumbroso13}.
+This optimality concerns the number of random bits, which is not the same criterion as running time;
+in \Cref{sec:exp}, we thus also evaluate a second implementation of our sampler that favors time over bits.
+Even if both calls to $\textsc{Uniform}$ and $\textsc{Bernoulli}$ are optimal, 
+the overall algorithm is not optimal in the random bits consumption.
+
+\begin{proposition}
+\label{prop:bits_consumption}
+    The consumption of random bits is in average upper bounded by
+    \[
+        \left(1+\frac{\cs - r}{w}\right) \left(\log(n) + 3\right) \leq \left(1+\frac{1}{n}\right) \left(\log(n) + 3\right).
+    \]
+\end{proposition}
+
+We say that the sampled object is rejected $t$ times when the \textbf{While} loop 
+(Line 4 in Algorithm~\ref{algo:tableXY}) is executed $t+1$ times.
+\begin{lemma}
+\label{lem:bits_consumption}
+    The probability that the sampled object is rejected $t$ times is
+    \[
+        \mathbb{P}(\text{exactly }t \text{ rejections}) = \left( \frac{\cs - r}{\bar{w}} \right)^t \left( \frac{w}{\bar{w}} \right).
+    \]
+    The average number of rejections is equal to $\displaystyle{\mathbb{E}(\text{number of rejections}) = \frac{\cs - r}{w}}$.
+\end{lemma}
+\begin{proof}
+    The case when the sampled object is rejected has probability $\frac{\cs - r}{\bar{w}}$ that corresponds
+    to the ratio of the weight of the virtual object and the total weight. 
+    Thus having exactly $t$ rejections has probability $\left( \frac{\cs - r}{\bar{w}} \right)^t$
+    and then the next object is valid (is not the virtual object) with probability $\left( \frac{w}{\bar{w}} \right)$.
+    Thus the first statement is proved.
+    To derive the average number of rejections, we have to calculate 
+    \[
+        \mathbb{E}(\text{number of rejections}) = \sum_{t=0}^{\infty} t \left( \frac{\cs - r}{\bar{w}} \right)^t \left( \frac{w}{\bar{w}} \right).  
+    \]
+    The next step is classical and can be derived from the derivative of the geometric series 
+    $\sum_{t=1}^{\infty} t x^{t-1} = \frac{1}{(1-x)^2}$ for $|x|<1$.
+    Hence,
+    \begin{align*}
+        \mathbb{E}(\text{number of rejections}) &= \frac{w}{\bar{w}} \cdot \frac{\cs - r}{\bar{w}} \cdot \sum_{t=1}^{\infty} t \left( \frac{\cs - r}{\bar{w}} \right)^{t-1} 
+        %= \frac{w}{\bar{w}} \cdot \frac{\cs - r}{\bar{w}} \cdot \frac{1}{\left( 1 - \frac{\cs - r}{\bar{w}} \right)^2}
+        %\\
+        %    &= \frac{w}{\bar{w}} \cdot \frac{\cs - r}{\bar{w}} \cdot \frac{\bar{w}^2}{w^2} 
+        = \frac{\cs - r}{w}.
+    \end{align*}
+    And the proof is complete. \qed
+\end{proof}
+
+
+The proof of~\Cref{prop:bits_consumption} is a direct consequence of \Cref{lem:bits_consumption}.

@@ -1,0 +1,73 @@
+Sampling a discrete object from a prescribed, possibly non-uniform, distribution is a recurring primitive
+in computational science, underlying Monte Carlo simulation, agent-based modeling, and the stochastic
+components of modern machine learning pipelines, where billions of independent draws must be produced
+under strict time and memory budgets. The related question of generating or sampling from a large,
+implicitly described universe of discrete structures has likewise been studied extensively, from the
+classical treatises of Nijenhuis and Wilf~\cite{NW75} and Kreher and Stinson~\cite{KS99} to Ruskey's
+survey~\cite{Ruskey03}, more recent developments~\cite{GP21}, and Skiena's algorithmic
+toolbox~\cite{Skiena20}. In practice, the objects to be generated are rarely equally likely: they carry
+integer or rational \emph{weights}, and an unbiased sampler must reproduce the corresponding distribution
+exactly, however skewed it is.
+
+The reference solution to this weighted sampling problem is Walker's \emph{Alias
+Method}~\cite{Walker74,Walker77}: it reorganizes a set of $n$ unequal probabilities into $n$ buckets of
+equal capacity, each holding at most two outcomes, a primary value and its designated \emph{alias}, so that
+a single bucket, drawn uniformly at random, together with one biased coin flip, suffices to recover the
+target distribution. Vose later showed how to build this table in linear time~\cite{Vose91}, and Smith and
+Jacobson provided a thorough analysis of the resulting sampler~\cite{SJ05}. By front-loading the whole
+complexity of the distribution into a one-time linear-time preprocessing step, the Alias Method achieves
+$O(1)$ sampling independently of $n$, making it the gold standard whenever a fixed distribution must be
+queried a very large number of times. As for every sampler considered here, a one-time preprocessing is
+followed by a sampling step repeated as often as needed, each with its own cost.
+
+This efficiency, however, is traditionally obtained at the price of floating-point arithmetic, and modern
+computational-science workloads increasingly expose the fragility of this choice. Both the construction of
+the table and the sampling step rely on repeatedly comparing and renormalizing probabilities represented as
+IEEE~754 doubles, so that rounding drift can silently corrupt the classification of outcomes during
+preprocessing, and bit-creep can corrupt the coin-flip threshold during sampling. As soon as the total
+weight of a distribution exceeds $2^{53}$, the granularity of double-precision floats becomes coarser than
+the weight of individual items, which then acquire a \emph{structurally zero} probability of ever being
+drawn. Such regimes are no longer isolated cases: in combinatorial chemistry, the space of chemically
+plausible molecules grows so quickly with the number of atoms that it must be sampled rather than
+enumerated, with reference libraries already ranging from about $10^{8}$ molecules for the smallest
+structures to several trillion compounds for modern make-on-demand libraries~\cite{SSHL26}, well beyond
+$2^{64}$ for molecules of about thirty heavy atoms. Monterrubio-Chanca and von Rudorff~\cite{MR25}, whose
+open-source \texttt{nablachem} package~\cite{nablachem} we use in our own experiments, address this regime
+with a pipeline whose final step is precisely a weighted random draw among combinatorial groups, over
+weights of several hundred bits, well beyond the reach of a double-precision mantissa.
+
+Several directions have been explored to make the Alias Method robust to this kind of scale. The most
+direct remedy is to abandon floating-point numbers altogether and represent probabilities as
+arbitrary-precision rational fractions (when it is possible), which restores mathematical exactness but incurs a substantial
+overhead in both running time and memory, since every comparison and table entry now manipulates a pair of
+big integers. An alternative, adopted by the Rust ecosystem's \texttt{weighted\_rand} crate~\cite{Rust25},
+is to restrict the input to non-negative integer weights, instead of probabilities, so that the whole construction can be carried out
+with exact integer arithmetic; this avoids fractions entirely, but its construction departs from Vose's and its correctness had, to the best
+of our knowledge, never been established in the literature, and, as we show in \Cref{sec:algo}, it also produces
+alias tables with systematically fewer alias-free cells than Vose's construction, which slows down the
+sampling step. Orthogonally, entropy-optimal samplers such as \textsc{Fldr}~\cite{SFRM19} and its
+refinement \textsc{Aldr}~\cite{DS26} build on the discrete-distribution-generating trees of Knuth and
+Yao~\cite{KY76} to approach the information-theoretic minimum number of random bits per sample, at the cost
+of a preprocessing and sampling cost that grows with the entropy of the distribution, again without native
+support for arbitrary-precision weights.
+
+In this paper we introduce the \emph{Integer-Alias Sampler}, a construction and sampling scheme that
+operates natively and exclusively on arbitrary-precision integer weights, without ever resorting to
+floating-point numbers or rational fractions. We revisit Walker and Vose's construction in this exact
+integer setting, present the key-ideas for proving the correctness of the Rust integer-weight variant~\cite{Rust25}, and
+prove that our own construction, built around a natural integer cell size, yields alias tables with more
+alias-free cells, and hence a faster sampling step, together with matching tight bounds on the size of the
+resulting table (\Cref{sec:walker,sec:algo}). We design an efficient random generation procedure on this
+table, together with a virtual-object rejection mechanism, and bound its average random-bit consumption,
+which we then compare experimentally with the near-optimal consumption of the entropy-optimal samplers
+of~\cite{SFRM19,DS26}. We
+implement all of the above under arbitrary-precision arithmetic, coupled with a background thread that
+continuously refills a cryptographically secure random-bit stream, overlapping bit generation with sampling, supporting
+distributions whose number of objects and individual weights can both grow without any fixed-width bound.
+Finally, we experimentally compare our approach against the Fraction-Alias sampler, the Rust-Alias
+sampler~\cite{Rust25}, and arbitrary-precision adaptations of \textsc{Fldr}~\cite{SFRM19} and
+\textsc{Aldr}~\cite{DS26}, including a large-scale combinatorial-chemistry case study derived
+from~\cite{MR25,SSHL26}, showing that once weights genuinely require arbitrary precision, our sampler offers
+a favorable trade-off between sampling time, memory footprint, and random-bit consumption: it is faster than
+the other exact Alias variants at comparable memory cost, while \textsc{Fldr} and \textsc{Aldr} consume fewer
+random bits at a higher memory cost (\Cref{sec:exp}).

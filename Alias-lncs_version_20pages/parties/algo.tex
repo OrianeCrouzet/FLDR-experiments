@@ -1,0 +1,313 @@
+
+Let us recall some notations.
+Let $X = [x_0, x_1, \dots x_{n-1}]$ of sequence of $n$ distinct objects and 
+$W =[w_0, \dots, w_{n-1}]$ a sequence of non-negative integers such that 
+object $x_i$ is of weight $w_i$. We denote the total weight by $w = \sum_i w_i$.
+
+We aim at generating at random an object $x_i$
+according to the global distribution $W$ avoiding any bias: the probability for generating $x_i$ is given 
+by $w_i / w$, for each $i$.
+
+For the rest of the paper, we suppose 
+that the weights are positive integers, otherwise we remove all objects $x_i$
+of weight $0$. Furthermore we suppose that the greatest common divisor of integers in $W$ is $\texttt{GCD}(W) = 1$.
+If it is not the case, we replace $W$ by the normalized sequence 
+$[\frac{w_0}{\texttt{GCD}(W)}, \dots, \frac{w_{n-1}}{\texttt{GCD}(W)}]$,
+still being an integer distribution. 
+Obviously both sets of weights (the original one and the latter one) yield the same probability distribution. 
+So, from now we suppose $W$ contains only positive integers whose $\texttt{GCD}$ is $1$.
+
+\begin{definition}
+    We define the cell size, denoted by $\cs$, to be the integer $\lfloor \frac{w}{n} \rfloor$.
+\end{definition}
+
+\begin{remark*}
+    %The number $\lfloor \frac{w}{n} \rfloor$ is equal to $w // n$.
+    Since the distribution $W$ contains $n$ positive integers, we have $\cs \geq 1$.
+\end{remark*}
+
+We compute the Euclidean division of $w$ by $\cs$ and thus define the quotient $q$ and the remaining part $r$ such that
+\begin{equation}
+    \label{eq:division}
+    w = q \cdot \cs + r \qquad\qquad \text{with} \quad 0 \leq r < \cs.
+\end{equation}
+Let us focus on the simple running example where $X$ contains $n=5$ objects from $x_0$ to $x_4$ 
+with respective weights $W = [2, 9, 1, 6, 1]$.
+The total weight is $w = 19$ and the cell size is $\cs = 3$. Thus we calculate $q = 6$ and $r=1$.\\
+From now, generally, we are faced in two cases:
+\begin{itemize}
+    \item if $r > 0$, then we define a new object $x_n$, called \emph{virtual object}
+        and relate it to the weight $w_n = \cs - r$.
+        Furthermore, we define $\bar{X} = [x_0, x_1, \dots x_{n-1}, x_n]$, 
+        $\bar{W} =[w_0, \dots, w_{n-1}, w_n]$ and $\bar{w} = w + w_n$.
+    \item If $r=0$, the we choose $\bar{X} = X$ and $\bar{W} = W$, and we set $x_n=\emptyset$.
+\end{itemize}
+Thus, we will use the following notations
+\begin{equation}
+    \label{eq:division2}
+    \bar{w} = \bar{q} \cdot \cs \qquad\qquad \text{with either } \bar{q}=q+1 \text{ or } \bar{q}=q.
+\end{equation}
+
+\begin{remarks*}
+    We observe now that $\bar{w}$ is a multiple of $\cs$.
+    The value $\cs$ does not change, even if $\bar{X} \neq X$.
+\end{remarks*}
+In our running example, we append a virtual object $x_5$ with weight $2$ and then $\bar{q} = 7$.
+
+Next algorithm builds a table $T$ with $\bar{q}$ cells,
+each one containing a triplet $(v', x', x)$ where $v'$ is an integer in 
+$\llbracket 1, \cs \rrbracket$\footnote{The notation $\llbracket a, b \rrbracket$ 
+    stands for the subset of all consecutive integers from $a$ to $b$.}
+and $x$ and $x'$ being two distinct objects from $\bar{X}$. The object $x$ may eventually be $\emptyset$
+in the case where $v'=\cs$, in that case we will say that $x'$ has no alias.
+As in the classical Alias method, 
+the preprocessing step objective is to arrange the weight distribution.
+Here the weights $\bar{W}$ must be distributed into $\bar{q}$ cells,
+with the constraint that each cell contains at most two different objects whose associated weights cumulate to $\cs$.
+
+Intuitively, we apply Vose's preprocessing step with specific inputs that are different from the original ones.
+Let us present our algorithm approach for this preprocessing step, building the alias table $T$.
+The algorithm proceeds in two phases. 
+First objects are distributed in two stacks $L$ and $S$,
+containing respectively the larger objects (whose individual weights
+are larger than $\cs$)
+and the smaller objects of weights smaller than or equal to $\cs$. Then
+(1) the first step of the algorithm is to empty the stack $L$.
+To that order, each object of $S$ is completed with a part of a larger object from $L$
+if necessary. In the case where the smaller object is of weight $\cs$ it is put alone, without alias, in its cell.
+Once done,  either $S$ is also empty and the algorithm terminates (correctly)
+or from there (2) we will prove that $S$ will contain objects whose remaining weight are exactly $\cs$. Hence each object is put
+without alias in a new cell of $T$.
+This approach will be proved correct. 
+
+Taking our running example, we get the following result for $T$:
+\[
+    [(2, x_5, x_3), (1, x_4, x_3), (3, x_3, \emptyset), (1, x_2, x_1), (2, x_0, x_1), (3, x_1, \emptyset), (3, x_1, \emptyset) ].
+\]
+
+\begin{algorithm}[htb]
+\caption{Building of the table of triplets $T$} 
+\label{algo:table}
+% Old version
+	% \begin{algorithmic}[1]
+    %     \renewcommand{\algorithmicrequire}{\textbf{Input:}}
+    %     \renewcommand{\algorithmicensure}{\textbf{Output:}}
+    %     \Require $\bar{X}$, $\bar{W}$, $\cs, \bar{q}, x_n$ previously defined.
+    %     \Ensure  The table of triplets $T$.
+    %     \Function{TableBuilding}{$\bar{X}$, $\bar{W}$, $\cs, \bar{q}, x_n$}
+    %         \State $T = \texttt{init}(\bar{q})$ \Comment{Initialization of a table indexed from $0$ to $\bar{q}-1$}
+    %         \State $L = \{x \in \bar{X} \quad | \quad W[x] \geq \cs\}$ \Comment{$L$ is the stack of the larger objects}
+    %         \State $S = \{x \in \bar{X} \quad | \quad W[x] < \cs\}$ \Comment{$S$ is the stack of the smaller objects}
+    %         \State $k = 0$
+    %         \While{$L$ is not empty}
+    %             \State $x = \texttt{pop}(L)$ \Comment{pop operation extracts one object from the stack}
+    %             \If{$S$ is not empty}
+    %                 \State $x' = \texttt{pop}(S)$
+    %                 \If{$x' \neq x_n$} \Comment{$x'$ is not the virtual object}
+    %                     \State $T[k] = (\bar{W}[x'], x', x)$
+    %                 \Else \Comment{$x'$ is the virtual object}
+    %                     \State $T[\bar{q}-1] = (\cs-\bar{W}[x'], x, x')$ \Comment{$x'$ is the 3rd component of the triplet, in the last cell}
+    %                     \State $k = k - 1$
+    %                 \EndIf
+    %                 \State $\bar{W}[x] = \bar{W}[x] - (\cs - \bar{W}[x'])$
+    %             \Else
+    %                 \State $T[k] = (\cs, x, \emptyset)$
+    %                 \State $\bar{W}[x] = \bar{W}[x] - \cs$
+    %             \EndIf
+    %             \If{$0 < \bar{W}[x] < \cs$}
+    %                 \State $push(S, x)$ \Comment{push operation adds one object to the stack}
+    %             \ElsIf{$\bar{W}[x] \geq \cs$}
+    %                 \State $push(L, x)$
+    %             \EndIf
+    %             \State $k = k + 1$
+    %         \EndWhile
+    %         \State \Return $T$
+    %     \EndFunction
+	% \end{algorithmic}
+%New version
+	\begin{algorithmic}[1]
+        \scriptsize
+        \renewcommand{\algorithmicrequire}{\textbf{Input:}}
+        \renewcommand{\algorithmicensure}{\textbf{Output:}}
+        \Require $\bar{X}$, $\bar{W}$, $\cs, \bar{q}$ previously defined.
+        \Ensure  The table of triplets $T$.
+        \Function{TableBuilding}{$\bar{X}$, $\bar{W}$, $\cs, \bar{q}$}
+            \State $T = \texttt{init}(\bar{q})$ %\Comment{Initialization of a table indexed from $0$ to $\bar{q}-1$}
+            \State $L = \{x \in \bar{X} \quad | \quad \bar{W}[x] > \cs\}$ \Comment{$L$ is the stack of the larger objects}
+            \State $S = \{x \in \bar{X} \quad | \quad \bar{W}[x] \leq \cs\}$ \Comment{$S$ is the stack of the smaller objects}
+            \State $k = 0$
+            \While{$L$ is not empty}
+                \State $x = \texttt{pop}(L)$ %\Comment{pop operation extracts one object from the stack}
+                \If{$S$ is not empty}
+                    \State $x' = \texttt{pop}(S)$
+                    \If{$\bar{W}[x'] < \cs$}
+                        \State $T[k] = (\bar{W}[x'], x', x)$
+                        \State $\bar{W}[x] = \bar{W}[x] - (\cs - \bar{W}[x'])$
+                    \Else
+                        \State $T[k] = (\cs, x', \emptyset)$
+                    \EndIf
+                \Else
+                    \State $T[k] = (\cs, x, \emptyset)$
+                    \State $\bar{W}[x] = \bar{W}[x] - \cs$
+                \EndIf
+                \If{$0 < \bar{W}[x] \leq \cs$}
+                    \State $push(S, x)$ %\Comment{push operation adds one object to the stack}
+                \ElsIf{$\bar{W}[x] > \cs$}
+                    \State $push(L, x)$
+                \EndIf
+                \State $k = k + 1$
+            \EndWhile
+            \For{$x' \in S$}
+                \State $T[k] = (\cs, x', \emptyset)$ \Comment{the objects still in $S$ have a remaining weight equal to $\cs$}
+                \State $k = k + 1$
+            \EndFor
+            \State \Return $T$
+        \EndFunction
+	\end{algorithmic}    
+ \end{algorithm}
+
+\begin{remark*}
+    The conditional cases in Lines 10 to 14 could be omitted by keeping only Line 12 with $W[x']=\cs$; thus 
+    the alias object $x$ would have a weight 0 in this cell. The algorithm would still be correct.
+\end{remark*}
+
+
+\begin{proposition}
+\label{prop:size_table}
+    The size $\bar{q}$ of the table $T$ satisfies $n \leq \bar{q} \leq (1 + \frac{1}{\cs})\cdot n -1$.
+\end{proposition}
+\begin{proof}
+    First suppose $q = \bar{q}$ and $w = \bar{w}$, i.e. $r=0$ in Equation~\eqref{eq:division2}. In that case,
+    using the latter equation, and the definition of $\cs$ we have
+    \[
+        \frac{w}{q} = \lfloor \frac{w}{n} \rfloor.
+    \]
+    Thus we deduce $q \geq n$.
+    Furthermore, suppose now that $q \geq (1 + \frac{1}{\cs})\cdot n$.
+    \[
+        \cs = \lfloor \frac{q\cdot \cs}{n} \rfloor \geq \lfloor \frac{(1 + \frac{1}{\cs})\cdot n \cdot \cs}{n} \rfloor \geq \cs +1.
+    \]
+    This is a contradiction.
+    So in this case $n \leq q < (1 + \frac{1}{\cs})\cdot n$.\\
+    Second, suppose in the Equation~\eqref{eq:division}, we are in the case $r>0$. From Equation~\eqref{eq:division2}
+    we obtain
+    \[
+        \frac{w + (\cs - r)}{q+1} = \lfloor \frac{w}{n} \rfloor.
+    \]
+    Thus we get
+    \[
+        \frac{w}{q+1} \leq \lfloor \frac{w}{n} \rfloor \leq \frac{w}{n},
+    \]   
+    so $q+1\geq n$.
+    Again, suppose $q \geq (1 + \frac{1}{\cs})\cdot n -1$. We deduce
+    \[
+        \cs = \lfloor \frac{(q+1)\cdot \cs}{n} \rfloor \geq \lfloor \frac{ (1 + \frac{1}{\cs})\cdot n \cdot \cs}{n} \rfloor 
+            \geq \lfloor (1 + \frac{1}{\cs}) \cs \rfloor = \cs + 1.
+    \]    
+    This is a contradiction so we obtain in this second setting $n-1 \leq q < (1 + \frac{1}{\cs})\cdot n-1$.\\
+    Using the relationship between $q$ and $\bar{q}$ from~\eqref{eq:division2}, we get the proposition's statement.\qed
+\end{proof}
+Note that these bounds for $\bar{q}$ are tight. In fact, if all the weights are equal (thus we are faced to the uniform distribution)
+once normalized each weight is 1, then $q=\bar{q} = n$.
+For the upper bound, fix two positive integers $\omega$ and $n$, and take a set of $\omega \cdot n$ objects, such that
+all of them except one have weight $\omega$ and the last one has weight $\omega\cdot n$.
+We calculate that the constant $\cs$ is equal to $\omega$, thus we get
+$q = (1 + \frac{1}{\cs})\cdot \omega\cdot n - 1$ (recall $\omega\cdot n$ is the number of objects).
+
+
+\begin{lemma}
+\label{lem:seq_increase}
+    After each loop, starting Line 6 of Algorithm~\ref{algo:table}, the average updated weight of the objects still lying either in $L$
+    or in $S$ is greater than or equal to $\cs$.
+\end{lemma}
+\begin{proof}
+    We prove the result by induction.
+    \begin{itemize}
+        \item At the beginning of the algorithm, let us prove that the average weight of the objects is larger than or equal to $\cs$.
+            \begin{itemize}
+                \item In the case when $r=0$ in Equation~\eqref{eq:division},
+                    we have $\bar{w} = w$ and the number of objects is $n$, thus the average weight is $\bar{w}/n = w/n \geq \cs$.
+                \item In the case when $r>0$, we have $\bar{w} = w + (\cs - r) = (q+1)\cs$ and the number of objects is $n+1$, thus the average weight satisfies
+                    \[
+                        \frac{w}{n+1} < \frac{\bar{w}}{n+1} = \frac{(q+1)\cs}{n+1} < \frac{q+1}{n+1}\cdot\frac{w}{n} = \frac{q+1}{n}\cdot \frac{w}{n+1}.
+                    \]
+                    \Cref{prop:size_table} induces $n\leq q+1$, using the later inequality the case $n=q+1$ is not possible,
+                    thus
+                    \[
+                         \frac{\bar{w}}{n+1} = \frac{(q+1)\cs}{n+1} \geq \frac{(n+1)\cs}{n+1} = \cs.
+                    \]
+            \end{itemize}
+            Hence when we enter the loop Line 6, the average weight of the objects distributed in $L$ and $S$ is greater than or equal to $\cs$.
+        \item Suppose at the beginning of the loop, it remains $k$ objects distributed in $L$ and $S$, 
+            whose average weight $\omega \geq \cs$.\\
+            During the loop, the total weight is decreased by $\cs$.\\
+            There are two mutually exclusive loop-behaviors:
+            \begin{itemize}
+                \item An object from $S$ is removed from $S$;
+                \item An object from $L$ is of updated weight greater than $\cs$, its new weight is decreased by $\cs$
+                    and then, either it still stands in $L$ or it is pushed in $S$.
+            \end{itemize}
+            In the first case, at the end of the loop, the cumulative remaining weight is $W' = k\cdot \omega - \cs$,
+            for $k-1$ objects (since $\omega$ was the average weight of the $k$ objects). 
+            If the number of remaining objects $k-1$ is positive, then the average weight is
+            \[
+                \omega' = \frac{W'}{k-1} = \frac{k\cdot \omega - \cs}{k-1}  \geq \frac{k\cdot \cs - \cs}{k-1} = \cs.
+            \]
+            Otherwise, when $k-1 = 0$, the algorithm terminates.\\
+
+            In the second case, the following constraints are valid : $S$ is empty and there is an element in $L$
+            of weight greater than $\cs$.
+            Thus the total weight $\bar{W}$ of objects remaining in $L$ at the beginning of the loop is at least $k\cdot (\cs + 1) = k\cs + k$.
+            But the remaining weight is a multiple of $\cs$, thus $\bar{W} \geq (k+1) \cdot \cs$,
+            since the number $k$ of objects does not decrease, so we deduce the updated average weight
+            \[
+                \frac{W'}{k} = \frac{\bar{W} - \cs}{k} \geq \frac{(k+1)\cdot \cs - \cs}{k}  = \cs.
+            \]
+            So in both cases, at the end of the loop, the average weight of the remaining objects is at least $\cs$.
+    \end{itemize}
+    Thus the lemma is proved.\qed
+\end{proof}
+\begin{lemma}
+\label{lem:res_without aliases}
+    At Line 27 of Algorithm~\ref{algo:table}, all objects still lying in $S$ have a weight equal to $\cs$.
+\end{lemma}
+\begin{proof}
+    Arriving at Line 27, the loop invariant proved in~\Cref{lem:seq_increase} is still valid, thus the 
+    average weight of the objects still lying in $S$ is greater than or equal to $\cs$.
+    Hence we deduce that these remaining objects have all a weight equal to $\cs$.\qed
+\end{proof}
+
+
+\begin{theorem}
+\label{theo:correctness}
+    Algorithm~\ref{algo:table} is correct.
+\end{theorem}
+The correctness of the approach lies essentially in proving that the algorithm terminates, $T$ being completed.
+\begin{proof}
+    This is a direct corollary of~\Cref{lem:seq_increase,lem:res_without aliases}. Each cell of $T$ contains
+    a cumulated weight of $\cs$, either using a single object or by completing an object with an alias.\qed
+\end{proof}
+
+
+
+% \noteAnt{voir si on garde la suite, je pense que ce qui est indiqué n'est pas clair}
+
+% In the next proposition, we propose a deeper analysis of the size of the alias table.
+% Beyond Equation~\eqref{eq:division}, let us introduce a second division:
+% \begin{equation}
+%     \label{eq:division3}
+%     w = \cs \cdot n + \tilde{r} \qquad\qquad \text{with} \quad 0 \leq \tilde{r} < n.
+% \end{equation}
+% Note, in the division of $w$ by $n$, the quotient is $\cs$.
+% \begin{proposition}
+%     The number of supplementary cells $q-n$ satisfies $(q-n)\cs = \tilde{r} - r$,
+%     with values $r$ and $\tilde{r}$ respectively given by Equations~\eqref{eq:division} and~\eqref{eq:division3}.
+% \end{proposition}
+% \begin{proof}
+%     Using Equations~\eqref{eq:division} and~\eqref{eq:division3}, we get
+%     two constants $0\leq r < \cs$ and $0 \leq \tilde{r} < n$.
+%     We get the two equalities $w + \cs - r = (q+1)\cdot\cs$ and $w = n \cdot \cs + \tilde{r}$.
+%     We easily deduce $(q-n)\cdot\cs = \tilde{r} - r$.
+% \end{proof}
+% \noteAnt{intuitivement, avec un peu d'arithmétique, je pense qu'on peut trouver toutes les combinaisons
+% satisfaisant cette contrainte de divisibilité.}
